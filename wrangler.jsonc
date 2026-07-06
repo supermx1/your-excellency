@@ -1,0 +1,36 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "your-excellency",
+	"main": ".svelte-kit/cloudflare/_worker.js",
+	"compatibility_date": "2026-07-02",
+	"compatibility_flags": ["nodejs_compat"],
+	"assets": {
+		"directory": ".cloudflare/public",
+		"binding": "ASSETS"
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "fantasy-naija",
+			"database_id": "34d5d260-0cdf-499f-9f29-6c13d74799a8",
+			"migrations_dir": "migrations"
+		}
+	],
+	"kv_namespaces": [
+		{
+			"binding": "RULEBOOK_CACHE",
+			"id": "9a2fbdf624594e1c9047f73bfb34893f"
+		},
+		{
+			"binding": "AI_CACHE",
+			"id": "85f147b3ddc34bfa9af2652caec6c790"
+		}
+	],
+	"ai": {
+		"binding": "AI"
+	},
+	"observability": {
+		"enabled": true,
+		"head_sampling_rate": 1
+	}
+}

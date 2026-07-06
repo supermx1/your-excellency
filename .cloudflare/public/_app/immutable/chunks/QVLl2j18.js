@@ -1,0 +1,1 @@
+var e=``+new URL(`../assets/favicon.DuSGR-cB.png`,import.meta.url).href;export{e as t};
