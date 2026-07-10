@@ -31,7 +31,7 @@ Build a turn-based, single-player political simulation game set in Nigeria. **Th
 **Status by milestone (see §13):**
 
 - **Milestone A — deterministic core:** ✅ built — setup, character builder, AP/turn economy, national vote maths with insecurity turnout-suppression, rigging + detection, the full election → policy → tribunal → Legacy loop, clean twins, noble-loss carry-over, save/load.
-- **Milestone B — AI policy simulator:** ⛔ not built — the policy step runs the **deterministic fallback only**; Workers AI / the provider interface and response cache are not wired.
+- **Milestone B — AI policy simulator:** ✅ built — `/api/policy` runs the §8 provider interface (Workers AI `@cf/meta/llama-3.2-3b-instruct` via JSON-mode schema, or Anthropic when `AI_PROVIDER=anthropic` + key secret), grounded with rulebook provisions + national insecurity, KV-cached (`AI_CACHE`, 30-day TTL, hash of policy+provision ids), strict-validated, deterministic fallback on any failure. *Note: the PRD's `llama-3.1-8b-instruct` default was deprecated 2026-05-30.*
 - **Milestone C — living rulebook:** 🟡 partial — the **rulebook admin (Path 1) is shipped at `/admin`, backed by D1 + KV** (edits take effect for new runs with no redeploy, per §5.7). Document-upload assist (Path 2) is not built.
 - **Milestone D — governing clock / events / endings polish:** 🟡 partial — the tribunal exchange and Legacy **endings** are in; the term clock, result-lag queue, and event / EFCC / defection engine are not.
 

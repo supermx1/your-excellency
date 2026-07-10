@@ -52,7 +52,8 @@
 		title: 'Community Security and Schools Compact',
 		sector: 'security',
 		scope: 'national',
-		description: 'Fund joint community safety patrols, school reopening grants, and transparent local delivery dashboards.'
+		description:
+			'Fund joint community safety patrols, school reopening grants, and transparent local delivery dashboards.'
 	});
 	let tribunalCounter = $state('legal_spend');
 	let error = $state('');
@@ -85,12 +86,17 @@
 
 	function naira(value) {
 		const abs = Math.abs(value);
-		const text = abs >= 1_000_000_000 ? `₦${(abs / 1_000_000_000).toFixed(1)}bn` : `₦${Math.round(abs / 1_000_000)}m`;
+		const text =
+			abs >= 1_000_000_000
+				? `₦${(abs / 1_000_000_000).toFixed(1)}bn`
+				: `₦${Math.round(abs / 1_000_000)}m`;
 		return value < 0 ? `+${text}` : text;
 	}
 
 	function votes(value) {
-		return value >= 1_000_000 ? `${(value / 1_000_000).toFixed(1)}m` : `${Math.round(value / 1000)}k`;
+		return value >= 1_000_000
+			? `${(value / 1_000_000).toFixed(1)}m`
+			: `${Math.round(value / 1000)}k`;
 	}
 
 	function actionCost(id, action) {
@@ -137,7 +143,12 @@
 			const res = await fetch('/api/register', {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ name: reg.name, email: reg.email, country: reg.country, consent: reg.consent })
+				body: JSON.stringify({
+					name: reg.name,
+					email: reg.email,
+					country: reg.country,
+					consent: reg.consent
+				})
 			});
 			if (!res.ok) {
 				const data = await res.json().catch(() => ({}));
@@ -168,8 +179,30 @@
 		applyResult(resolveElection(run, selectedRigging, selectedState));
 	}
 
-	function submitPolicy() {
-		applyResult(simulatePolicy(run, policy));
+	let policyLoading = $state(false);
+
+	async function submitPolicy() {
+		policyLoading = true;
+		let aiResponse = null;
+		try {
+			// AI reaction (Milestone B): cached + validated server-side; any failure → deterministic fallback
+			const insecurity = Math.round(
+				run.state.states.reduce((sum, s) => sum + s.insecurityIndex, 0) / run.state.states.length
+			);
+			const res = await fetch('/api/policy', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({
+					policy,
+					ctx: { party: run.party, origin: run.origin, religion: run.religion, insecurity }
+				})
+			});
+			if (res.ok) aiResponse = (await res.json()).response;
+		} catch {
+			// offline / provider down → fallback
+		}
+		policyLoading = false;
+		applyResult(simulatePolicy(run, policy, aiResponse));
 	}
 
 	function tribunal() {
@@ -226,8 +259,10 @@
 	<section class="border-b-4 border-black bg-emerald-400">
 		<div class="mx-auto grid max-w-7xl gap-6 px-4 py-8 md:grid-cols-[1.4fr_0.8fr] md:px-8">
 			<div>
-				<p class="inline-flex -rotate-1 items-center gap-2 border-2 border-black bg-yellow-300 px-2 py-1 text-sm font-black uppercase shadow-[3px_3px_0_0_#000]">
-					<img src={favicon} alt="" class="w-10">
+				<p
+					class="inline-flex -rotate-1 items-center gap-2 border-2 border-black bg-yellow-300 px-2 py-1 text-sm font-black uppercase shadow-[3px_3px_0_0_#000]"
+				>
+					<img src={favicon} alt="" class="w-10" />
 					Your Excellency
 				</p>
 				<h1 class="mt-4 max-w-3xl text-4xl font-black uppercase leading-tight md:text-6xl">
@@ -240,10 +275,24 @@
 			</div>
 
 			<div class="grid content-end gap-3 text-sm">
-				<div class="{card} p-4">
-					<p class="font-black uppercase">Rulebook disclaimer</p>
-					<p class="mt-1">This is a game abstraction of Nigerian law and politics. It is not legal advice.</p>
-				</div>
+				<aside
+					class="{card} rulebook-notice bg-amber-50 p-4"
+					role="note"
+					aria-labelledby="rulebook-disclaimer-title"
+				>
+					<div class="flex items-start gap-3">
+						<span
+							class="grid size-7 shrink-0 place-items-center border-2 border-black bg-black font-black text-yellow-300"
+							aria-hidden="true">!</span
+						>
+						<div>
+							<p id="rulebook-disclaimer-title" class="font-black uppercase">Rulebook disclaimer</p>
+							<p class="mt-1 font-medium">
+								This is a game abstraction of Nigerian law and politics. It is not legal advice.
+							</p>
+						</div>
+					</div>
+				</aside>
 				<button class="{btn} bg-black px-4 py-3 text-white" onclick={resetRun}>New run</button>
 			</div>
 		</div>
@@ -256,7 +305,9 @@
 					<span
 						class={[
 							'border-2 border-black px-3 py-1 text-xs font-black uppercase',
-							i === stepIndex && run.phase !== 'complete' && 'bg-yellow-300 shadow-[3px_3px_0_0_#000]',
+							i === stepIndex &&
+								run.phase !== 'complete' &&
+								'bg-yellow-300 shadow-[3px_3px_0_0_#000]',
 							(i < stepIndex || run.phase === 'complete') && 'bg-emerald-400',
 							i > stepIndex && 'bg-white opacity-50'
 						]}
@@ -279,9 +330,15 @@
 						map, pick an action, and choose how much to spend — small, medium or large. Green actions
 						build real support. The red one pays fast, but EFCC go dey watch you.
 					</li>
-					<li><strong>Election day:</strong> run clean, push turnout, or rig — rigging fit land you for tribunal.</li>
+					<li>
+						<strong>Election day:</strong> run clean, push turnout, or rig — rigging fit land you for
+						tribunal.
+					</li>
 					<li><strong>If you win,</strong> announce one policy and see how Nigerians react.</li>
-					<li><strong>Survive the tribunal.</strong> Your Legacy decides the ending — money counts for nothing, and even a clean loss seeds your next run.</li>
+					<li>
+						<strong>Survive the tribunal.</strong> Your Legacy decides the ending — money counts for nothing,
+						and even a clean loss seeds your next run.
+					</li>
 				</ol>
 			</details>
 
@@ -295,7 +352,9 @@
 				<section class="{card} p-4">
 					<h2 class="font-black uppercase">War chest</h2>
 					<p class="mt-1 text-2xl font-black">{naira(run.naira)}</p>
-					<p class="text-xs font-medium">Supporters donate every week — more popularity, more money.</p>
+					<p class="text-xs font-medium">
+						Supporters donate every week — more popularity, more money.
+					</p>
 					<div class="mt-3 grid gap-2 text-sm">
 						{@render meterRow('Week', `${run.week}/${defaultRulebook.params.campaignWeeks}`)}
 						{@render meterRow('Actions left', run.ap)}
@@ -330,7 +389,9 @@
 
 		<div class="space-y-6">
 			{#if error}
-				<div class="border-4 border-black bg-rose-400 p-4 font-black shadow-[6px_6px_0_0_#000]">{error}</div>
+				<div class="border-4 border-black bg-rose-400 p-4 font-black shadow-[6px_6px_0_0_#000]">
+					{error}
+				</div>
 			{/if}
 
 			{#if !run}
@@ -389,7 +450,9 @@
 									<option value={r}>{r}</option>
 								{/each}
 							</select>
-							<span class="text-xs font-medium text-zinc-600">Leans support toward aligned regions.</span>
+							<span class="text-xs font-medium text-zinc-600"
+								>Leans support toward aligned regions.</span
+							>
 						</label>
 
 						<label class="grid gap-2 md:col-span-2">
@@ -399,7 +462,9 @@
 									<option value={s.id}>{s.name}</option>
 								{/each}
 							</select>
-							<span class="text-xs font-medium text-zinc-600">Your home state gives you a turnout edge there.</span>
+							<span class="text-xs font-medium text-zinc-600"
+								>Your home state gives you a turnout edge there.</span
+							>
 						</label>
 
 						{#if party === 'FOUND'}
@@ -421,16 +486,24 @@
 					<div class="mt-5 border-4 border-black bg-amber-50 p-4 shadow-[5px_5px_0_0_#000]">
 						<p class="text-xs font-black uppercase">You'll start with</p>
 						<div class="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-sm font-bold sm:grid-cols-3">
-							<span>War chest {naira(previewProfile.naira)}</span>
-							<span>Popularity {previewProfile.popularity}</span>
-							<span>Connections {previewProfile.connections}</span>
-							<span>Integrity {previewProfile.integrity}</span>
-							<span>Trust {previewProfile.publicTrust}</span>
-							<span>EFCC risk {previewProfile.efccRisk}</span>
+							<span
+								>War chest: <span class="text-green-600">{naira(previewProfile.naira)}</span></span
+							>
+							<span
+								>Popularity: <span class="text-green-600">{previewProfile.popularity}</span></span
+							>
+							<span
+								>Connections: <span class="text-green-600">{previewProfile.connections}</span></span
+							>
+							<span>Integrity: <span class="text-green-600">{previewProfile.integrity}</span></span>
+							<span>Trust: <span class="text-green-600">{previewProfile.publicTrust}</span></span>
+							<span>EFCC risk: <span class="text-red-600">{previewProfile.efccRisk}</span></span>
 						</div>
 					</div>
 
-					<button class="{btn} mt-5 bg-emerald-400 px-4 py-3" onclick={startRun}>Begin your presidency →</button>
+					<button class="{btn} mt-5 bg-emerald-400 px-4 py-3" onclick={startRun}
+						>Begin your presidency →</button
+					>
 				</section>
 			{:else if run.phase === 'campaign'}
 				{@render nigeriaMap('Nigeria — tap a state to campaign there')}
@@ -453,8 +526,8 @@
 						</div>
 					</div>
 					<p class="mt-1 text-sm font-medium">
-						Spend size scales both the cost and the effect. Money moves: donations come in weekly, and
-						the godfather's offer changes every week.
+						Spend size scales both the cost and the effect. Money moves: donations come in weekly,
+						and the godfather's offer changes every week.
 					</p>
 
 					<div class="mt-5 grid gap-4 lg:grid-cols-2">
@@ -485,7 +558,9 @@
 				<section class="{card} p-5">
 					<h2 class="text-2xl font-black uppercase">Election day</h2>
 					<p class="mt-2 font-medium">
-						Projection: you {votes(electionPreview.playerLegitimate)} vs opponent {votes(electionPreview.opponentOfficial)}
+						Projection: you {votes(electionPreview.playerLegitimate)} vs opponent {votes(
+							electionPreview.opponentOfficial
+						)}
 						— you dey lead for {electionPreview.statesCarried} of 37 states.
 					</p>
 					<div class="mt-5 grid gap-4 md:grid-cols-2">
@@ -493,7 +568,9 @@
 							<span class="text-sm font-black uppercase">Your final move</span>
 							<select class={field} bind:value={selectedRigging}>
 								{#each Object.entries(riggingActions) as [id, action] (id)}
-									<option value={id}>{action.label}{action.nairaCost ? ` — ${naira(action.nairaCost)}` : ''}</option>
+									<option value={id}
+										>{action.label}{action.nairaCost ? ` — ${naira(action.nairaCost)}` : ''}</option
+									>
 								{/each}
 							</select>
 						</label>
@@ -505,14 +582,18 @@
 							</p>
 						</div>
 					</div>
-					<button class="{btn} mt-5 bg-black px-4 py-3 text-white" onclick={election}>Declare result</button>
+					<button class="{btn} mt-5 bg-black px-4 py-3 text-white" onclick={election}
+						>Declare result</button
+					>
 				</section>
 
 				{@render nigeriaMap('Where do you make your final move?')}
 			{:else if run.phase === 'policy'}
 				<section class="{card} p-5">
 					<h2 class="text-2xl font-black uppercase">Your first policy as President</h2>
-					<p class="mt-1 text-sm font-medium">One policy. Nigerians will judge the delivery, not the speech.</p>
+					<p class="mt-1 text-sm font-medium">
+						One policy. Nigerians will judge the delivery, not the speech.
+					</p>
 					<div class="mt-5 grid gap-4">
 						<input class={field} bind:value={policy.title} />
 						<select class={field} bind:value={policy.sector}>
@@ -522,13 +603,20 @@
 						</select>
 						<textarea class="{field} min-h-32" bind:value={policy.description}></textarea>
 					</div>
-					<button class="{btn} mt-5 bg-emerald-400 px-4 py-3" onclick={submitPolicy}>Announce policy</button>
+					<button
+						class="{btn} mt-5 bg-emerald-400 px-4 py-3"
+						onclick={submitPolicy}
+						disabled={policyLoading}
+					>
+						{policyLoading ? 'Nigerians are reacting…' : 'Announce policy'}
+					</button>
 				</section>
 			{:else if run.phase === 'tribunal'}
 				<section class="{card} p-5">
 					<h2 class="text-2xl font-black uppercase">{run.policy.response.headline}</h2>
 					<p class="mt-2 font-medium">
-						Net approval {run.policy.response.netApproval}; trending {run.policy.response.trendingHashtag}.
+						Net approval {run.policy.response.netApproval}; trending {run.policy.response
+							.trendingHashtag}.
 						{run.policy.response.unintendedConsequence}
 					</p>
 					<div class="mt-4 grid gap-4 md:grid-cols-3">
@@ -543,7 +631,9 @@
 
 					<div class="mt-6 border-t-4 border-black pt-5">
 						<h3 class="text-xl font-black uppercase">Tribunal challenge</h3>
-						<p class="mt-1 text-sm font-medium">The loser has gone to court. Choose your defence.</p>
+						<p class="mt-1 text-sm font-medium">
+							The loser has gone to court. Choose your defence.
+						</p>
 						<label class="mt-3 grid gap-2 md:max-w-sm">
 							<span class="text-sm font-black uppercase">Counter</span>
 							<select class={field} bind:value={tribunalCounter}>
@@ -554,27 +644,36 @@
 								<option value="judge_bribe">Judge bribe — ₦400m</option>
 							</select>
 						</label>
-						<button class="{btn} mt-5 bg-black px-4 py-3 text-white" onclick={tribunal}>Resolve tribunal</button>
+						<button class="{btn} mt-5 bg-black px-4 py-3 text-white" onclick={tribunal}
+							>Resolve tribunal</button
+						>
 					</div>
 				</section>
 			{:else}
 				<section class="{card} p-5">
-					<p class="inline-block border-2 border-black bg-yellow-300 px-2 py-0.5 text-sm font-black uppercase">
+					<p
+						class="inline-block border-2 border-black bg-yellow-300 px-2 py-0.5 text-sm font-black uppercase"
+					>
 						Final legacy
 					</p>
 					<h2 class="mt-2 text-4xl font-black uppercase">{run.legacy.ending}</h2>
 					<p class="mt-2 text-xl font-bold">Score: {run.legacy.score}</p>
 					{#if run.election}
 						<p class="mt-4 font-medium">
-							Official result: {votes(run.election.playerOfficial)} to {votes(run.election.opponentOfficial)},
-							carrying {run.election.statesCarried} of 37 states on legitimate votes.
-							{run.election.detected ? 'Evidence of manipulation followed you into court.' : 'No election-day detection was recorded.'}
+							Official result: {votes(run.election.playerOfficial)} to {votes(
+								run.election.opponentOfficial
+							)}, carrying {run.election.statesCarried} of 37 states on legitimate votes.
+							{run.election.detected
+								? 'Evidence of manipulation followed you into court.'
+								: 'No election-day detection was recorded.'}
 						</p>
 					{/if}
 					{#if run.tribunal}
 						<p class="mt-2 font-medium">Tribunal: {run.tribunal.outcome.replace('_', ' ')}.</p>
 					{/if}
-					<button class="{btn} mt-5 bg-emerald-400 px-4 py-3" onclick={resetRun}>Start another run</button>
+					<button class="{btn} mt-5 bg-emerald-400 px-4 py-3" onclick={resetRun}
+						>Start another run</button
+					>
 				</section>
 
 				{@render nigeriaMap('How Nigeria voted (legitimate votes)')}
@@ -598,7 +697,8 @@
 			<div class="{card} w-full max-w-md p-6">
 				<h2 class="text-2xl font-black uppercase">One quick step</h2>
 				<p class="mt-1 text-sm font-medium">
-					Sign up to play — it saves your Legacy and lets us tell you when new seasons drop. Free, no spam.
+					Sign up to play — it saves your Legacy and lets us tell you when new seasons drop. Free,
+					no spam.
 				</p>
 				<div class="mt-4 grid gap-3">
 					<label class="grid gap-1">
@@ -607,7 +707,12 @@
 					</label>
 					<label class="grid gap-1">
 						<span class="text-xs font-black uppercase">Email</span>
-						<input class={field} type="email" bind:value={reg.email} placeholder="you@example.com" />
+						<input
+							class={field}
+							type="email"
+							bind:value={reg.email}
+							placeholder="you@example.com"
+						/>
 					</label>
 					<label class="grid gap-1">
 						<span class="text-xs font-black uppercase">Country</span>
@@ -618,7 +723,11 @@
 						</select>
 					</label>
 					<label class="flex items-start gap-2 text-sm font-medium">
-						<input type="checkbox" class="mt-1 h-4 w-4 border-2 border-black" bind:checked={reg.consent} />
+						<input
+							type="checkbox"
+							class="mt-1 h-4 w-4 border-2 border-black"
+							bind:checked={reg.consent}
+						/>
 						<span>I agree to receive occasional emails about Your Excellency.</span>
 					</label>
 				</div>
@@ -633,7 +742,9 @@
 					>
 						{registering ? 'Saving…' : 'Play now'}
 					</button>
-					<button class="{btn} bg-white px-4 py-2" onclick={() => (showRegister = false)}>Cancel</button>
+					<button class="{btn} bg-white px-4 py-2" onclick={() => (showRegister = false)}
+						>Cancel</button
+					>
 				</div>
 			</div>
 		</div>
@@ -690,7 +801,9 @@
 					<div class="border-4 border-black bg-amber-50 p-4 shadow-[5px_5px_0_0_#000]">
 						<div class="flex items-start justify-between gap-2">
 							<h3 class="text-lg font-black uppercase">{stateInfo.name}</h3>
-							<span class="border-2 border-black bg-white px-1.5 py-0.5 text-xs font-black uppercase">
+							<span
+								class="border-2 border-black bg-white px-1.5 py-0.5 text-xs font-black uppercase"
+							>
 								{stateInfo.playerVotes > stateInfo.opponentVotes ? 'Leading' : 'Trailing'}
 							</span>
 						</div>
@@ -700,16 +813,26 @@
 						<div class="mt-1 h-2 border-2 border-black bg-white">
 							<div class="h-full bg-black" style={`width: ${stateInfo.insecurityIndex}%`}></div>
 						</div>
-						<p class="mt-3 text-sm font-medium">Turnout {Math.round(stateInfo.effectiveTurnout * 100)}% of {votes(stateInfo.registeredVoters)} voters</p>
-						<p class="text-sm font-black">You {votes(stateInfo.playerVotes)} · Opp {votes(stateInfo.opponentVotes)}</p>
-						<p class="mt-1 text-xs font-medium">Insecurity suppresses turnout — one reason the numbers stay low.</p>
+						<p class="mt-3 text-sm font-medium">
+							Turnout {Math.round(stateInfo.effectiveTurnout * 100)}% of {votes(
+								stateInfo.registeredVoters
+							)} voters
+						</p>
+						<p class="text-sm font-black">
+							You {votes(stateInfo.playerVotes)} · Opp {votes(stateInfo.opponentVotes)}
+						</p>
+						<p class="mt-1 text-xs font-medium">
+							Insecurity suppresses turnout — one reason the numbers stay low.
+						</p>
 					</div>
 				{/if}
 
 				<div class="mt-4 border-2 border-black bg-white p-3">
 					<p class="text-xs font-black uppercase">National projection</p>
 					<p class="text-sm font-bold">
-						You {votes(electionPreview.playerLegitimate)} · Opp {votes(electionPreview.opponentOfficial)}
+						You {votes(electionPreview.playerLegitimate)} · Opp {votes(
+							electionPreview.opponentOfficial
+						)}
 					</p>
 					<p class="text-sm font-medium">Leading in {electionPreview.statesCarried} of 37 states</p>
 				</div>
@@ -724,3 +847,27 @@
 		</div>
 	</section>
 {/snippet}
+
+<style>
+	.rulebook-notice {
+		animation: rulebook-arrival 600ms cubic-bezier(0.16, 1, 0.3, 1) 120ms both;
+	}
+
+	@keyframes rulebook-arrival {
+		from {
+			transform: translate3d(0, -12px, 0) rotate(-1.5deg) scale(0.98);
+			box-shadow: 10px 10px 0 0 #000;
+		}
+
+		to {
+			transform: translate3d(0, 0, 0) rotate(0) scale(1);
+			box-shadow: 6px 6px 0 0 #000;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.rulebook-notice {
+			animation: none;
+		}
+	}
+</style>

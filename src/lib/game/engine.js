@@ -433,8 +433,8 @@ export function resolveElection(run, actionId = 'none', stateId = 'kano') {
 	return { ok: true, run: next };
 }
 
-/** @param {GameRun} run @param {{ title?: string, sector?: string, scope?: string, description?: string }} policy */
-export function simulatePolicy(run, policy) {
+/** @param {GameRun} run @param {{ title?: string, sector?: string, scope?: string, description?: string }} policy @param {object|null} [aiResponse] validated AI reaction (§5.4); null → deterministic fallback */
+export function simulatePolicy(run, policy, aiResponse = null) {
 	if (run.phase !== 'policy') return fail(run, 'Policy simulation is only available after a win.');
 	const next = clone(run);
 	const sector = policy.sector || 'security';
@@ -449,7 +449,8 @@ export function simulatePolicy(run, policy) {
 	next.legacy.internationalStanding = clamp(next.legacy.internationalStanding + (securityPolicy ? 4 : 2));
 	next.policy = {
 		...policy,
-		response: fallbackPolicyResponse(policy, run, approvalDelta)
+		// ponytail: legacy deltas stay deterministic; AI only narrates the reaction
+		response: aiResponse ?? fallbackPolicyResponse(policy, run, approvalDelta)
 	};
 	next.phase = 'tribunal';
 	next.history.push(`Policy announced: ${policy.title || 'Untitled reform'}.`);
