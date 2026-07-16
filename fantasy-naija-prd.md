@@ -1,6 +1,6 @@
-# PRD: Fantasy Naija — A Nigerian Political Simulator
+# PRD: Your Excellency — A Nigerian Political Simulator
 
-**Status:** Draft v1 · partially implemented (see §0A) · **Owner:** Emeka · **Last updated:** 5 July 2026
+**Status:** Draft v1 · partially implemented (see §0A) · **Owner:** Toby · **Last updated:** 5 July 2026
 **Target implementer:** A small/mid coding model (e.g. Claude Haiku / Workers AI) working from this doc alone.
 
 ---
