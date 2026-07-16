@@ -3,7 +3,9 @@
 	"name": "your-excellency",
 	"main": ".svelte-kit/cloudflare/_worker.js",
 	"compatibility_date": "2026-07-02",
-	"compatibility_flags": ["nodejs_compat"],
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
 	"assets": {
 		"directory": ".cloudflare/public",
 		"binding": "ASSETS"
@@ -32,5 +34,14 @@
 	"observability": {
 		"enabled": true,
 		"head_sampling_rate": 1
-	}
+	},
+	"routes": [
+		{
+			"pattern": "yx.techgfxlimited.com",
+			"zone_name": "techgfxlimited.com",
+			"custom_domain": true,
+			"enabled": true,
+			"previews_enabled": false
+		}
+	]
 }
