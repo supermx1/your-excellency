@@ -5,7 +5,13 @@
 
 	let { data, form } = $props();
 	// One-time initial value for the editor; edits live in local state thereafter.
-	let rulebookJson = $state(JSON.stringify(untrack(() => data.provisions), null, 2));
+	let rulebookJson = $state(
+		JSON.stringify(
+			untrack(() => data.provisions),
+			null,
+			2
+		)
+	);
 	let password = $state('');
 	let saving = $state(false);
 
@@ -24,11 +30,11 @@
 	<div class="mx-auto max-w-4xl space-y-6">
 		<div class="flex flex-wrap items-end justify-between gap-4">
 			<div>
-				<a href="/" class="text-sm font-black uppercase underline">← Back to game</a>
+				<a href="/campaign" class="text-sm font-black uppercase underline">← Back to game</a>
 				<h1 class="mt-2 text-4xl font-black uppercase">Rulebook admin</h1>
 				<p class="mt-1 max-w-2xl font-medium">
-					Edit the game's rule values — party-registration thresholds, tribunal windows, legacy-score
-					weights. Saving takes effect for new runs immediately, with no redeploy.
+					Edit the game's rule values — party-registration thresholds, tribunal windows,
+					legacy-score weights. Saving takes effect for new runs immediately, with no redeploy.
 				</p>
 			</div>
 		</div>
@@ -45,7 +51,9 @@
 				✓ Saved {form.count} provisions. New runs will use them right away.
 			</div>
 		{:else if form?.error}
-			<div class="border-4 border-black bg-rose-400 p-4 font-black shadow-[6px_6px_0_0_#000]">{form.error}</div>
+			<div class="border-4 border-black bg-rose-400 p-4 font-black shadow-[6px_6px_0_0_#000]">
+				{form.error}
+			</div>
 		{/if}
 
 		<form
@@ -61,22 +69,31 @@
 		>
 			<div>
 				<p class="text-xs font-black uppercase text-zinc-500">
-					Source: {data.fromDefault ? 'built-in defaults (nothing saved yet)' : 'your saved rulebook'}
+					Source: {data.fromDefault
+						? 'built-in defaults (nothing saved yet)'
+						: 'your saved rulebook'}
 				</p>
-				<label for="provisions" class="mt-2 block text-sm font-black uppercase">Provisions JSON</label>
+				<label for="provisions" class="mt-2 block text-sm font-black uppercase"
+					>Provisions JSON</label
+				>
 				<textarea
 					id="provisions"
 					name="provisions"
 					class="{field} mt-2 min-h-96 w-full font-mono text-sm"
 					bind:value={rulebookJson}
-					spellcheck="false"
-				></textarea>
+					spellcheck="false"></textarea>
 			</div>
 
 			<div class="flex flex-wrap items-end gap-3">
 				<label class="grid gap-1">
 					<span class="text-xs font-black uppercase">Admin password</span>
-					<input class={field} type="password" name="password" bind:value={password} placeholder="Admin password" />
+					<input
+						class={field}
+						type="password"
+						name="password"
+						bind:value={password}
+						placeholder="Admin password"
+					/>
 				</label>
 				<button class="{btn} bg-emerald-400 px-5 py-2" disabled={saving}>
 					{saving ? 'Saving…' : 'Save rulebook'}
