@@ -134,7 +134,7 @@ export class EnvironmentManager {
 
 			cloudGroup.position.set(
 				(Math.random() - 0.5) * range,
-				9 + Math.random() * 4.5,
+				18 + Math.random() * 5,
 				(Math.random() - 0.5) * range
 			);
 
