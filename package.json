@@ -26,6 +26,7 @@
 		"@tailwindcss/typography": "^0.5.19",
 		"@tailwindcss/vite": "^4.3.0",
 		"@types/node": "^26.1.0",
+		"@types/three": "0.174.0",
 		"prettier": "^3.8.3",
 		"prettier-plugin-svelte": "^4.1.0",
 		"prettier-plugin-tailwindcss": "^0.8.0",
@@ -38,6 +39,7 @@
 		"wrangler": "^4.106.0"
 	},
 	"dependencies": {
-		"@svg-maps/nigeria": "^2.0.0"
+		"@svg-maps/nigeria": "^2.0.0",
+		"three": "0.174.0"
 	}
 }

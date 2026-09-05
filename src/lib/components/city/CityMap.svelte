@@ -3,32 +3,29 @@
 	import { buildingCatalog, previewPlacement, tileTypes } from '$lib/game/city/engine.js';
 	import { SvelteMap } from 'svelte/reactivity';
 	import BuildingSprite from './BuildingSprite.svelte';
+	import CityCanvas3D from './three/CityCanvas3D.svelte';
 
-	let { run, selectedBuildingId = $bindable(null), onPlace } = $props();
+	let {
+		run,
+		selectedBuildingId = $bindable(null),
+		onPlace,
+		isTheaterMode = $bindable(false)
+	} = $props();
 
-	// True 2:1 isometric projection, done in 2D on purpose.
-	//
-	// ponytail: this was a CSS-3D board with billboarded sprites, and CSS 3D does
-	// not depth-sort a standing plane against the ground planes — tiles in front
-	// painted over the sprites and buildings looked half-buried. Projecting in 2D
-	// and drawing back-to-front (painter's algorithm) is the standard fix and is
-	// both simpler and exact. Rotation becomes a coordinate remap, not a transform.
-	// 14x14 is a lot of tiles, so the default tile is small enough that the whole
-	// ward fits without scrolling; zoom in for detail.
+	let viewMode = $state('3d'); // '3d' | '2d'
+	let canvas3dRef = $state(null);
+
+	// 2D SVG Isometric Fallback Variables
 	const BASE_TILE_W = 38;
-
 	let rotationStep = $state(0);
 	let zoomLevel = $state(1);
 
 	const tileW = $derived(BASE_TILE_W * zoomLevel);
 	const tileH = $derived(tileW / 2);
-	// Tallest artwork reaches y=8 in a 64x72 viewBox whose base sits at y=56, so a
-	// sprite can rise 48/64 of a tile width above its tile. That's the top margin.
 	const headroom = $derived(tileW * 0.78);
 	const boardW = $derived(run.grid.size * tileW);
 	const boardH = $derived(headroom + run.grid.size * tileH);
 
-	/** Board rotation as a coordinate remap — one of four 90-degree quarter turns. */
 	function displayCoords(x, y) {
 		const n = run.grid.size - 1;
 		if (rotationStep === 1) return { dx: y, dy: n - x };
@@ -37,7 +34,6 @@
 		return { dx: x, dy: y };
 	}
 
-	/** Centre of a tile's diamond, in board pixels. */
 	function tileCentre(x, y) {
 		const { dx, dy } = displayCoords(x, y);
 		return {
@@ -47,7 +43,6 @@
 		};
 	}
 
-	/** Tiles in painter order: furthest back drawn first, so nearer buildings overlap. */
 	const placedSprites = $derived(
 		run.grid.tiles
 			.filter((tile) => tile.buildingId)
@@ -61,17 +56,9 @@
 			.sort((a, b) => a.depth - b.depth)
 	);
 
-	/** Tile the confirm/reason panel is currently open for (a building is selected).
-	 * Only rendered while `selectedBuildingId` is set — see the template guard — so
-	 * a stale value left over from a previous selection never leaks into the UI. */
 	let pendingTile = $state(null);
-	/** Tile the read-only info readout is open for (nothing selected). Same rule:
-	 * only rendered while `selectedBuildingId` is unset. */
 	let infoTile = $state(null);
 
-	// Precompute a preview per tile whenever a building is selected, so illegal
-	// tiles can dim immediately rather than only on tap (per the design doc:
-	// "legal tiles highlight, illegal ones dim with a reason").
 	const previewMap = $derived.by(() => {
 		if (!selectedBuildingId) return null;
 		const map = new SvelteMap();
@@ -94,6 +81,9 @@
 			pendingTile = { x: tile.x, y: tile.y };
 		} else {
 			infoTile = infoTile?.x === tile.x && infoTile?.y === tile.y ? null : { x: tile.x, y: tile.y };
+			if (infoTile && canvas3dRef?.focusTile) {
+				canvas3dRef.focusTile(tile.x, tile.y);
+			}
 		}
 	}
 
@@ -133,99 +123,152 @@
 
 	const card = 'border-4 border-black bg-white shadow-[6px_6px_0_0_#000]';
 	const btn =
-		'border-2 border-black font-black uppercase tracking-wide shadow-[4px_4px_0_0_#000] transition active:translate-x-1 active:translate-y-1 active:shadow-none disabled:opacity-40 disabled:shadow-none';
+		'border-2 border-black font-black uppercase tracking-wide shadow-[4px_4px_0_0_#000] transition active:translate-x-1 active:translate-y-1 active:shadow-none disabled:opacity-40 disabled:shadow-none text-xs';
 </script>
 
 <section class="{card} min-w-0 p-4">
-	<div class="flex flex-wrap items-center justify-between gap-2">
-		<h2 class="text-xl font-black uppercase">The constituency</h2>
-		<div class="flex gap-2">
-			<button class="{btn} grid size-9 place-items-center bg-white" onclick={rotate} title="Rotate">
-				↻
-			</button>
-			<button
-				class="{btn} grid size-9 place-items-center bg-white"
-				onclick={zoomOut}
-				title="Zoom out"
+	<!-- Map Header Bar -->
+	<div class="flex flex-wrap items-center justify-between gap-3 border-b-2 border-black pb-3">
+		<div class="flex items-center gap-2">
+			<h2 class="text-xl font-black uppercase">The Constituency</h2>
+			<span
+				class="rounded border border-black bg-emerald-300 px-2 py-0.5 text-[10px] font-black uppercase"
 			>
-				−
-			</button>
-			<button
-				class="{btn} grid size-9 place-items-center bg-white"
-				onclick={zoomIn}
-				title="Zoom in"
-			>
-				+
-			</button>
+				{viewMode === '3d' ? '3D Strategy World' : 'Classic 2D'}
+			</span>
+		</div>
+
+		<div class="flex flex-wrap items-center gap-2">
+			<!-- Mode Toggle: 3D vs 2D -->
+			<div class="flex border-2 border-black shadow-[2px_2px_0_0_#000]">
+				<button
+					class="px-2.5 py-1 text-xs font-black uppercase transition {viewMode === '3d'
+						? 'bg-yellow-300 text-black'
+						: 'bg-white text-zinc-600'}"
+					onclick={() => (viewMode = '3d')}
+					title="Switch to Full 3D View"
+				>
+					🌐 3D World
+				</button>
+				<button
+					class="border-l-2 border-black px-2.5 py-1 text-xs font-black uppercase transition {viewMode ===
+					'2d'
+						? 'bg-yellow-300 text-black'
+						: 'bg-white text-zinc-600'}"
+					onclick={() => (viewMode = '2d')}
+					title="Switch to 2D Isometric View"
+				>
+					📐 2D Classic
+				</button>
+			</div>
+
+			{#if viewMode === '2d'}
+				<div class="flex gap-1">
+					<button
+						class="{btn} size-8 p-0 bg-white grid place-items-center"
+						onclick={rotate}
+						title="Rotate 90°"
+					>
+						↻
+					</button>
+					<button
+						class="{btn} size-8 p-0 bg-white grid place-items-center"
+						onclick={zoomOut}
+						title="Zoom out"
+					>
+						−
+					</button>
+					<button
+						class="{btn} size-8 p-0 bg-white grid place-items-center"
+						onclick={zoomIn}
+						title="Zoom in"
+					>
+						+
+					</button>
+				</div>
+			{/if}
 		</div>
 	</div>
 
-	<div class="iso-stage mt-3 overflow-x-auto">
-		<div class="flex justify-center" style="min-width: {boardW}px;">
-			<div class="relative" style="width: {boardW}px; height: {boardH}px;">
-				<!-- Ground: one SVG so the diamonds keep crisp strokes and stay hit-testable. -->
-				<svg
-					class="absolute inset-0"
-					width={boardW}
-					height={boardH}
-					viewBox="0 0 {boardW} {boardH}"
-					role="group"
-					aria-label="Constituency map, {run.grid.size} by {run.grid.size} tiles"
-				>
-					{#each groundTiles as { tile, cx, cy } (tile.x + ',' + tile.y)}
-						{@const terrain = tileTypes[tile.type]}
-						{@const preview = previewMap?.get(`${tile.x},${tile.y}`)}
-						{@const legal = !selectedBuildingId || preview?.ok}
-						{@const isPending = pendingTile?.x === tile.x && pendingTile?.y === tile.y}
-						{@const isInfo = infoTile?.x === tile.x && infoTile?.y === tile.y}
-						<polygon
-							points="{cx},{cy - tileH / 2} {cx + tileW / 2},{cy} {cx},{cy + tileH / 2} {cx -
-								tileW / 2},{cy}"
-							fill={terrain.fill}
-							fill-opacity={selectedBuildingId && !legal ? 0.35 : 1}
-							stroke={isPending || isInfo
-								? '#000'
-								: selectedBuildingId && legal
-									? '#059669'
-									: '#000'}
-							stroke-width={isPending || isInfo ? 3 : selectedBuildingId && legal ? 2 : 0.8}
-							style="cursor: {selectedBuildingId && !legal ? 'not-allowed' : 'pointer'};"
-							role="button"
-							tabindex="0"
-							aria-label="{terrain.label} tile ({tile.x}, {tile.y}){tile.buildingId
-								? `, ${buildingCatalog[tile.buildingId].label}`
-								: ''}"
-							onclick={() => tileClick(tile)}
-							onkeydown={(e) => e.key === 'Enter' && tileClick(tile)}
-						/>
-					{/each}
-				</svg>
+	<!-- Main Map Viewport Area -->
+	<div class="mt-3">
+		{#if viewMode === '3d'}
+			<CityCanvas3D
+				bind:this={canvas3dRef}
+				{run}
+				bind:selectedBuildingId
+				onTileClick={tileClick}
+				bind:isTheaterMode
+			/>
+		{:else}
+			<div class="iso-stage overflow-x-auto rounded border-4 border-black bg-amber-50 p-2">
+				<div class="flex justify-center" style="min-width: {boardW}px;">
+					<div class="relative" style="width: {boardW}px; height: {boardH}px;">
+						<svg
+							class="absolute inset-0"
+							width={boardW}
+							height={boardH}
+							viewBox="0 0 {boardW} {boardH}"
+							role="group"
+							aria-label="Constituency map, {run.grid.size} by {run.grid.size} tiles"
+						>
+							{#each groundTiles as { tile, cx, cy } (tile.x + ',' + tile.y)}
+								{@const terrain = tileTypes[tile.type]}
+								{@const preview = previewMap?.get(`${tile.x},${tile.y}`)}
+								{@const legal = !selectedBuildingId || preview?.ok}
+								{@const isPending = pendingTile?.x === tile.x && pendingTile?.y === tile.y}
+								{@const isInfo = infoTile?.x === tile.x && infoTile?.y === tile.y}
+								<polygon
+									points="{cx},{cy - tileH / 2} {cx + tileW / 2},{cy} {cx},{cy + tileH / 2} {cx -
+										tileW / 2},{cy}"
+									fill={terrain.fill}
+									fill-opacity={selectedBuildingId && !legal ? 0.35 : 1}
+									stroke={isPending || isInfo
+										? '#000'
+										: selectedBuildingId && legal
+											? '#059669'
+											: '#000'}
+									stroke-width={isPending || isInfo ? 3 : selectedBuildingId && legal ? 2 : 0.8}
+									style="cursor: {selectedBuildingId && !legal ? 'not-allowed' : 'pointer'};"
+									role="button"
+									tabindex="0"
+									aria-label="{terrain.label} tile ({tile.x}, {tile.y}){tile.buildingId
+										? `, ${buildingCatalog[tile.buildingId].label}`
+										: ''}"
+									onclick={() => tileClick(tile)}
+									onkeydown={(e) => e.key === 'Enter' && tileClick(tile)}
+								/>
+							{/each}
+						</svg>
 
-				<!-- Buildings, painted back-to-front so nearer ones overlap the ones behind.
-				     Each sprite's base diamond sits at 56/72 down its 64x72 artwork, so it is
-				     offset by half a tile width across and 0.875 of one down. -->
-				<div class="pointer-events-none absolute inset-0">
-					{#each placedSprites as { tile, cx, cy } (tile.x + ',' + tile.y)}
-						<div class="absolute" style="left: {cx - tileW / 2}px; top: {cy - tileW * 0.875}px;">
-							<BuildingSprite
-								id={tile.buildingId}
-								size={tileW}
-								underConstruction={tile.turnsLeft > 0}
-							/>
-							{#if tile.turnsLeft > 0}
-								<span
-									class="absolute left-1/2 top-0 -translate-x-1/2 border border-black bg-yellow-300 px-1 text-[10px] font-black leading-tight"
+						<div class="pointer-events-none absolute inset-0">
+							{#each placedSprites as { tile, cx, cy } (tile.x + ',' + tile.y)}
+								<div
+									class="absolute"
+									style="left: {cx - tileW / 2}px; top: {cy - tileW * 0.875}px;"
 								>
-									{tile.turnsLeft}
-								</span>
-							{/if}
+									<BuildingSprite
+										id={tile.buildingId}
+										size={tileW}
+										underConstruction={tile.turnsLeft > 0}
+									/>
+									{#if tile.turnsLeft > 0}
+										<span
+											class="absolute left-1/2 top-0 -translate-x-1/2 border border-black bg-yellow-300 px-1 text-[10px] font-black leading-tight"
+										>
+											{tile.turnsLeft}
+										</span>
+									{/if}
+								</div>
+							{/each}
 						</div>
-					{/each}
+					</div>
 				</div>
 			</div>
-		</div>
+		{/if}
 	</div>
 
+	<!-- Terrain Legend Strip -->
 	<div class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs font-bold text-zinc-600">
 		{#each Object.entries(tileTypes) as [type, t] (type)}
 			<span class="inline-flex items-center gap-1">
@@ -235,59 +278,87 @@
 		{/each}
 	</div>
 
+	<!-- Placement Preview / Tile Info Panel -->
 	<div class="mt-3">
 		{#if selectedBuildingId}
 			{#if pendingTile && pendingPreview?.ok}
-				<div class="border-4 border-black bg-amber-50 p-3 shadow-[5px_5px_0_0_#000]">
-					<p class="font-black uppercase">
-						{buildingCatalog[selectedBuildingId].label} at ({pendingTile.x}, {pendingTile.y})
-					</p>
-					<p class="mt-1 text-sm font-bold">Cost: {naira(pendingPreview.cost)}</p>
+				<div class="border-4 border-black bg-emerald-100 p-4 shadow-[5px_5px_0_0_#000]">
+					<div class="flex flex-wrap items-center justify-between gap-2">
+						<p class="font-black uppercase text-base">
+							🏗️ Build {buildingCatalog[selectedBuildingId].label} at ({pendingTile.x}, {pendingTile.y})
+						</p>
+						<span class="rounded border border-black bg-emerald-400 px-2 py-0.5 text-xs font-black">
+							Cost: {naira(pendingPreview.cost)}
+						</span>
+					</div>
 					{#if pendingPreview.terrainNote}
-						<p class="mt-1 text-sm font-medium">{pendingPreview.terrainNote}</p>
+						<p class="mt-1 text-sm font-medium text-emerald-950">{pendingPreview.terrainNote}</p>
 					{/if}
 					{#if pendingPreview.adjacencyNote}
-						<p class="mt-1 text-sm font-medium">{pendingPreview.adjacencyNote}</p>
+						<p class="mt-1 text-sm font-medium text-emerald-950">{pendingPreview.adjacencyNote}</p>
 					{/if}
 					<div class="mt-3 flex gap-2">
-						<button class="{btn} bg-emerald-400 px-4 py-2" onclick={confirmPlacement}
-							>Confirm</button
-						>
+						<button class="{btn} bg-emerald-400 px-4 py-2" onclick={confirmPlacement}>
+							Confirm Construction →
+						</button>
 						<button class="{btn} bg-white px-4 py-2" onclick={cancelPending}>Cancel</button>
 					</div>
 				</div>
 			{:else if pendingTile}
-				<div class="border-4 border-black bg-rose-300 p-3 shadow-[5px_5px_0_0_#000]">
-					<p class="font-black uppercase">Can't build there</p>
+				<div class="border-4 border-black bg-rose-300 p-4 shadow-[5px_5px_0_0_#000]">
+					<p class="font-black uppercase text-base">⚠️ Can't build there</p>
 					<p class="mt-1 text-sm font-medium">{pendingPreview?.reason}</p>
 					<button class="{btn} mt-3 bg-white px-4 py-2" onclick={cancelPending}>Dismiss</button>
 				</div>
 			{:else}
-				<p class="text-sm font-medium text-zinc-600">
-					Tap a tile to preview and confirm placement.
-				</p>
+				<div
+					class="border-2 border-dashed border-zinc-400 bg-amber-50/70 p-3 text-sm font-medium text-zinc-700"
+				>
+					🎯 <span class="font-bold">{buildingCatalog[selectedBuildingId].label}</span> selected. Hover
+					over tiles to see the 3D ghost preview, then tap any tile to confirm placement.
+				</div>
 			{/if}
 		{:else if infoTile}
 			{@const tile = tileAt(infoTile.x, infoTile.y)}
 			{@const terrain = tileTypes[tile.type]}
-			<div class="border-4 border-black bg-white p-3 shadow-[5px_5px_0_0_#000]">
-				<p class="font-black uppercase">{terrain.label} · ({tile.x}, {tile.y})</p>
-				<p class="mt-1 text-sm font-medium">{terrain.description}</p>
+			<div class="border-4 border-black bg-white p-4 shadow-[5px_5px_0_0_#000]">
+				<div class="flex items-center justify-between">
+					<p class="font-black uppercase text-base">{terrain.label} · ({tile.x}, {tile.y})</p>
+					<button
+						class="{btn} bg-zinc-100 px-2 py-0.5 text-[11px]"
+						onclick={() => (infoTile = null)}
+					>
+						✕ Close
+					</button>
+				</div>
+				<p class="mt-1 text-sm font-medium text-zinc-700">{terrain.description}</p>
 				{#if tile.buildingId}
-					<p class="mt-2 text-sm font-black">{buildingCatalog[tile.buildingId].label}</p>
-					<p class="text-sm font-medium">{buildingCatalog[tile.buildingId].blurb}</p>
-					{#if tile.turnsLeft > 0}
-						<p class="mt-1 text-sm font-black text-amber-700">
-							Under construction — {tile.turnsLeft} turn{tile.turnsLeft === 1 ? '' : 's'} left. It delivers
-							nothing until it opens.
+					<div class="mt-3 border-t-2 border-black pt-2">
+						<p class="text-sm font-black">{buildingCatalog[tile.buildingId].label}</p>
+						<p class="text-xs font-medium text-zinc-600">
+							{buildingCatalog[tile.buildingId].blurb}
 						</p>
-					{/if}
+						{#if tile.turnsLeft > 0}
+							<p class="mt-1 text-xs font-black text-amber-700">
+								🚧 Under construction — {tile.turnsLeft} turn{tile.turnsLeft === 1 ? '' : 's'} left. Contributes
+								0 capacity until completed.
+							</p>
+						{:else}
+							<p class="mt-1 text-xs font-bold text-emerald-700">
+								✓ Operational: +{buildingCatalog[tile.buildingId].capacity} capacity · Upkeep {naira(
+									buildingCatalog[tile.buildingId].maintenance
+								)}/turn
+							</p>
+						{/if}
+					</div>
 				{:else}
-					<p class="mt-2 text-sm font-medium text-zinc-600">Nothing built here yet.</p>
+					<p class="mt-2 text-sm font-medium text-zinc-500">
+						Empty plot. Select a building from the palette to develop this tile.
+					</p>
 				{/if}
 			</div>
 		{:else}
-			<p class="text-sm font-medium text-zinc-600">
+			<p class="text-xs font-medium text-zinc-600">
 				Select a building from the palette, then tap a tile to place it — or tap any tile to inspect
 				it.
 			</p>

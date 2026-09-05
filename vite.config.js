@@ -15,7 +15,8 @@ export default defineConfig({
 			},
 
 			adapter: adapter(),
-			experimental: { remoteFunctions: true, handleRenderingErrors: true }
+			alias: { $lib: 'src/lib' },
+			experimental: { remoteFunctions: true }
 		})
 	]
 });

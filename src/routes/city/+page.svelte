@@ -20,17 +20,24 @@
 
 	let constituencyName = $state('');
 	let playerName = $state('');
+	let customSeed = $state('');
 	let registered = $state(false);
 	let showRegister = $state(false);
 	let error = $state('');
 	let run = $state(null);
 	let selectedBuildingId = $state(null);
+	let isTheaterMode = $state(false);
+	let paletteCollapsed = $state(false);
 
 	onMount(() => {
 		registered = localStorage.getItem('your-excellency-registered') === '1';
 		const saved = loadCityRun();
 		if (saved) run = saved;
 	});
+
+	function rerollSeed() {
+		customSeed = `ward-${Math.floor(Math.random() * 900000 + 100000)}`;
+	}
 
 	function startRun() {
 		if (!registered) {
@@ -41,7 +48,8 @@
 	}
 
 	function beginRun() {
-		const result = createCityRun({ playerName, constituencyName });
+		const seed = customSeed ? customSeed : undefined;
+		const result = createCityRun({ playerName, constituencyName, seed });
 		if (!result.ok) {
 			error = result.error;
 			return;
@@ -95,6 +103,17 @@
 		run = null;
 		error = '';
 		selectedBuildingId = null;
+		rerollSeed();
+	}
+
+	function confirmNewWard() {
+		if (
+			confirm(
+				'Start a brand new term with a new procedurally generated ward map? Your current term progress will be discarded.'
+			)
+		) {
+			resetRun();
+		}
 	}
 
 	const card = 'border-4 border-black bg-white shadow-[6px_6px_0_0_#000]';
@@ -107,13 +126,14 @@
 	<title>The Constituency — Your Excellency</title>
 	<meta
 		name="description"
-		content="A Nigerian city-building satire. Develop a fictional constituency over one four-year term — or quietly help yourself to the budget."
+		content="A 3D Nigerian city-building strategy satire. Develop a fictional constituency over one four-year term — or quietly help yourself to the budget."
 	/>
 </svelte:head>
 
 <main class="min-h-screen bg-amber-100 text-black">
+	<!-- Top Header Band -->
 	<section class="border-b-4 border-black bg-emerald-400">
-		<div class="mx-auto max-w-7xl px-4 py-8 md:px-8">
+		<div class="mx-auto {isTheaterMode ? 'max-w-[98vw] px-3' : 'max-w-7xl px-4'} py-6 md:px-8">
 			<div class="flex flex-wrap items-center justify-between gap-3">
 				<p
 					class="inline-flex -rotate-1 items-center gap-2 border-2 border-black bg-yellow-300 px-2 py-1 text-sm font-black uppercase shadow-[3px_3px_0_0_#000]"
@@ -121,19 +141,55 @@
 					<img src={favicon} alt="" class="w-10" />
 					Your Excellency
 				</p>
-				<a class="{btn} bg-white px-3 py-1.5 text-sm" href="/">← All games</a>
+
+				<div class="flex flex-wrap items-center gap-2">
+					{#if run && run.phase === 'playing'}
+						<button
+							class="{btn} bg-amber-200 px-3 py-1.5 text-xs flex items-center gap-1"
+							onclick={confirmNewWard}
+							title="Generate a brand new procedural ward"
+						>
+							🎲 New Ward Map
+						</button>
+						<button
+							class="{btn} {isTheaterMode ? 'bg-yellow-300' : 'bg-white'} px-3 py-1.5 text-xs"
+							onclick={() => (isTheaterMode = !isTheaterMode)}
+							title="Toggle Full Playable Window"
+						>
+							⛶ {isTheaterMode ? 'Exit Theater' : 'Maximize Window'}
+						</button>
+					{/if}
+					<a class="{btn} bg-white px-3 py-1.5 text-xs" href="/">← All games</a>
+				</div>
 			</div>
-			<h1 class="mt-4 max-w-3xl text-4xl font-black uppercase leading-tight md:text-6xl">
-				The Constituency
-			</h1>
-			<p class="mt-4 max-w-2xl border-l-4 border-black pl-3 text-lg font-medium">
-				One four-year term, sixteen quarters. Build what the people need — or quietly build your own
-				portfolio. Either way, the EFCC is watching.
-			</p>
+
+			{#if !isTheaterMode || !run}
+				<div class="mt-4 flex flex-wrap items-baseline justify-between gap-3">
+					<div>
+						<h1 class="text-3xl font-black uppercase leading-tight md:text-5xl">
+							The Constituency
+						</h1>
+						<p class="mt-2 max-w-2xl border-l-4 border-black pl-3 text-base font-medium">
+							A 3D strategy simulation of Nigerian local governance. Sixteen quarters to build what
+							the people need — or quietly fill your offshore purse. The EFCC is always watching.
+						</p>
+					</div>
+					<span
+						class="rounded border-2 border-black bg-yellow-300 px-2.5 py-1 text-xs font-black uppercase shadow-[2px_2px_0_0_#000]"
+					>
+						3D Strategy Mode
+					</span>
+				</div>
+			{/if}
 		</div>
 	</section>
 
-	<div class="mx-auto max-w-7xl space-y-6 px-4 py-6 pb-24 md:px-8">
+	<!-- Main Playable Stage -->
+	<div
+		class="mx-auto {isTheaterMode
+			? 'max-w-[98vw] px-2'
+			: 'max-w-7xl px-4'} space-y-5 py-5 pb-24 md:px-8"
+	>
 		{#if error}
 			<div class="border-4 border-black bg-rose-400 p-4 font-black shadow-[6px_6px_0_0_#000]">
 				{error}
@@ -141,8 +197,16 @@
 		{/if}
 
 		{#if !run}
-			<section class="{card} p-5">
-				<h2 class="text-2xl font-black uppercase">Found a constituency</h2>
+			<section class="{card} p-6">
+				<div class="flex flex-wrap items-center justify-between gap-2 border-b-2 border-black pb-3">
+					<h2 class="text-2xl font-black uppercase">Found a Constituency</h2>
+					<span
+						class="rounded border border-black bg-emerald-300 px-2.5 py-1 text-xs font-black uppercase"
+					>
+						Procedural 3D Terrain
+					</span>
+				</div>
+
 				<div class="mt-5 grid gap-4 md:grid-cols-2">
 					<label class="grid gap-2">
 						<span class="text-sm font-black uppercase">Constituency name</span>
@@ -153,13 +217,38 @@
 						<input class={field} bind:value={playerName} placeholder="The Chairman" />
 					</label>
 				</div>
-				<button class="{btn} mt-5 bg-emerald-400 px-4 py-3" onclick={startRun}>
-					Take office →
+
+				<!-- Seed and Procedural Map Customization -->
+				<div class="mt-5 rounded border-2 border-black bg-amber-50 p-4">
+					<div class="flex flex-wrap items-center justify-between gap-3">
+						<div>
+							<p class="text-xs font-black uppercase text-zinc-600">Procedural World Generation</p>
+							<p class="text-sm font-medium text-zinc-800">
+								Each term generates a fresh, unique 3D ward with rivers, farmland, town centers, and
+								slums.
+							</p>
+						</div>
+						<div class="flex items-center gap-2">
+							<input
+								class="{field} w-36 text-xs font-mono"
+								bind:value={customSeed}
+								placeholder="Random seed..."
+							/>
+							<button class="{btn} bg-white px-3 py-1.5 text-xs" onclick={rerollSeed} type="button">
+								🎲 Reroll Seed
+							</button>
+						</div>
+					</div>
+				</div>
+
+				<button class="{btn} mt-6 bg-emerald-400 px-6 py-3 text-sm" onclick={startRun}>
+					Take office & Enter 3D World →
 				</button>
 			</section>
 		{:else if run.phase === 'complete'}
 			<Verdict {run} onReset={resetRun} />
 		{:else}
+			<!-- Turn and Budget Status Bar -->
 			<TurnBar
 				{run}
 				onEndTurn={doEndTurn}
@@ -167,16 +256,27 @@
 				onHandout={doHandout}
 				onElectionInsurance={doElectionInsurance}
 			/>
-			<div class="grid gap-6 md:grid-cols-[1fr_320px]">
-				<CityMap {run} bind:selectedBuildingId onPlace={place} />
-				<Palette {run} bind:selectedBuildingId />
+
+			<!-- 3D Strategy Viewport & Building Palette -->
+			<div
+				class="grid gap-5 {paletteCollapsed
+					? 'grid-cols-[1fr_56px]'
+					: 'grid-cols-1 lg:grid-cols-[1fr_320px]'} items-start transition-all"
+			>
+				<CityMap {run} bind:selectedBuildingId onPlace={place} bind:isTheaterMode />
+				<Palette {run} bind:selectedBuildingId bind:collapsed={paletteCollapsed} />
 			</div>
 		{/if}
 
 		{#if run}
 			<section class="{card} p-5">
-				<h2 class="text-xl font-black uppercase">Run log</h2>
-				<ol class="mt-3 list-decimal space-y-1 pl-5 text-sm font-medium">
+				<div class="flex items-center justify-between border-b-2 border-black pb-2">
+					<h2 class="text-xl font-black uppercase">Run log</h2>
+					<span class="text-xs font-bold text-zinc-500">Seed: {run.seed}</span>
+				</div>
+				<ol
+					class="mt-3 max-h-48 list-decimal space-y-1 overflow-y-auto pl-5 pr-2 text-sm font-medium"
+				>
 					{#each run.history as item, index (index)}
 						<li>{item}</li>
 					{/each}
