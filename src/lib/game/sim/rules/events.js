@@ -99,7 +99,7 @@ function apply(world, event) {
 
 	if (fx.coup) {
 		const ng = world.polities.find((p) => p.id === 'nigeria');
-		if (ng) coup(world, ng);
+		if (ng) coup(world, ng, { log: false });
 	}
 
 	if (fx.war) {

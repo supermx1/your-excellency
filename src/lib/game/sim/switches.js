@@ -43,7 +43,7 @@ export const PRESETS = {
 	genius: {
 		label: '200 IQ',
 		description: 'Everyone learns and invents three times faster. Greed, fear and ambition stay the same.',
-		startYear: 1960,
+		startYear: 1850,
 		switches: { learning: 3 }
 	}
 };

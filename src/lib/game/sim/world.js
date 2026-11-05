@@ -194,6 +194,11 @@ export function stepWorld(world) {
 	for (const c of world.cells) c.mods = { mortality, productivity: 1, learning: sw.learning ?? 1 };
 	world.oilPrice = 1;
 	for (const rule of RULES) rule(world);
+	// Keep war links two-sided after unions, secessions and conquests removed or renamed polities.
+	const ids = new Set(world.polities.map((p) => p.id));
+	const byId = new Map(world.polities.map((p) => [p.id, p]));
+	for (const p of world.polities)
+		p.atWarWith = p.atWarWith.filter((x) => x !== p.id && ids.has(x) && byId.get(x).atWarWith.includes(p.id));
 	world.year += 1;
 	world.history.push(snapshot(world));
 }

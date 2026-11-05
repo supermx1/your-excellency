@@ -23,10 +23,15 @@ export function summarize(runs) {
 }
 
 export function handleMessage({ inputs, extraSeeds = 0 }, post) {
-	post({ type: 'result', run: runSimulation(inputs) });
-	if (!extraSeeds) return;
-	const runs = Array.from({ length: extraSeeds }, (_, i) => runSimulation({ ...inputs, seed: inputs.seed + i + 1 }));
-	post({ type: 'summary', ...summarize(runs) });
+	try {
+		post({ type: 'result', run: runSimulation(inputs) });
+		if (!extraSeeds) return;
+		const seed = Number(inputs.seed);
+		const runs = Array.from({ length: extraSeeds }, (_, i) => runSimulation({ ...inputs, seed: seed + i + 1 }));
+		post({ type: 'summary', ...summarize(runs) });
+	} catch (err) {
+		post({ type: 'error', message: err instanceof Error ? err.message : String(err) });
+	}
 }
 
 if (typeof self !== 'undefined' && typeof self.postMessage === 'function' && typeof window === 'undefined') {

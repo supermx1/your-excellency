@@ -26,7 +26,7 @@ export function stepPolities(world) {
 		p.stability = Math.min(1, Math.max(0, p.stability + (target - p.stability) * 0.15 + (world.rand() - 0.5) * 0.04));
 		p.army = 0.015 + 0.02 * (p.atWarWith.length > 0);
 
-		if (coupMult && world.rand() < P.coupBase * coupMult * (1 - p.stability)) coup(world, p);
+		if (coupMult && !p.british && world.rand() < P.coupBase * coupMult * (1 - p.stability)) coup(world, p);
 		else if (p.government === 'military' && world.rand() < 0.06) setGovernment(world, p, 'republic', 'Civilian rule returns');
 	}
 
@@ -51,8 +51,9 @@ export function stepPolities(world) {
 	for (const p of world.polities) if (!p.cellIds.includes(p.capitalCell)) p.capitalCell = p.cellIds[0];
 }
 
-export function coup(world, p) {
-	setGovernment(world, p, 'military', `Military coup in ${p.name}`, 'coup');
+export function coup(world, p, { log = true } = {}) {
+	p.government = 'military';
+	if (log) world.events.push({ year: world.year, kind: 'coup', polityIds: [p.id], title: `Military coup in ${p.name}` });
 	p.stability = Math.max(0, p.stability - 0.1);
 }
 
