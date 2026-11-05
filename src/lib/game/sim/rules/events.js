@@ -107,9 +107,13 @@ function apply(world, event) {
 		}
 	}
 
+	const drought = event.id.startsWith('drought') ? (world.switches.drought ?? 1) : 1;
 	for (const kind of ['mortality', 'productivity', 'oilPrice', 'insurgency']) {
 		if (!fx[kind]) continue;
-		world.activeEffects.push({ kind, ...fx[kind], cells: cellsFor(world, fx[kind].cells ?? 'all'), until: world.year + (fx[kind].years ?? 1) });
+		const scaled = { ...fx[kind] };
+		if (scaled.share) scaled.share *= drought;
+		if (scaled.mult && kind === 'productivity') scaled.mult = 1 - (1 - scaled.mult) * drought;
+		world.activeEffects.push({ kind, ...scaled, cells: cellsFor(world, fx[kind].cells ?? 'all'), until: world.year + (fx[kind].years ?? 1) });
 	}
 }
 

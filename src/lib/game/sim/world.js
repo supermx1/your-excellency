@@ -43,6 +43,48 @@ function startingCell(id, year, data) {
 	};
 }
 
+/**
+ * The polity map, flags and real conditions at the start year. 1850 starts use the 1850 polities;
+ * later starts use the latest real-borders snapshot and real national averages for that year.
+ */
+function startingMap(inputs, data) {
+	const year = inputs.startYear;
+	const sw = inputs.switches ?? {};
+	const snap = (data.realBorders ?? []).filter((s) => s.year > 1850 && s.year <= year).at(-1);
+	if (!snap) return { polities: data.polities ?? [], flags: {}, cellDefaults: {} };
+
+	const at = (key) => data.national[key]?.[data.national.years.indexOf(year)] ?? null;
+	const known = (data.tech ?? []).filter((t) => t.nigeriaYear != null && t.nigeriaYear <= year).map((t) => t.id);
+	const litSchool = at('litSchool') ?? 0.02;
+	const polities = snap.polities.map((p) => ({
+		...p,
+		capitalCell: p.id === 'nigeria' ? (year >= 1991 ? 'fct' : 'lagos') : p.cellIds[0],
+		government: p.british ? 'colony' : year >= 1960 ? 'federation' : 'monarchy',
+		tech: known,
+		knowledge: 1 + 0.05 * known.length + 2 * litSchool
+	}));
+	const nigeriaExists = polities.some((p) => p.id === 'nigeria');
+	return {
+		polities,
+		flags: {
+			britishRule: polities.some((p) => p.british),
+			nigeriaExists,
+			independent: nigeriaExists && year >= (sw.independenceYear ?? 1960),
+			oilFound: sw.oilInGround !== false && sw.oilDiscovery !== false && year >= (sw.oilYear ?? 1956)
+		},
+		cellDefaults: Object.fromEntries(
+			Object.entries({
+				litSchool,
+				litAny: Math.min(1, litSchool * 1.25),
+				lifeExp: at('lifeExp'),
+				urban: at('urban'),
+				incomePc: at('gdpPc'),
+				schools: { quranic: 0.1, mission: litSchool * 0.4, state: litSchool * 0.6 }
+			}).filter(([, v]) => v != null)
+		)
+	};
+}
+
 /** Defaults for every Cell field so rules can rely on them. */
 function makeCell(src, polityId) {
 	return {
@@ -82,9 +124,12 @@ function makePolity(src) {
  * @returns {import('./types.js').World}
  */
 export function createWorld(inputs, data = defaultData) {
-	const polities = (data.polities ?? []).map(makePolity);
+	const start = startingMap(inputs, data);
+	const polities = start.polities.map(makePolity);
 	const owner = new Map(polities.flatMap((p) => p.cellIds.map((c) => [c, p.id])));
-	const cells = data.cells.map((c) => makeCell({ ...startingCell(c.id, inputs.startYear, data), ...c }, owner.get(c.id) ?? null));
+	const cells = data.cells.map((c) =>
+		makeCell({ ...startingCell(c.id, inputs.startYear, data), ...start.cellDefaults, ...c }, owner.get(c.id) ?? null)
+	);
 	const world = {
 		year: inputs.startYear,
 		rand: rng(hashString(`timeline:${inputs.seed}`)),
@@ -95,7 +140,7 @@ export function createWorld(inputs, data = defaultData) {
 		events: [],
 		history: [],
 		switches: inputs.switches ?? {},
-		flags: { ...(data.startFlags ?? {}) },
+		flags: { ...start.flags, ...(data.startFlags ?? {}) },
 		inputs,
 		data
 	};
