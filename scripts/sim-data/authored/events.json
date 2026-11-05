@@ -4,6 +4,7 @@
 	"groups": {
 		"north": ["sokoto", "zamfara", "kebbi", "katsina", "kano", "jigawa", "kaduna", "bauchi", "gombe", "yobe", "borno", "adamawa", "taraba", "niger", "kwara", "kogi", "fct", "nassarawa", "benue", "plateau"],
 		"east": ["anambra", "enugu", "imo", "abia", "ebonyi", "rivers", "bayelsa", "cross-river", "akwa-ibom"],
+		"oil": ["delta", "rivers", "bayelsa", "akwa-ibom", "imo", "abia", "ondo", "edo"],
 		"sahel": ["sokoto", "zamfara", "kebbi", "katsina", "kano", "jigawa", "yobe", "borno", "bauchi", "gombe"]
 	},
 	"sources": [

@@ -137,6 +137,10 @@ export function snapshot(world) {
 /** Record the current year, then advance one year by running every rule. */
 /** @param {import('./types.js').World} world */
 export function stepWorld(world) {
+	const sw = world.switches;
+	const mortality = (sw.health ?? 1) * (sw.malaria ?? 1) ** 0.4;
+	for (const c of world.cells) c.mods = { mortality, productivity: 1, learning: sw.learning ?? 1 };
+	world.oilPrice = 1;
 	for (const rule of RULES) rule(world);
 	world.year += 1;
 	world.history.push(snapshot(world));
