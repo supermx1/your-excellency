@@ -8,15 +8,15 @@ export const PARAMS = {
 	infraReturn: 2,
 	oilIncome: 900, // $ per head added in oil cells at oil price multiplier 1
 	urbanFloor: 0.03,
-	urbanScale: 5, // urban target = (ln income − ln urbanBaseIncome) / urbanScale
+	urbanScale: 4.3, // urban target = (ln income − ln urbanBaseIncome) / urbanScale
 	urbanBaseIncome: 450,
 	urbanAdjust: 0.04,
 	infraGrowth: 0.004, // per year, scaled by income
 	// demography
 	birthBase: 0.05,
-	birthLitDrop: 0.016,
-	birthUrbanDrop: 0.012,
-	deathBase: 0.036,
+	birthLitDrop: 0.01,
+	birthUrbanDrop: 0.008,
+	deathBase: 0.045,
 	deathIncomeDrop: 0.35, // share of deaths removed as income approaches incomeForLowDeath
 	incomeForLowDeath: 12000,
 	warDeath: 0.05, // extra death rate at full war damage
@@ -28,7 +28,7 @@ export const PARAMS = {
 	relState: 0.08,
 	relSchool: 0.1,
 	schoolGrowth: 0.006,
-	stateSchoolGrowth: 0.004, // government schools, from income and stability
+	stateSchoolGrowth: 0.008, // government schools, from income and stability
 	// polities and conflict (same for every polity)
 	warBase: 0.002,
 	warTension: 0.03,
