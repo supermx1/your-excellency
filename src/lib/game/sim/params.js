@@ -36,6 +36,15 @@ export const PARAMS = {
 	coupBase: 0.02,
 	secessionBase: 0.03,
 	unionBase: 0.004,
+	// technology
+	knowledgeRate: 0.006, // per year, × learning², × (0.3 + 2 × literacy)
+	knowledgePerTech: 0.05,
+	adoptBase: 0.004,
+	adoptLit: 0.08,
+	adoptTrade: 0.03,
+	adoptColonial: 0.05,
+	inventMargin: 1, // knowledge must exceed a tech's threshold by this much to invent it
+	inventChance: 0.2,
 	// literacy
 	learnRate: 0.03, // per year at full school coverage
 	litDecay: 0.002

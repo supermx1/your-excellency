@@ -9,7 +9,13 @@ export function stepEconomy(world) {
 	const oilCells = new Set(world.data.events?.groups?.oil ?? []);
 	const oilOn = world.flags.oilFound && world.switches.oilInGround !== false;
 	const power = world.switches.power24hFromYear != null && world.year >= world.switches.power24hFromYear;
+	const polityById = new Map(world.polities.map((p) => [p.id, p]));
 	for (const c of world.cells) {
+		const polity = polityById.get(c.polityId);
+		if (polity?.tech.includes('printing')) {
+			const funding = polity.stability * Math.min(1, c.incomePc / 2000);
+			c.schools.state = clamp(c.schools.state + P.stateSchoolGrowth * funding * (1 - c.schools.state), 0, 1);
+		}
 		const potential =
 			P.baseIncome *
 			c.mods.productivity *

@@ -53,7 +53,7 @@ export function stepConflict(world) {
 			const taken = cells.find((c) => c.polityId === loser.id && c.id !== loser.capitalCell);
 			if (taken) transferCell(world, taken, winner);
 		}
-		if (world.rand() < 0.15 + 0.05 * war.years) endWar(world, war, winner, 'peace');
+		if (war.years >= (war.minYears ?? 0) && world.rand() < 0.15 + 0.05 * war.years) endWar(world, war, winner, 'peace');
 	}
 
 	// new wars
@@ -91,6 +91,11 @@ function endWar(world, war, winner, how) {
 	for (const p of world.polities) {
 		if (p.id === war.a) p.atWarWith = p.atWarWith.filter((x) => x !== war.b);
 		if (p.id === war.b) p.atWarWith = p.atWarWith.filter((x) => x !== war.a);
+	}
+	if (war.reabsorb && winner?.id === war.a) {
+		const rebel = world.polities.find((p) => p.id === war.b);
+		for (const id of [...(rebel?.cellIds ?? [])]) transferCell(world, world.cellById.get(id), winner);
+		world.polities = world.polities.filter((p) => p.cellIds.length);
 	}
 	world.events.push({
 		year: world.year,
