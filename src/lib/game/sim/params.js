@@ -29,6 +29,13 @@ export const PARAMS = {
 	relSchool: 0.1,
 	schoolGrowth: 0.006,
 	stateSchoolGrowth: 0.004, // government schools, from income and stability
+	// polities and conflict (same for every polity)
+	warBase: 0.002,
+	warTension: 0.03,
+	warWeakness: 0.01,
+	coupBase: 0.02,
+	secessionBase: 0.03,
+	unionBase: 0.004,
 	// literacy
 	learnRate: 0.03, // per year at full school coverage
 	litDecay: 0.002
