@@ -13,7 +13,7 @@ export function stepEconomy(world) {
 		const potential =
 			P.baseIncome *
 			c.mods.productivity *
-			(1 + P.schoolReturn * c.litSchool + P.anyLitReturn * c.litAny) *
+			(1 + P.litReturn * c.litAny) *
 			(1 + P.infraReturn * c.infra) *
 			(1 - 0.5 * c.warDamage) +
 			(oilOn && oilCells.has(c.id) ? P.oilIncome * (world.oilPrice ?? 1) : 0);

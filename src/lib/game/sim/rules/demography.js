@@ -23,9 +23,10 @@ export function stepDemography(world) {
 		c.lifeExp = clamp(P.lifeExpBase + (0.045 - death) * P.lifeExpSlope, 15, 95);
 
 		const learn = P.learnRate * c.mods.learning;
-		const anySchools = clamp(c.schools.quranic + c.schools.western + (freeSchool ? 0.4 : 0), 0, 1);
-		const western = clamp(c.schools.western + (freeSchool ? 0.4 : 0), 0, 1);
+		const extra = freeSchool ? 0.4 : 0;
+		const anySchools = clamp(c.schools.quranic + c.schools.mission + c.schools.state + extra, 0, 1);
+		const latin = clamp(c.schools.mission + c.schools.state + extra, 0, 1);
 		c.litAny = clamp(c.litAny + learn * anySchools * (1 - c.litAny) - P.litDecay * c.litAny, 0, 1);
-		c.litSchool = clamp(c.litSchool + learn * western * (1 - c.litSchool) - P.litDecay * c.litSchool, 0, c.litAny);
+		c.litSchool = clamp(c.litSchool + learn * latin * (1 - c.litSchool) - P.litDecay * c.litSchool, 0, c.litAny);
 	}
 }

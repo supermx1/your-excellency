@@ -55,8 +55,8 @@ describe('demography and economy', () => {
 	});
 
 	it('learning switch x3 raises litAny faster than x1', () => {
-		const slow = world([{ schools: { quranic: 0.3, western: 0.3 } }], { learning: 1 });
-		const fast = world([{ schools: { quranic: 0.3, western: 0.3 } }], { learning: 3 });
+		const slow = world([{ schools: { quranic: 0.3, mission: 0.3, state: 0 } }], { learning: 1 });
+		const fast = world([{ schools: { quranic: 0.3, mission: 0.3, state: 0 } }], { learning: 3 });
 		years(slow, 20);
 		years(fast, 20);
 		expect(fast.cells[0].litAny).toBeGreaterThan(slow.cells[0].litAny);

@@ -19,7 +19,7 @@
  * @property {number} warDamage    0–1, decays
  * @property {number} tension      0–1
  * @property {ReligionShares} religion
- * @property {{ quranic: number, western: number }} schools  0–1 coverage
+ * @property {{ quranic: number, mission: number, state: number }} schools  0–1 coverage
  * @property {CellMods} mods
  *
  * @typedef {object} Polity

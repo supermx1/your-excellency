@@ -55,7 +55,7 @@ function makeCell(src, polityId) {
 		warDamage: 0,
 		tension: 0,
 		religion: { islam: 0, christian: 0, traditional: 1 },
-		schools: { quranic: 0, western: 0 },
+		schools: { quranic: 0, mission: 0, state: 0 },
 		...structuredClone(src),
 		polityId,
 		mods: { mortality: 1, productivity: 1, learning: 1 }
@@ -95,7 +95,7 @@ export function createWorld(inputs, data = defaultData) {
 		events: [],
 		history: [],
 		switches: inputs.switches ?? {},
-		flags: {},
+		flags: { ...(data.startFlags ?? {}) },
 		inputs,
 		data
 	};
@@ -116,6 +116,7 @@ export function snapshot(world) {
 			litSchool: round(c.litSchool),
 			lifeExp: round(c.lifeExp, 1),
 			incomePc: Math.round(c.incomePc),
+			tension: round(c.tension),
 			religion: {
 				islam: round(c.religion.islam),
 				christian: round(c.religion.christian),

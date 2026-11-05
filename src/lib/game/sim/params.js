@@ -4,8 +4,7 @@ export const PARAMS = {
 	// economy
 	baseIncome: 650, // $ per head with no schooling, infrastructure or tech
 	incomeAdjust: 0.08, // share of the gap to potential income closed each year
-	schoolReturn: 1.4, // income boost per unit of school literacy
-	anyLitReturn: 0.3,
+	litReturn: 1.5, // income boost per unit of literacy in any script
 	infraReturn: 2,
 	oilIncome: 900, // $ per head added in oil cells at oil price multiplier 1
 	urbanFloor: 0.03,
@@ -23,6 +22,13 @@ export const PARAMS = {
 	warDeath: 0.05, // extra death rate at full war damage
 	lifeExpBase: 15,
 	lifeExpSlope: 1200,
+	// religion (one set of weights for every faith)
+	relRate: 0.01, // share of the gap to the pulled mix closed each year
+	relNeighbour: 0.15,
+	relState: 0.08,
+	relSchool: 0.1,
+	schoolGrowth: 0.006,
+	stateSchoolGrowth: 0.004, // government schools, from income and stability
 	// literacy
 	learnRate: 0.03, // per year at full school coverage
 	litDecay: 0.002
