@@ -1,0 +1,620 @@
+[
+	{
+		"id": "abia",
+		"name": "Abia",
+		"centroid": [
+			300.8,
+			529.5
+		],
+		"area": 1472,
+		"coastal": false,
+		"neighbours": [
+			"akwa-ibom",
+			"anambra",
+			"cross-river",
+			"ebonyi",
+			"enugu",
+			"imo",
+			"rivers"
+		]
+	},
+	{
+		"id": "adamawa",
+		"name": "Adamawa",
+		"centroid": [
+			615.5,
+			287.8
+		],
+		"area": 10867,
+		"coastal": false,
+		"neighbours": [
+			"borno",
+			"gombe",
+			"taraba"
+		]
+	},
+	{
+		"id": "akwa-ibom",
+		"name": "Akwa Ibom",
+		"centroid": [
+			319.1,
+			564.9
+		],
+		"area": 2098,
+		"coastal": true,
+		"neighbours": [
+			"abia",
+			"cross-river",
+			"rivers"
+		]
+	},
+	{
+		"id": "anambra",
+		"name": "Anambra",
+		"centroid": [
+			266.7,
+			479
+		],
+		"area": 1442,
+		"coastal": false,
+		"neighbours": [
+			"abia",
+			"delta",
+			"edo",
+			"enugu",
+			"imo",
+			"kogi",
+			"rivers"
+		]
+	},
+	{
+		"id": "bauchi",
+		"name": "Bauchi",
+		"centroid": [
+			451.3,
+			192.7
+		],
+		"area": 15720,
+		"coastal": false,
+		"neighbours": [
+			"gombe",
+			"jigawa",
+			"kaduna",
+			"kano",
+			"plateau",
+			"taraba",
+			"yobe"
+		]
+	},
+	{
+		"id": "benue",
+		"name": "Benue",
+		"centroid": [
+			364.5,
+			419.9
+		],
+		"area": 9847,
+		"coastal": false,
+		"neighbours": [
+			"cross-river",
+			"ebonyi",
+			"enugu",
+			"kogi",
+			"nassarawa",
+			"taraba"
+		]
+	},
+	{
+		"id": "borno",
+		"name": "Borno",
+		"centroid": [
+			663,
+			99.4
+		],
+		"area": 21355,
+		"coastal": false,
+		"neighbours": [
+			"adamawa",
+			"gombe",
+			"yobe"
+		]
+	},
+	{
+		"id": "bayelsa",
+		"name": "Bayelsa",
+		"centroid": [
+			218.1,
+			575.9
+		],
+		"area": 3117,
+		"coastal": true,
+		"neighbours": [
+			"delta",
+			"rivers"
+		]
+	},
+	{
+		"id": "cross-river",
+		"name": "Cross River",
+		"centroid": [
+			362.8,
+			512.4
+		],
+		"area": 6639,
+		"coastal": true,
+		"neighbours": [
+			"abia",
+			"akwa-ibom",
+			"benue",
+			"ebonyi"
+		]
+	},
+	{
+		"id": "delta",
+		"name": "Delta",
+		"centroid": [
+			186.3,
+			516
+		],
+		"area": 5222,
+		"coastal": true,
+		"neighbours": [
+			"anambra",
+			"bayelsa",
+			"edo",
+			"kogi",
+			"ondo",
+			"rivers"
+		]
+	},
+	{
+		"id": "ebonyi",
+		"name": "Ebonyi",
+		"centroid": [
+			329.8,
+			479.2
+		],
+		"area": 1935,
+		"coastal": false,
+		"neighbours": [
+			"abia",
+			"benue",
+			"cross-river",
+			"enugu"
+		]
+	},
+	{
+		"id": "edo",
+		"name": "Edo",
+		"centroid": [
+			196.6,
+			450.5
+		],
+		"area": 6138,
+		"coastal": false,
+		"neighbours": [
+			"anambra",
+			"delta",
+			"kogi",
+			"ondo"
+		]
+	},
+	{
+		"id": "ekiti",
+		"name": "Ekiti",
+		"centroid": [
+			167.8,
+			382.8
+		],
+		"area": 1646,
+		"coastal": false,
+		"neighbours": [
+			"kogi",
+			"kwara",
+			"ondo",
+			"osun"
+		]
+	},
+	{
+		"id": "enugu",
+		"name": "Enugu",
+		"centroid": [
+			291.3,
+			464.2
+		],
+		"area": 2413,
+		"coastal": false,
+		"neighbours": [
+			"abia",
+			"anambra",
+			"benue",
+			"ebonyi",
+			"kogi"
+		]
+	},
+	{
+		"id": "fct",
+		"name": "Federal Capital Territory",
+		"centroid": [
+			285.3,
+			310.2
+		],
+		"area": 2334,
+		"coastal": false,
+		"neighbours": [
+			"kaduna",
+			"kogi",
+			"nassarawa",
+			"niger"
+		]
+	},
+	{
+		"id": "gombe",
+		"name": "Gombe",
+		"centroid": [
+			529.2,
+			217.9
+		],
+		"area": 5812,
+		"coastal": false,
+		"neighbours": [
+			"adamawa",
+			"bauchi",
+			"borno",
+			"taraba",
+			"yobe"
+		]
+	},
+	{
+		"id": "imo",
+		"name": "Imo",
+		"centroid": [
+			270.7,
+			521.2
+		],
+		"area": 1652,
+		"coastal": false,
+		"neighbours": [
+			"abia",
+			"anambra",
+			"rivers"
+		]
+	},
+	{
+		"id": "jigawa",
+		"name": "Jigawa",
+		"centroid": [
+			418.3,
+			114.1
+		],
+		"area": 7770,
+		"coastal": false,
+		"neighbours": [
+			"bauchi",
+			"kano",
+			"katsina",
+			"yobe"
+		]
+	},
+	{
+		"id": "kaduna",
+		"name": "Kaduna",
+		"centroid": [
+			305.4,
+			227.5
+		],
+		"area": 14162,
+		"coastal": false,
+		"neighbours": [
+			"bauchi",
+			"fct",
+			"kano",
+			"katsina",
+			"nassarawa",
+			"niger",
+			"plateau",
+			"zamfara"
+		]
+	},
+	{
+		"id": "kebbi",
+		"name": "Kebbi",
+		"centroid": [
+			133.5,
+			149.1
+		],
+		"area": 11601,
+		"coastal": false,
+		"neighbours": [
+			"niger",
+			"sokoto",
+			"zamfara"
+		]
+	},
+	{
+		"id": "kano",
+		"name": "Kano",
+		"centroid": [
+			366,
+			144.1
+		],
+		"area": 6483,
+		"coastal": false,
+		"neighbours": [
+			"bauchi",
+			"jigawa",
+			"kaduna",
+			"katsina"
+		]
+	},
+	{
+		"id": "kogi",
+		"name": "Kogi",
+		"centroid": [
+			242.4,
+			390.6
+		],
+		"area": 9112,
+		"coastal": false,
+		"neighbours": [
+			"anambra",
+			"benue",
+			"delta",
+			"edo",
+			"ekiti",
+			"enugu",
+			"fct",
+			"kwara",
+			"nassarawa",
+			"niger",
+			"ondo"
+		]
+	},
+	{
+		"id": "katsina",
+		"name": "Katsina",
+		"centroid": [
+			313.5,
+			108.8
+		],
+		"area": 7687,
+		"coastal": false,
+		"neighbours": [
+			"jigawa",
+			"kaduna",
+			"kano",
+			"zamfara"
+		]
+	},
+	{
+		"id": "kwara",
+		"name": "Kwara",
+		"centroid": [
+			97.8,
+			316.2
+		],
+		"area": 11229,
+		"coastal": false,
+		"neighbours": [
+			"ekiti",
+			"kogi",
+			"niger",
+			"osun",
+			"oyo"
+		]
+	},
+	{
+		"id": "lagos",
+		"name": "Lagos",
+		"centroid": [
+			60.2,
+			461
+		],
+		"area": 1184,
+		"coastal": true,
+		"neighbours": [
+			"ogun"
+		]
+	},
+	{
+		"id": "nassarawa",
+		"name": "Nassarawa",
+		"centroid": [
+			349.3,
+			331.5
+		],
+		"area": 8318,
+		"coastal": false,
+		"neighbours": [
+			"benue",
+			"fct",
+			"kaduna",
+			"kogi",
+			"plateau",
+			"taraba"
+		]
+	},
+	{
+		"id": "niger",
+		"name": "Niger",
+		"centroid": [
+			180.3,
+			239.4
+		],
+		"area": 22619,
+		"coastal": false,
+		"neighbours": [
+			"fct",
+			"kaduna",
+			"kebbi",
+			"kogi",
+			"kwara",
+			"zamfara"
+		]
+	},
+	{
+		"id": "ogun",
+		"name": "Ogun",
+		"centroid": [
+			55.9,
+			431.6
+		],
+		"area": 5049,
+		"coastal": true,
+		"neighbours": [
+			"lagos",
+			"ondo",
+			"osun",
+			"oyo"
+		]
+	},
+	{
+		"id": "ondo",
+		"name": "Ondo",
+		"centroid": [
+			158.3,
+			436.9
+		],
+		"area": 4558,
+		"coastal": true,
+		"neighbours": [
+			"delta",
+			"edo",
+			"ekiti",
+			"kogi",
+			"ogun",
+			"osun"
+		]
+	},
+	{
+		"id": "osun",
+		"name": "Osun",
+		"centroid": [
+			117.5,
+			395.9
+		],
+		"area": 2890,
+		"coastal": false,
+		"neighbours": [
+			"ekiti",
+			"kwara",
+			"ogun",
+			"ondo",
+			"oyo"
+		]
+	},
+	{
+		"id": "oyo",
+		"name": "Oyo",
+		"centroid": [
+			59.9,
+			364.1
+		],
+		"area": 8651,
+		"coastal": false,
+		"neighbours": [
+			"kwara",
+			"ogun",
+			"osun"
+		]
+	},
+	{
+		"id": "plateau",
+		"name": "Plateau",
+		"centroid": [
+			412.5,
+			284.4
+		],
+		"area": 8751,
+		"coastal": false,
+		"neighbours": [
+			"bauchi",
+			"kaduna",
+			"nassarawa",
+			"taraba"
+		]
+	},
+	{
+		"id": "rivers",
+		"name": "Rivers",
+		"centroid": [
+			270.8,
+			572.5
+		],
+		"area": 2580,
+		"coastal": true,
+		"neighbours": [
+			"abia",
+			"akwa-ibom",
+			"anambra",
+			"bayelsa",
+			"delta",
+			"imo"
+		]
+	},
+	{
+		"id": "sokoto",
+		"name": "Sokoto",
+		"centroid": [
+			158.9,
+			71.4
+		],
+		"area": 10332,
+		"coastal": false,
+		"neighbours": [
+			"kebbi",
+			"zamfara"
+		]
+	},
+	{
+		"id": "taraba",
+		"name": "Taraba",
+		"centroid": [
+			498.6,
+			395
+		],
+		"area": 18963,
+		"coastal": false,
+		"neighbours": [
+			"adamawa",
+			"bauchi",
+			"benue",
+			"gombe",
+			"nassarawa",
+			"plateau"
+		]
+	},
+	{
+		"id": "yobe",
+		"name": "Yobe",
+		"centroid": [
+			541.5,
+			105.2
+		],
+		"area": 14758,
+		"coastal": false,
+		"neighbours": [
+			"bauchi",
+			"borno",
+			"gombe",
+			"jigawa"
+		]
+	},
+	{
+		"id": "zamfara",
+		"name": "Zamfara",
+		"centroid": [
+			221.8,
+			118.7
+		],
+		"area": 11164,
+		"coastal": false,
+		"neighbours": [
+			"kaduna",
+			"kebbi",
+			"katsina",
+			"niger",
+			"sokoto"
+		]
+	}
+]
