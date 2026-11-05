@@ -1,0 +1,21 @@
+{
+	"note": "Starting polities in 1850, coarsely mapped onto present-day state cells. Hand-authored; boundaries are approximate by design (cells are whole states).",
+	"sources": [
+		{ "name": "Wikipedia — Sokoto Caliphate, Bornu Empire, Kingdom of Benin, Ibadan, Egba, Ijebu Kingdom, Kingdom of Lagos, Igala Kingdom, Aro Confederacy, Bonny, Kalabari, Old Calabar", "url": "https://en.wikipedia.org/wiki/Sokoto_Caliphate", "licence": "CC BY-SA 4.0" },
+		{ "name": "Murdock (1959) ethnographic map of Africa, digitised by N. Nunn", "url": "https://scholar.harvard.edu/nunn/pages/data-0", "licence": "academic use" }
+	],
+	"polities": [
+		{ "id": "sokoto", "name": "Sokoto Caliphate", "capitalCell": "sokoto", "government": "caliphate", "stateReligion": "islam", "cellIds": ["sokoto", "zamfara", "kebbi", "katsina", "kano", "jigawa", "kaduna", "bauchi", "gombe", "niger", "kwara", "adamawa", "taraba", "nassarawa", "fct"] },
+		{ "id": "borno", "name": "Borno", "capitalCell": "borno", "government": "monarchy", "stateReligion": "islam", "cellIds": ["borno", "yobe"] },
+		{ "id": "ibadan", "name": "Ibadan", "capitalCell": "oyo", "government": "military-republic", "stateReligion": null, "cellIds": ["oyo", "osun", "ekiti"] },
+		{ "id": "egba-ijebu", "name": "Egba and Ijebu", "capitalCell": "ogun", "government": "monarchy", "stateReligion": null, "cellIds": ["ogun"] },
+		{ "id": "lagos", "name": "Kingdom of Lagos", "capitalCell": "lagos", "government": "monarchy", "stateReligion": null, "cellIds": ["lagos"] },
+		{ "id": "ondo", "name": "Ondo", "capitalCell": "ondo", "government": "monarchy", "stateReligion": null, "cellIds": ["ondo"] },
+		{ "id": "benin", "name": "Kingdom of Benin", "capitalCell": "edo", "government": "monarchy", "stateReligion": "traditional", "cellIds": ["edo", "delta"] },
+		{ "id": "igala", "name": "Igala Kingdom", "capitalCell": "kogi", "government": "monarchy", "stateReligion": "traditional", "cellIds": ["kogi"] },
+		{ "id": "igbo", "name": "Igbo communities", "capitalCell": "anambra", "government": "confederation", "stateReligion": null, "cellIds": ["anambra", "enugu", "imo", "abia", "ebonyi"] },
+		{ "id": "rivers-states", "name": "Bonny and Kalabari", "capitalCell": "rivers", "government": "city-states", "stateReligion": null, "cellIds": ["rivers", "bayelsa"] },
+		{ "id": "calabar", "name": "Old Calabar", "capitalCell": "cross-river", "government": "city-states", "stateReligion": null, "cellIds": ["cross-river", "akwa-ibom"] },
+		{ "id": "middle-belt", "name": "Middle Belt peoples", "capitalCell": "benue", "government": "decentralised", "stateReligion": null, "cellIds": ["benue", "plateau"] }
+	]
+}

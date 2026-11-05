@@ -1,0 +1,25 @@
+{
+	"note": "Real-history polity map snapshots for the 'ours' side and for late start years. Coarse: whole state cells. 1850 is polities-1850.json. Internal state divisions (1967, 1976, 1987, 1991) are left to the visuals plan.",
+	"sources": [
+		{ "name": "Wikipedia — Lagos Colony, Oil Rivers Protectorate, Royal Niger Company, Southern Nigeria Protectorate, Northern Nigeria Protectorate, Amalgamation of 1914, Regions of Nigeria, States of Nigeria", "url": "https://en.wikipedia.org/wiki/Colonial_Nigeria", "licence": "CC BY-SA 4.0" }
+	],
+	"snapshots": [
+		{ "year": 1861, "replace": [{ "id": "lagos-colony", "name": "Lagos Colony (British)", "cellIds": ["lagos"], "british": true }] },
+		{ "year": 1885, "replace": [
+			{ "id": "lagos-colony", "name": "Lagos Colony (British)", "cellIds": ["lagos"], "british": true },
+			{ "id": "oil-rivers", "name": "Oil Rivers Protectorate (British)", "cellIds": ["rivers", "bayelsa", "cross-river", "akwa-ibom"], "british": true },
+			{ "id": "niger-company", "name": "Royal Niger Company territory", "cellIds": ["kogi"], "british": true }
+		] },
+		{ "year": 1900, "replace": [
+			{ "id": "lagos-colony", "name": "Colony and Protectorate of Lagos", "cellIds": ["lagos", "ogun", "oyo", "osun", "ondo", "ekiti"], "british": true },
+			{ "id": "southern-nigeria", "name": "Southern Nigeria Protectorate", "cellIds": ["edo", "delta", "rivers", "bayelsa", "cross-river", "akwa-ibom", "anambra", "enugu", "imo", "abia", "ebonyi"], "british": true },
+			{ "id": "northern-nigeria", "name": "Northern Nigeria Protectorate", "cellIds": ["kogi", "kwara", "niger", "fct", "nassarawa", "benue", "plateau"], "british": true }
+		] },
+		{ "year": 1906, "polities": [
+			{ "id": "southern-nigeria", "name": "Colony and Protectorate of Southern Nigeria", "cellIds": ["lagos", "ogun", "oyo", "osun", "ondo", "ekiti", "edo", "delta", "rivers", "bayelsa", "cross-river", "akwa-ibom", "anambra", "enugu", "imo", "abia", "ebonyi"], "british": true },
+			{ "id": "northern-nigeria", "name": "Protectorate of Northern Nigeria", "cellIds": ["kogi", "kwara", "niger", "fct", "nassarawa", "benue", "plateau", "sokoto", "zamfara", "kebbi", "katsina", "kano", "jigawa", "kaduna", "bauchi", "gombe", "adamawa", "taraba", "borno", "yobe"], "british": true }
+		] },
+		{ "year": 1914, "polities": [{ "id": "nigeria", "name": "Colony and Protectorate of Nigeria", "cellIds": "all", "british": true }] },
+		{ "year": 1960, "polities": [{ "id": "nigeria", "name": "Federation of Nigeria", "cellIds": "all", "british": false }] }
+	]
+}

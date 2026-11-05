@@ -9,6 +9,7 @@ import { stepTech } from './rules/tech.js';
 import { stepEconomy } from './rules/economy.js';
 import { stepDemography } from './rules/demography.js';
 import { stepFamilies } from './rules/families.js';
+import { defaultData } from './data/index.js';
 
 export const ENGINE_VERSION = 1;
 
@@ -24,6 +25,23 @@ const RULES = [
 ];
 
 const round = (n, p = 4) => Math.round(n * 10 ** p) / 10 ** p;
+
+/** Population and religion for a cell at the start year, from the regional data (if present). */
+function startingCell(id, year, data) {
+	if (!data.regional) return {};
+	const years = Object.keys(data.regional.pop).map(Number).filter((y) => y <= year);
+	const base = Math.max(...years);
+	const natIdx = data.national.years.indexOf(year);
+	const scale = data.national.pop[natIdx] / data.national.pop[data.national.years.indexOf(base)];
+	const r0 = data.regional.religion[1850][id];
+	const r1 = data.regional.religion[2018][id];
+	const t = Math.min(1, Math.max(0, (year - 1850) / (2018 - 1850)));
+	const mix = (k) => r0[k] * (1 - t) + r1[k] * t;
+	return {
+		pop: data.regional.pop[base][id] * scale,
+		religion: { islam: mix('islam'), christian: mix('christian'), traditional: mix('traditional') }
+	};
+}
 
 /** Defaults for every Cell field so rules can rely on them. */
 function makeCell(src, polityId) {
@@ -63,10 +81,10 @@ function makePolity(src) {
  * @param {any} data
  * @returns {import('./types.js').World}
  */
-export function createWorld(inputs, data) {
+export function createWorld(inputs, data = defaultData) {
 	const polities = (data.polities ?? []).map(makePolity);
 	const owner = new Map(polities.flatMap((p) => p.cellIds.map((c) => [c, p.id])));
-	const cells = data.cells.map((c) => makeCell(c, owner.get(c.id) ?? null));
+	const cells = data.cells.map((c) => makeCell({ ...startingCell(c.id, inputs.startYear, data), ...c }, owner.get(c.id) ?? null));
 	return {
 		year: inputs.startYear,
 		rand: rng(hashString(`timeline:${inputs.seed}`)),
@@ -129,7 +147,7 @@ export function stepWorld(world) {
  * @param {any} data
  * @returns {import('./types.js').RunResult}
  */
-export function runSimulation(inputs, data) {
+export function runSimulation(inputs, data = defaultData) {
 	const world = createWorld(inputs, data);
 	world.history.push(snapshot(world));
 	while (world.year < inputs.endYear) stepWorld(world);
