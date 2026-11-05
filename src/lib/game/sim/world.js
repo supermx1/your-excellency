@@ -56,9 +56,13 @@ function startingMap(inputs, data) {
 	const at = (key) => data.national[key]?.[data.national.years.indexOf(year)] ?? null;
 	const known = (data.tech ?? []).filter((t) => t.nigeriaYear != null && t.nigeriaYear <= year).map((t) => t.id);
 	const litSchool = at('litSchool') ?? 0.02;
-	const polities = snap.polities.map((p) => ({
+	const british = snap.polities.filter((p) => p.british && p.id !== 'nigeria');
+	const merged = british.length > 1
+		? [...snap.polities.filter((p) => !british.includes(p)), { id: 'british', name: 'British territories', british: true, cellIds: british.flatMap((p) => p.cellIds) }]
+		: snap.polities;
+	const polities = merged.map((p) => ({
 		...p,
-		capitalCell: p.id === 'nigeria' ? (year >= 1991 ? 'fct' : 'lagos') : p.cellIds[0],
+		capitalCell: p.id === 'nigeria' ? (year >= 1991 ? 'fct' : 'lagos') : p.cellIds.includes('lagos') ? 'lagos' : p.cellIds[0],
 		government: p.british ? 'colony' : year >= 1960 ? 'federation' : 'monarchy',
 		tech: known,
 		knowledge: 1 + 0.05 * known.length + 2 * litSchool
@@ -170,7 +174,7 @@ export function snapshot(world) {
 				traditional: round(c.religion.traditional)
 			}
 		})),
-		polities: world.polities.map((p) => ({ id: p.id, name: p.name, cellIds: [...p.cellIds] })),
+		polities: world.polities.map((p) => ({ id: p.id, name: p.name, capitalCell: p.capitalCell, cellIds: [...p.cellIds] })),
 		totals: {
 			pop: Math.round(pop),
 			litAny: round(w('litAny')),

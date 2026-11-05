@@ -36,6 +36,10 @@ export function stepConflict(world) {
 	for (const war of world.wars.filter((w) => !w.ended)) {
 		const a = byId.get(war.a);
 		const b = byId.get(war.b);
+		if (a && b && (!a.atWarWith.includes(b.id) || !b.atWarWith.includes(a.id))) {
+			endWar(world, war, null, 'collapse');
+			continue;
+		}
 		const key = [war.a, war.b].sort().join('|');
 		if (!a || !b || !front.has(key)) {
 			endWar(world, war, a ?? b, 'collapse');
@@ -50,7 +54,7 @@ export function stepConflict(world) {
 		const sb = strength(world, b);
 		const [winner, loser] = world.rand() < sa / (sa + sb) ? [a, b] : [b, a];
 		if (world.rand() < 0.3) {
-			const taken = cells.find((c) => c.polityId === loser.id && c.id !== loser.capitalCell);
+			const taken = loser.cellIds.length > 1 && cells.find((c) => c.polityId === loser.id && c.id !== loser.capitalCell);
 			if (taken) transferCell(world, taken, winner);
 		}
 		if (war.years >= (war.minYears ?? 0) && world.rand() < 0.15 + 0.05 * war.years) endWar(world, war, winner, 'peace');
@@ -111,7 +115,10 @@ function endWar(world, war, winner, how) {
 /** Moves a cell to another polity, keeping cellIds consistent. */
 export function transferCell(world, cell, to) {
 	const from = world.polities.find((p) => p.id === cell.polityId);
-	if (from) from.cellIds = from.cellIds.filter((id) => id !== cell.id);
+	if (from) {
+		from.cellIds = from.cellIds.filter((id) => id !== cell.id);
+		if (from.capitalCell === cell.id) from.capitalCell = from.cellIds[0] ?? null;
+	}
 	to.cellIds.push(cell.id);
 	cell.polityId = to.id;
 }

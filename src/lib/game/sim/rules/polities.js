@@ -48,6 +48,7 @@ export function stepPolities(world) {
 	}
 
 	world.polities = world.polities.filter((p) => p.cellIds.length > 0);
+	for (const p of world.polities) if (!p.cellIds.includes(p.capitalCell)) p.capitalCell = p.cellIds[0];
 }
 
 export function coup(world, p) {

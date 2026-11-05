@@ -60,7 +60,9 @@ function apply(world, event) {
 			if (from === brit) continue;
 			if (from) {
 				from.cellIds = from.cellIds.filter((x) => x !== id);
+				if (from.capitalCell === id) from.capitalCell = from.cellIds[0] ?? null;
 				from.atWarWith = from.atWarWith.filter((x) => x !== brit.id);
+				brit.atWarWith = brit.atWarWith.filter((x) => x !== from.id);
 			}
 			brit.cellIds.push(id);
 			cell.polityId = brit.id;
@@ -73,6 +75,12 @@ function apply(world, event) {
 	if (fx.merge) {
 		const brit = world.polities.find((p) => p.british);
 		if (brit) {
+			const old = brit.id;
+			for (const p of world.polities) p.atWarWith = p.atWarWith.map((x) => (x === old ? fx.merge.id : x));
+			for (const w of world.wars ?? []) {
+				if (w.a === old) w.a = fx.merge.id;
+				if (w.b === old) w.b = fx.merge.id;
+			}
 			brit.id = fx.merge.id;
 			brit.name = fx.merge.name;
 			for (const c of world.cells) if (brit.cellIds.includes(c.id)) c.polityId = brit.id;
@@ -125,14 +133,20 @@ export function stepEvents(world) {
 		world.activeEffects = [];
 		// Flags from events before the start year (e.g. missionaries arriving in 1842).
 		for (const e of all)
-			if (e.year < world.inputs.startYear && e.effects?.flags && scheduledYear(e, sw) !== null)
+			if (e.year < world.inputs.startYear && e.effects?.flags && !e.requires && scheduledYear(e, sw) !== null)
 				Object.assign(world.flags, e.effects.flags);
 	}
 
+	world.fired ??= new Set();
 	for (const e of all) {
 		const year = e.kind === 'world' ? e.year : scheduledYear(e, sw);
-		if (year !== world.year) continue;
+		if (year === null || world.fired.has(e.id)) continue;
+		// Year-switch events (independence, oil) wait until their requirements hold.
+		const waits = e.switch === 'independenceYear' || e.id === 'oil-oloibiri';
+		if (waits ? year > world.year : year !== world.year) continue;
 		if (e.kind === 'history' && !(e.requires ?? []).every((f) => world.flags[f])) continue;
+		if (waits && year < world.inputs.startYear && world.year === world.inputs.startYear && e.year < world.inputs.startYear) continue;
+		world.fired.add(e.id);
 		apply(world, e);
 		world.events.push({ year: world.year, kind: e.kind, id: e.id, title: e.title });
 	}

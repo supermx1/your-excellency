@@ -56,7 +56,7 @@ export function validateSwitches(input) {
 	if (!input || typeof input !== 'object' || Array.isArray(input)) return { ok: false, error: 'switches must be an object' };
 	const out = defaultSwitches();
 	for (const [key, value] of Object.entries(input)) {
-		const s = SWITCHES[key];
+		const s = Object.hasOwn(SWITCHES, key) ? SWITCHES[key] : null;
 		if (!s) return { ok: false, error: `unknown switch ${key}` };
 		const bad = (why) => ({ ok: false, error: `${key}: ${why}` });
 		if (s.type === 'bool' && typeof value !== 'boolean') return bad('must be true or false');
