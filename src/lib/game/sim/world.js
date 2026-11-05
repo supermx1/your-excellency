@@ -8,7 +8,7 @@ import { stepReligion } from './rules/religion.js';
 import { stepTech } from './rules/tech.js';
 import { stepEconomy } from './rules/economy.js';
 import { stepDemography } from './rules/demography.js';
-import { stepFamilies } from './rules/families.js';
+import { stepFamilies, createFamilies } from './rules/families.js';
 import { defaultData } from './data/index.js';
 
 export const ENGINE_VERSION = 1;
@@ -85,7 +85,7 @@ export function createWorld(inputs, data = defaultData) {
 	const polities = (data.polities ?? []).map(makePolity);
 	const owner = new Map(polities.flatMap((p) => p.cellIds.map((c) => [c, p.id])));
 	const cells = data.cells.map((c) => makeCell({ ...startingCell(c.id, inputs.startYear, data), ...c }, owner.get(c.id) ?? null));
-	return {
+	const world = {
 		year: inputs.startYear,
 		rand: rng(hashString(`timeline:${inputs.seed}`)),
 		cells,
@@ -99,6 +99,8 @@ export function createWorld(inputs, data = defaultData) {
 		inputs,
 		data
 	};
+	world.families = createFamilies(world);
+	return world;
 }
 
 /** @param {import('./types.js').World} world */
