@@ -1,24 +1,49 @@
 import { PARAMS as P } from './params.js';
 
-/** Labels interpret recorded factors; never recompute an old run using new engine constants. */
+/**
+ * Plain words for recorded factors, chosen by how big the recorded multiplier is.
+ * Never recompute an old run using new engine constants. Each entry: label, then [at least, text] from best down.
+ * @type {Record<string, [string, [number, string][]]>}
+ */
 const FACTORS = {
-	literacy: ['Literacy', 'Reading skills raise productive capacity in the model.'],
-	infrastructure: [
-		'Infrastructure',
-		'Transport and infrastructure support production and market access.'
-	],
-	electricity: ['Usable electricity', 'Connected access helps when it provides usable service.'],
-	conflict: ['Conflict disruption', 'War damage reduces productive capacity.'],
-	food: ['Recent food pressure', 'Food pressure reduces the following year’s productive capacity.']
+	literacy: ['Reading', [
+		[1.5, 'Most people can read, so many can do better-paid work.'],
+		[1.1, 'Some people can read, which opens up better-paid work.'],
+		[0, 'Few people can read, so most work pays little more than farming.']
+	]],
+	infrastructure: ['Roads and markets', [
+		[2.5, 'Roads, transport and markets are well built, so goods sell easily.'],
+		[1.5, 'Some roads and markets, but trade is still hard in places.'],
+		[0, 'Few roads or markets, so goods are hard to sell.']
+	]],
+	electricity: ['Electricity', [
+		[1.1, 'Power is reliable enough to run machines and shops.'],
+		[1.02, 'Some power, but cuts hold businesses back.'],
+		[0, 'Almost no usable power: few connections, or cuts most of the time.']
+	]],
+	conflict: ['War', [
+		[0.995, 'No war damage.'],
+		[0, 'War damage is holding work back.']
+	]],
+	food: ['Food', [
+		[0.995, 'There was enough food last year.'],
+		[0, 'Food ran short last year, leaving people less able to work.']
+	]]
+};
+
+/** "+91%", "−20%" or "no effect": how much a factor raises or lowers income. */
+export const effectText = (/** @type {number} */ m) => {
+	const pct = Math.round((m - 1) * 100);
+	return pct === 0 ? 'no effect' : pct > 0 ? `+${pct}%` : `−${-pct}%`;
 };
 
 /** @param {{incomeFactors?: Record<string,number>|null}} cell */
 export function incomeDrivers(cell) {
 	return Object.entries(cell.incomeFactors ?? {}).flatMap(([key, multiplier]) => {
-		const labels = FACTORS[/** @type {keyof typeof FACTORS} */ (key)];
-		return labels && Number.isFinite(multiplier)
-			? [{ key, label: labels[0], description: labels[1], multiplier }]
-			: [];
+		const f = FACTORS[key];
+		if (!f || !Number.isFinite(multiplier)) return [];
+		const text = (f[1].find(([min]) => multiplier >= min) ?? f[1][f[1].length - 1])[1];
+		return [{ key, label: f[0], description: text, multiplier, effect: effectText(multiplier) }];
 	});
 }
 

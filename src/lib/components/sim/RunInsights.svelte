@@ -3,6 +3,8 @@
 	import { incomeDrivers } from '$lib/game/sim/explanations.js';
 	import { defaultData } from '$lib/game/sim/data/index.js';
 	import { formatStat } from '$lib/game/sim/format.js';
+	import { PARAMS } from '$lib/game/sim/params.js';
+	const BASE = PARAMS.baseIncome;
 	let { run, summary = null } = $props();
 	let selected = $state('lagos');
 	const last = $derived(run.history.at(-1));
@@ -23,7 +25,7 @@
 				].filter((r) => r.values)
 			: []
 	);
-	const percent = (n) => `${Math.round(n * 100)}%`;
+	const name = $derived(areas.find((a) => a.id === selected)?.name ?? selected);
 </script>
 
 {#if ranges.length}
@@ -76,35 +78,44 @@
 		>
 			{#each areas as area (area.id)}<option value={area.id}>{area.name}</option>{/each}
 		</select>
+		<p class="text-sm text-black/60">
+			States here are fixed patches of land named after today's states, not countries. Who rules each
+			one depends on the run.
+		</p>
 		{#if drivers.length}
-			<p class="text-sm"><b>Model income per person:</b> {cell.incomePc.toLocaleString()}.</p>
-			<h3 class="font-black">Income factors in {last.year}</h3>
-			<dl class="space-y-3">
+			<h3 class="text-lg font-black">What sets income in {name} in {last.year}</h3>
+			<p>
+				People here earn about <b class="tabular-nums">${Math.round(cell.incomePc).toLocaleString()}</b> a
+				person a year. Everyone starts from ${BASE.toLocaleString()}; these raise or lower it.
+			</p>
+			<ul class="divide-y divide-black/15 border-y-2 border-black">
 				{#each drivers as driver (driver.key)}
-					<div>
-						<dt class="font-bold">
-							{driver.label} <span class="tabular-nums">×{driver.multiplier.toFixed(2)}</span>
-						</dt>
-						<dd class="mt-1 text-sm">{driver.description}</dd>
-					</div>
+					<li class="flex items-baseline justify-between gap-4 py-2.5">
+						<p><b>{driver.label}.</b> {driver.description}</p>
+						<span
+							class="shrink-0 text-sm font-bold tabular-nums {driver.effect === 'no effect'
+								? 'text-black/40'
+								: driver.multiplier > 1
+									? 'text-emerald-700'
+									: 'text-red-700'}">{driver.effect}</span
+						>
+					</li>
 				{/each}
-			</dl>
-			<p class="text-sm">
-				These recorded factors multiply non-oil productive capacity; they do not add together.
-				Technology, world events and oil also affect income, which adjusts gradually.
+			</ul>
+			<p class="text-sm text-black/60">
+				The effects multiply rather than add up. Oil, new technology and world events also count, and
+				income moves toward its new level over a few years.
 			</p>
 		{:else}
 			<p class="text-sm">This recording does not include detailed income factors.</p>
 		{/if}
-		{#if cell.foodStress != null}
+		{#if cell.netMigration != null}
 			<p class="text-sm">
-				<b>Food pressure:</b>
-				{percent(cell.foodStress)} on the model's pressure scale. This is not the percentage of people
-				going hungry.
-			</p>
-			<p class="text-sm">
-				<b>Net movement this year:</b>
-				{cell.netMigration.toLocaleString()} people. Positive means arrivals; negative means departures.
+				<b>Moving:</b>
+				{#if Math.round(cell.netMigration) === 0}About as many people moved in as left this year.
+				{:else}{Math.abs(Math.round(cell.netMigration)).toLocaleString()} more people {cell.netMigration > 0
+						? 'moved in than left'
+						: 'left than moved in'} this year.{/if}
 			</p>
 		{/if}
 		<a href="/sim/sources" class="inline-block font-bold underline"

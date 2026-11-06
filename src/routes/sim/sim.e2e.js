@@ -228,8 +228,8 @@ test('ending explains local conditions and reports the chosen year across seeds'
 	await expect(page.getByText(/all ending in 2021/)).toBeVisible({ timeout: 15000 });
 	await page.getByText('What shaped this world?', { exact: true }).click();
 	await page.getByLabel('Inspect a region').selectOption('kano');
-	await expect(page.getByRole('heading', { name: 'Income factors in 2021' })).toBeVisible();
-	await expect(page.getByText('Usable electricity', { exact: false })).toBeVisible();
+	await expect(page.getByRole('heading', { name: /What sets income in Kano in 2021/ })).toBeVisible();
+	await expect(page.getByText('Electricity', { exact: true })).toBeVisible();
 	expect(errors).toEqual([]);
 });
 

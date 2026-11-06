@@ -10,6 +10,8 @@ describe('recorded income explanations', () => {
 		expect(rows.find((r) => r.key === 'literacy').multiplier).toBe(2.5);
 		expect(rows.find((r) => r.key === 'conflict').multiplier).toBe(0.8);
 		expect(rows.some((r) => r.key === 'infrastructure')).toBe(false);
+		expect(rows.find((r) => r.key === 'literacy').effect).toBe('+150%');
+		expect(rows.find((r) => r.key === 'conflict')).toMatchObject({ effect: '−20%', description: 'War damage is holding work back.' });
 	});
 	it('leaves old recordings without driver details usable', async () => {
 		const { incomeDrivers } = await import('./explanations.js');
