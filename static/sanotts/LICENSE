@@ -1,6 +1,0 @@
-sanoTTS runtime (sanotts-web 0.3.0) and the "kristin" voice weights.
-Copyright Ampixa and contributors. Licensed under the GNU General Public License v3.0 or later.
-Source: https://github.com/Ampixa/sanoTTS  ·  Weights: https://huggingface.co/ampixa/sanoTTS
-Builds on piper (https://github.com/OHF-Voice/piper1-gpl) and espeak-ng (https://github.com/espeak-ng/espeak-ng), both GPLv3.
-The "kristin" voice is distilled from Piper's en_US-kristin voice, trained on public-domain LibriVox recordings.
-Full licence text: https://www.gnu.org/licenses/gpl-3.0.txt

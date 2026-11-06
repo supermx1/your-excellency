@@ -26,12 +26,12 @@ export function sentences(text) {
 	return (text.match(/(?:\d\.\d|[^.!?])+[.!?]*/g) ?? []).map((s) => s.trim()).filter(Boolean);
 }
 
-// --- sanoTTS: the same small neural voice on every device ---------------------------------
-// Runtime and the "kristin" voice (Piper lineage, trained on public-domain LibriVox audio) are
-// self-hosted under static/sanotts/, so no request leaves this site, and run in tts.worker.js.
-// GPL-3.0, see static/sanotts/LICENSE.
-const SANO_BASE = '/sanotts/';
-const SANO_VOICE = 'kristin';
+// --- KittenTTS Nano: the same neural voice on every device ---------------------------------
+// Model and voice ("Jasper", calm and clear) are self-hosted under static/kitten/ and run in
+// tts.worker.js, so no request leaves this site. Apache-2.0, see static/kitten/NOTICE.
+const KITTEN_BASE = '/kitten/';
+const SPEED = 0.9; // about 120 words a minute: unhurried narration
+const PAUSE = 0.35; // seconds of quiet between sentences
 /** @type {Worker | null} */
 let worker = null;
 let nextId = 0;
@@ -59,7 +59,7 @@ function synthesize(/** @type {string} */ text) {
 	return /** @type {Promise<{ samples: Float32Array, sampleRate: number }>} */ (
 		new Promise((resolve, reject) => {
 			pending.set(id, { resolve, reject });
-			worker?.postMessage({ id, text, base: SANO_BASE, voice: SANO_VOICE });
+			worker?.postMessage({ id, text, base: KITTEN_BASE, speed: SPEED });
 		})
 	);
 }
@@ -88,14 +88,14 @@ function play(ctx, audio, signal) {
 }
 
 /**
- * Reads `text` aloud with sanoTTS, synthesising the next sentence while the current one plays.
+ * Reads `text` aloud with KittenTTS, synthesising the next sentence while the current one plays.
  * Rejects if the voice can't load or run, so the caller can fall back to the browser's voice.
  * @param {string} text @param {AudioContext} ctx @param {AbortSignal} signal
  * @param {() => void} [onReady] called once the voice has loaded
  */
-export async function readWithSano(text, ctx, signal, onReady) {
+export async function readWithKitten(text, ctx, signal, onReady) {
 	const parts = sentences(text);
-	// The first call also loads the runtime and voice (≈8 MB, once) inside the worker.
+	// The first call also loads the runtime and voice (≈37 MB, once; the browser caches it) inside the worker.
 	let next = parts.length ? synthesize(parts[0]) : null;
 	for (let i = 0; i < parts.length && !signal.aborted; i++) {
 		const audio = /** @type {{ samples: Float32Array, sampleRate: number }} */ (await next);
@@ -103,12 +103,13 @@ export async function readWithSano(text, ctx, signal, onReady) {
 		next = i + 1 < parts.length ? synthesize(parts[i + 1]) : null;
 		if (signal.aborted) return;
 		await play(ctx, audio, signal);
+		if (i + 1 < parts.length && !signal.aborted) await new Promise((r) => setTimeout(r, PAUSE * 1000));
 	}
 }
 
 /**
  * The browser's own voice, one utterance per sentence (Chrome's online voices go silent ~15 s
- * into a long one). Used when sanoTTS can't run.
+ * into a long one). Used when KittenTTS can't run.
  * @param {string} text @param {AbortSignal} signal
  */
 export function readWithBrowser(text, signal) {

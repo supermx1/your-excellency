@@ -283,19 +283,19 @@ test.describe('read aloud', () => {
 	test('Listen reads the chapter with the site’s own voice', async ({ page }) => {
 		/** @type {string[]} */
 		const external = [];
-		page.on('request', (r) => /huggingface|ampixa/.test(r.url()) && external.push(r.url()));
+		page.on('request', (r) => /huggingface|ampixa|jsdelivr|kittenml/.test(r.url()) && external.push(r.url()));
 		await page.goto(`/sim/play?s=${never()}`);
 		const listen = page.getByRole('button', { name: /Listen/ });
 		await listen.click({ timeout: 15000 });
 		const button = page.locator('button[aria-pressed="true"][data-voice]');
-		await expect(button).toHaveAttribute('data-voice', 'sano', { timeout: 30000 });
+		await expect(button).toHaveAttribute('data-voice', 'kitten', { timeout: 30000 });
 		expect(external).toEqual([]);
 		await button.click();
 		await expect(page.getByRole('button', { name: /Listen/ })).toBeVisible();
 	});
 
 	test('falls back to the browser voice when the voice files cannot load', async ({ page }) => {
-		await page.route('**/sanotts/**', (r) => r.abort());
+		await page.route('**/kitten/**', (r) => r.abort());
 		await page.goto(`/sim/play?s=${never()}`);
 		await page.getByRole('button', { name: /Listen/ }).click({ timeout: 15000 });
 		await expect(page.locator('button[aria-pressed="true"][data-voice]')).toHaveAttribute('data-voice', 'browser', {

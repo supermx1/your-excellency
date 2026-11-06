@@ -1,0 +1,4 @@
+KittenTTS Nano 0.8 (int8) and the "Jasper" voice (expr-voice-2-m) by KittenML, Apache-2.0.
+https://huggingface.co/KittenML/kitten-tts-nano-0.8-int8
+jasper.bin is that voice's rows from voices.npz as raw float32 (400 x 256).
+Text front end adapted from kitten-tts-js (Apache-2.0).
