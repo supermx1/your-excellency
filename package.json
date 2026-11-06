@@ -14,7 +14,9 @@
 		"test:e2e": "playwright install && playwright test",
 		"test": "vitest run",
 		"lint": "prettier --check .",
-		"format": "prettier --write ."
+		"format": "prettier --write .",
+		"sim:data": "node scripts/sim-data/fetch.mjs && node scripts/sim-data/build-cells.mjs && node scripts/sim-data/build-national.mjs && node scripts/sim-data/build-development.mjs && node scripts/sim-data/build-regional.mjs && node scripts/sim-data/build-world.mjs",
+		"sim:calibrate": "vitest run src/lib/game/sim/calibration.test.js"
 	},
 	"devDependencies": {
 		"@playwright/test": "^1.60.0",

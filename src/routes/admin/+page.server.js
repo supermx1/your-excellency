@@ -2,6 +2,7 @@
 import { fail } from '@sveltejs/kit';
 import { defaultRulebook } from '$lib/game/rulebook.js';
 import { readRulebook, writeRulebook } from '$lib/server/rulebook.js';
+import { isAdmin } from '$lib/server/admin.js';
 
 export async function load({ platform }) {
 	let provisions = null;
@@ -23,11 +24,7 @@ export const actions = {
 		const password = String(form.get('password') ?? '');
 		const json = String(form.get('provisions') ?? '');
 
-		// ponytail: password gate via a Cloudflare secret; falls back to the legacy
-		// dev password when unset so it works out of the box. Set ADMIN_PASSWORD
-		// (`wrangler secret put ADMIN_PASSWORD`) for real protection.
-		const expected = platform?.env?.ADMIN_PASSWORD ?? 'emeka-local-admin';
-		if (password !== expected) {
+		if (!isAdmin(platform, password)) {
 			return fail(401, { error: 'Wrong admin password.' });
 		}
 

@@ -14,7 +14,7 @@
 	<title>Your Excellency</title>
 	<meta
 		name="description"
-		content="Two Nigerian political simulators: run for President, or govern a constituency. Corruption pays quickly, reform pays slowly."
+		content="Three Nigerian simulators: run for President, govern a constituency, or rewrite history. Corruption pays quickly, reform pays slowly."
 	/>
 </svelte:head>
 
@@ -31,7 +31,7 @@
 				Pick your seat of power.
 			</h1>
 			<p class="mt-4 max-w-2xl border-l-4 border-black pl-3 text-lg font-medium">
-				Two games, one satire. Corruption pays quickly, reform pays slowly — see how far you get
+				Three games, one satire. Corruption pays quickly, reform pays slowly — see how far you get
 				either way.
 			</p>
 			<div class="mt-6">
@@ -40,7 +40,7 @@
 		</div>
 	</section>
 
-	<div class="mx-auto grid max-w-7xl gap-6 px-4 py-10 md:grid-cols-2 md:px-8">
+	<div class="mx-auto grid max-w-7xl gap-6 px-4 py-10 md:grid-cols-3 md:px-8">
 		<a href="/campaign" class="{card} block p-6 transition hover:-translate-y-1">
 			<p
 				class="inline-block border-2 border-black bg-lime-300 px-2 py-0.5 text-xs font-black uppercase"
@@ -68,6 +68,20 @@
 			<span class="{btn} mt-5 inline-block bg-black px-4 py-2 text-white"
 				>Govern a constituency →</span
 			>
+		</a>
+
+		<a href="/sim" class="{card} block p-6 transition hover:-translate-y-1">
+			<p
+				class="inline-block border-2 border-black bg-amber-300 px-2 py-0.5 text-xs font-black uppercase"
+			>
+				Game three
+			</p>
+			<h2 class="mt-3 text-3xl font-black uppercase">The Timeline</h2>
+			<p class="mt-2 font-medium">
+				What if Nigeria was never colonized? What if everyone had a 200 IQ? Flip history's switches
+				and watch a different Nigeria unfold.
+			</p>
+			<span class="{btn} mt-5 inline-block bg-amber-300 px-4 py-2">Rewrite history →</span>
 		</a>
 	</div>
 </main>
