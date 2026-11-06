@@ -16,7 +16,12 @@ const FAMILY_KINDS = new Set([
 	'war-death',
 	'death',
 	'child',
-	'work'
+	'work',
+	'school',
+	'no-school',
+	'stays',
+	'business',
+	'savings-gone'
 ]);
 const LIMITS = { polities: 20, events: 25, ours: 5, families: 6, str: 160 };
 const cut = (s) => String(s).slice(0, LIMITS.str);

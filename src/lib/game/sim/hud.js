@@ -72,6 +72,10 @@ export function captionsAt(run, year, windowYears = 1.5) {
 }
 
 /** Up to two family life events from the last three years, newest first. */
+/** @param {number | undefined} months */
+const savingsText = (months) =>
+	months == null ? null : months === 0 ? 'No savings left' : `Savings: about ${months} month${months === 1 ? '' : 's'} of income`;
+
 export function familyCardsAt(run, year) {
 	const cards = [];
 	for (const f of run.families)
@@ -84,7 +88,8 @@ export function familyCardsAt(run, year) {
 						surname: f.surname,
 						member: m.name,
 						text: `${m.name} ${f.surname} ${e.text}.`,
-						year: e.year
+						year: e.year,
+						savings: savingsText(f.months?.[e.year - run.history[0].year])
 					});
 	return cards.sort((a, b) => b.year - a.year).slice(0, 2);
 }

@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Release checks: every preset and the real-history baseline run all the way to 2100 without
 // impossible numbers, for a few seeds. Cheap, and catches the long-run blow-ups players would see first.
 import { describe, expect, it } from 'vitest';

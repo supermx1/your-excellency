@@ -3,6 +3,7 @@
 
 const ONES = 'zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen'.split(' ');
 const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+/** @type {[number, string][]} */
 const SCALES = [
 	[1e12, 'trillion'],
 	[1e9, 'billion'],
@@ -19,7 +20,7 @@ function under1000(/** @type {number} */ n) {
 	return `${ONES[h]} hundred${r ? ` and ${rest}` : ''}`;
 }
 
-/** @param {number} n a whole number */
+/** @param {number} n a whole number @returns {string} */
 export function numberWords(n) {
 	if (n < 1000) return under1000(n);
 	for (const [size, name] of SCALES) {
