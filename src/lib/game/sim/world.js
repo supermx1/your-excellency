@@ -14,7 +14,7 @@ import { PARAMS as P } from './params.js';
 import { populationAt } from './population.js';
 import { stepLivelihoods } from './rules/livelihoods.js';
 
-export const ENGINE_VERSION = 6;
+export const ENGINE_VERSION = 7;
 
 const RULES = [
 	stepEvents,
@@ -208,7 +208,7 @@ export function createWorld(inputs, data = defaultData) {
 		history: [],
 		switches: inputs.switches ?? {},
 		flags: { ...start.flags, ...(data.startFlags ?? {}) },
-		missionCells: new Set(), // where missionaries work (from dated arrival events)
+		missionCells: new Set(), // where missionaries work: dated landings, then spread by contact
 		inputs,
 		data
 	};

@@ -9,6 +9,7 @@ const pickOne = (group, label, description, options, def = 'history') => ({ grou
 
 export const SWITCHES = {
 	britishConquest: bool('History', 'British conquest', 'Britain takes Lagos (1861) and conquers the rest by 1903.'),
+	indirectRule: bool('History', 'Indirect rule', 'Britain rules through local rulers, who keep missionaries out where most people follow a faith with its own schools.'),
 	amalgamation: bool('History', 'Amalgamation', 'North and South are joined into one Nigeria in 1914.'),
 	independenceYear: year('History', 'Independence year', 'The year Nigeria becomes independent, if it exists.', 1960),
 	civilWar: bool('History', 'Civil war', 'The 1967–70 war, if there is a Nigeria for it to happen in and a coup has just shaken it.'),
@@ -25,7 +26,7 @@ export const SWITCHES = {
 	freeSchoolingFromYear: year('Policy', 'Free schooling from', 'Free schools for every child from this year (1976 in history, Universal Primary Education; blank = never).', 1976),
 	corruption: pickOne('Policy', 'Corruption', 'Low, as in history, or high.', LEVELS),
 	religiousTolerance: pickOne('Religion', 'Religious tolerance', 'How much religious difference turns into tension, for every faith alike.', LEVELS),
-	christianMissions: bool('Religion', 'Christian missions', 'Missionaries arrive from 1842.'),
+	christianMissions: bool('Religion', 'Christian missions', 'Missionaries land on the coast from 1842 and move inland wherever rulers let them.'),
 	stateReligion: pickOne('Religion', 'State religion', 'Secular states, each state chooses, or as in history.', ['secular', 'choose', 'history']),
 	sharia: bool('Religion', 'Sharia in the north', 'Twelve northern states adopt Sharia law (1999–2001).')
 };

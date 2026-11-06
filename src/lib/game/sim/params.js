@@ -48,6 +48,7 @@ export const PARAMS = {
 	relState: 0.08,
 	relSchool: 5,
 	schoolGrowth: 0.004,
+	missionSpread: 1 / 15, // years for missionaries to move on: 15 from one neighbour, less from several
 	missionPresence: 0.8, // where missionaries work, their schools grow as if this share already believed
 	stateSchoolGrowth: 0.003, // government schools, from income and stability
 	// polities and conflict (same for every polity)

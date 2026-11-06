@@ -74,6 +74,7 @@ function apply(world, event) {
 			}
 			brit.cellIds.push(id);
 			cell.polityId = brit.id;
+			cell.indirectRule = world.switches.indirectRule !== false;
 		}
 		brit.capitalCell ??= fx.conquer.cellIds[0];
 		world.flags.britishRule = true;
@@ -167,8 +168,11 @@ export function stepEvents(world) {
 			)
 				Object.assign(world.flags, e.effects.flags);
 		for (const e of all)
-			if (e.year < world.inputs.startYear && e.effects?.missions && scheduledYear(e, sw) !== null)
-				for (const id of e.effects.missions) world.missionCells.add(id);
+			if (e.year < world.inputs.startYear && scheduledYear(e, sw) !== null) {
+				for (const id of e.effects?.missions ?? []) world.missionCells.add(id);
+				for (const id of e.effects?.conquer?.cellIds ?? [])
+					world.cellById.get(id).indirectRule = sw.indirectRule !== false;
+			}
 	}
 
 	world.fired ??= new Set();

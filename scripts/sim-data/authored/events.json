@@ -108,19 +108,6 @@
 			}
 		},
 		{
-			"id": "missions-yoruba",
-			"year": 1853,
-			"kind": "history",
-			"switch": "christianMissions",
-			"title": "Missions open stations at Ibadan and Ogbomoso",
-			"effects": {
-				"missions": [
-					"oyo",
-					"osun"
-				]
-			}
-		},
-		{
 			"id": "missions-niger",
 			"year": 1857,
 			"kind": "history",
@@ -131,90 +118,6 @@
 					"anambra",
 					"kogi",
 					"delta"
-				]
-			}
-		},
-		{
-			"id": "missions-delta",
-			"year": 1864,
-			"kind": "history",
-			"switch": "christianMissions",
-			"title": "Missions reach Bonny and the Niger Delta",
-			"effects": {
-				"missions": [
-					"rivers",
-					"bayelsa"
-				]
-			}
-		},
-		{
-			"id": "missions-ondo",
-			"year": 1875,
-			"kind": "history",
-			"switch": "christianMissions",
-			"title": "Missions reach Ondo and Ekiti",
-			"effects": {
-				"missions": [
-					"ondo",
-					"ekiti"
-				]
-			}
-		},
-		{
-			"id": "missions-benin",
-			"year": 1898,
-			"kind": "history",
-			"switch": "christianMissions",
-			"title": "Missions reach Benin",
-			"effects": {
-				"missions": [
-					"edo"
-				]
-			}
-		},
-		{
-			"id": "missions-igbo",
-			"year": 1905,
-			"kind": "history",
-			"switch": "christianMissions",
-			"title": "Missions spread through the Igbo heartland",
-			"effects": {
-				"missions": [
-					"imo",
-					"abia",
-					"enugu",
-					"ebonyi"
-				]
-			}
-		},
-		{
-			"id": "missions-middle-belt",
-			"year": 1906,
-			"kind": "history",
-			"switch": "christianMissions",
-			"title": "Missions open in the Middle Belt",
-			"effects": {
-				"missions": [
-					"plateau",
-					"nassarawa",
-					"fct",
-					"kwara",
-					"niger"
-				]
-			}
-		},
-		{
-			"id": "missions-benue",
-			"year": 1911,
-			"kind": "history",
-			"switch": "christianMissions",
-			"title": "Missions reach the Benue valley and the east",
-			"effects": {
-				"missions": [
-					"benue",
-					"taraba",
-					"adamawa",
-					"kaduna"
 				]
 			}
 		},
@@ -760,7 +663,7 @@
 					"cells": [
 						"lagos"
 					],
-					"share": 1e-06
+					"share": 0.000001
 				}
 			}
 		},

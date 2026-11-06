@@ -13,12 +13,30 @@ const TOLERANCE = { low: 0.2, history: 0.5, high: 0.85 };
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, Number.isFinite(v) ? v : lo));
 const diff = (a, b) => FAITHS.reduce((s, f) => s + Math.abs(a[f] - b[f]), 0) / 2;
 
-/** May a faith's schools grow in this cell? Mission schools need missionaries to have arrived there. */
-const schoolsAllowed = (world, faith, cell) =>
-	faith !== 'christian' ||
-	(world.switches.christianMissions !== false &&
-		// Data without dated arrivals (tests, custom maps) falls back to the one 'missions active' flag.
-		(world.missionCells?.size ? world.missionCells.has(cell.id) : world.flags.missionsActive));
+/**
+ * How open is this place to missionaries of this faith (0–1)? A ruler whose state faith runs schools
+ * of its own keeps them out; under indirect rule the local rulers keep them away from the people who
+ * hold such a faith, so they get in only as far as other people live there. Same for every faith.
+ */
+function openTo(cell, faith, polity) {
+	const guards = (f) => f != null && f !== faith && SCHOOL_OF[f] != null;
+	if (guards(polity?.stateReligion)) return 0;
+	if (!cell.indirectRule) return 1;
+	return 1 - FAITHS.filter(guards).reduce((t, f) => t + cell.religion[f], 0);
+}
+
+/** Missionaries move on from where they work into open neighbouring places, a few years per step. */
+function spreadMissions(world, polityById) {
+	if (world.switches.christianMissions === false || !world.missionCells?.size) return;
+	const arrive = [];
+	for (const c of world.cells) {
+		if (world.missionCells.has(c.id)) continue;
+		const near = c.neighbours.filter((id) => world.missionCells.has(id)).length;
+		c.missionContact = (c.missionContact ?? 0) + P.missionSpread * near * openTo(c, 'christian', polityById.get(c.polityId));
+		if (c.missionContact >= 1) arrive.push(c.id);
+	}
+	for (const id of arrive) world.missionCells.add(id);
+}
 
 /** @param {import('../types.js').World} world */
 export function stepReligion(world) {
@@ -27,6 +45,7 @@ export function stepReligion(world) {
 	const polityById = new Map(world.polities.map((p) => [p.id, p]));
 
 	if (sw.stateReligion === 'secular') for (const p of world.polities) p.stateReligion = null;
+	spreadMissions(world, polityById);
 	if (sw.stateReligion === 'choose' && world.year % 25 === 0)
 		for (const p of world.polities) p.stateReligion = majorityFaith(world, p);
 
@@ -58,10 +77,10 @@ export function stepReligion(world) {
 		const funding = 1 + c.incomePc / 3000;
 		for (const f of Object.keys(SCHOOL_OF)) {
 			const kind = SCHOOL_OF[f];
-			// Teachers are where believers live, or where missionaries from abroad have come to work.
+			// Every faith's schools grow from its local believers; missionaries from abroad add teachers where they work.
 			const missionaries = f === 'christian' && world.missionCells?.has(c.id) ? P.missionPresence : 0;
 			const teachers = Math.max(c.religion[f], missionaries);
-			const grow = schoolsAllowed(world, f, c) ? P.schoolGrowth * teachers * funding : 0;
+			const grow = P.schoolGrowth * teachers * funding;
 			c.schools[kind] = clamp(c.schools[kind] + grow * (1 - c.schools[kind]) - 0.01 * c.warDamage, 0, 1);
 		}
 	});
