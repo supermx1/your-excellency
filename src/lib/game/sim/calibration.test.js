@@ -62,3 +62,18 @@ describe('baseline calibration (mean of 30 seeds)', () => {
 	});
 	it('civil war happens in at least 50% of seeds', () => expect(civilWar).toBeGreaterThanOrEqual(0.5));
 });
+
+// The gap is not written in: it comes from where missionaries can work. Change the cause, the map changes.
+describe('the north–south reading gap follows causes', () => {
+	const north = ['kano', 'sokoto', 'katsina', 'zamfara', 'kebbi', 'jigawa'];
+	const east = ['anambra', 'enugu', 'imo', 'abia', 'ebonyi'];
+	const school = (sw, ids) => {
+		const runs = [1, 2, 3].map((seed) => runSimulation({ seed, switches: { ...defaultSwitches(), ...sw }, startYear: 1850, endYear: 2018 }));
+		return ids.reduce((t, id) => t + runs.reduce((s, r) => s + r.history.at(-1).cells.find((c) => c.id === id).litSchool, 0) / runs.length, 0) / ids.length;
+	};
+	it('without missions the north reads as well as the south-east', () =>
+		expect(school({ christianMissions: false }, north)).toBeGreaterThan(school({ christianMissions: false }, east) - 0.05));
+	it('without indirect rule the north reads far more than in history', () =>
+		expect(school({ indirectRule: false }, north)).toBeGreaterThan(school({}, north) + 0.1));
+});
+
