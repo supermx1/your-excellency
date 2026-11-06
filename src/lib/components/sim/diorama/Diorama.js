@@ -3,6 +3,7 @@
 // clock — so live mode and video export produce the same image for the same time.
 import * as THREE from 'three';
 import { cellShapes, sharedEdges, toWorld } from './geometry.js';
+import { addNeighbours } from './neighbours.js';
 import { polityColor } from '$lib/game/sim/colors.js';
 import cells from '$lib/game/sim/data/cells.json';
 
@@ -30,6 +31,7 @@ export class Diorama {
 		Object.assign(sun.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14 });
 		this.scene.add(sun);
 		this.sun = sun;
+		this.disposeNeighbours = addNeighbours(this.scene);
 
 		this.cells = new Map();
 		const segments = lowDetail ? 6 : 12;
@@ -114,6 +116,7 @@ export class Diorama {
 	}
 
 	dispose() {
+		this.disposeNeighbours();
 		this.scene.traverse((o) => {
 			o.geometry?.dispose();
 			o.material?.dispose();
