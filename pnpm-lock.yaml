@@ -11,6 +11,9 @@ importers:
       '@svg-maps/nigeria':
         specifier: ^2.0.0
         version: 2.0.0
+      sanotts-web:
+        specifier: 0.3.0
+        version: 0.3.0
       three:
         specifier: 0.174.0
         version: 0.174.0
@@ -19,13 +22,13 @@ importers:
         specifier: ^1.60.0
         version: 1.61.1
       '@sveltejs/adapter-auto':
-        specifier: next
+        specifier: 8.0.0-next.3
         version: 8.0.0-next.3(@sveltejs/kit@3.0.0-next.25(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.4)(vite@8.1.2(@types/node@26.1.0)(esbuild@0.28.1)(jiti@2.7.0)))(svelte@5.56.4)(typescript@6.0.3)(vite@8.1.2(@types/node@26.1.0)(esbuild@0.28.1)(jiti@2.7.0)))
       '@sveltejs/adapter-cloudflare':
         specifier: ^7.2.9
         version: 7.2.9(@sveltejs/kit@3.0.0-next.25(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.4)(vite@8.1.2(@types/node@26.1.0)(esbuild@0.28.1)(jiti@2.7.0)))(svelte@5.56.4)(typescript@6.0.3)(vite@8.1.2(@types/node@26.1.0)(esbuild@0.28.1)(jiti@2.7.0)))(wrangler@4.106.0(@cloudflare/workers-types@4.20260701.1))
       '@sveltejs/kit':
-        specifier: next
+        specifier: 3.0.0-next.25
         version: 3.0.0-next.25(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.4)(vite@8.1.2(@types/node@26.1.0)(esbuild@0.28.1)(jiti@2.7.0)))(svelte@5.56.4)(typescript@6.0.3)(vite@8.1.2(@types/node@26.1.0)(esbuild@0.28.1)(jiti@2.7.0))
       '@sveltejs/vite-plugin-svelte':
         specifier: ^7.1.2
@@ -1179,6 +1182,10 @@ packages:
     resolution: {integrity: sha512-xal3CZX1Xlo/k4ApwCFrHVACi9fBqJ7V+mwhBsuf/1IOKbBy098Fex+Wa/5QMubw09pSZ/u8EY8PWgevJsXp1A==}
     engines: {node: '>=6'}
 
+  sanotts-web@0.3.0:
+    resolution: {integrity: sha512-1npJ+nptbU4+byTFLIRy81XsvSKVDj1FOGHiyCjeO2PM+/Y3mIKb1FheYjenfyrNqQ6uuN36ODBCFfFzHvmBtA==}
+    engines: {node: '>=18'}
+
   semver@7.8.5:
     resolution: {integrity: sha512-Y7/KDsb8LjooZpwaqGyulO6DQlksgCncchHGk+sZIY4SBvUocMBEFH5Ur1fI4dV+Jvl0w6cjvucaIi40puRioA==}
     engines: {node: '>=10'}
@@ -2202,6 +2209,8 @@ snapshots:
   sade@1.8.1:
     dependencies:
       mri: 1.2.0
+
+  sanotts-web@0.3.0: {}
 
   semver@7.8.5: {}
 
