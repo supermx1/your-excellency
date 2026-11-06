@@ -229,7 +229,7 @@ test('ending explains local conditions and reports the chosen year across seeds'
 	await page.getByText('What shaped this world?', { exact: true }).click();
 	await page.getByLabel('Inspect a region').selectOption('kano');
 	await expect(page.getByRole('heading', { name: /What sets income in Kano in 2021/ })).toBeVisible();
-	await expect(page.getByText('Electricity', { exact: true })).toBeVisible();
+	await expect(page.getByText('Electricity.', { exact: true })).toBeVisible();
 	expect(errors).toEqual([]);
 });
 
