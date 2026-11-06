@@ -1,4 +1,5 @@
 import { PARAMS as P } from './params.js';
+import { powerText } from './format.js';
 
 /**
  * Plain words for recorded factors, chosen by how big the recorded multiplier is.
@@ -37,13 +38,15 @@ export const effectText = (/** @type {number} */ m) => {
 	return pct === 0 ? 'no effect' : pct > 0 ? `+${pct}%` : `−${-pct}%`;
 };
 
-/** @param {{incomeFactors?: Record<string,number>|null}} cell */
+/** @param {{incomeFactors?: Record<string,number>|null, electricityAccess?: number, powerService?: number}} cell */
 export function incomeDrivers(cell) {
 	return Object.entries(cell.incomeFactors ?? {}).flatMap(([key, multiplier]) => {
 		const f = FACTORS[key];
 		if (!f || !Number.isFinite(multiplier)) return [];
 		const text = (f[1].find(([min]) => multiplier >= min) ?? f[1][f[1].length - 1])[1];
-		return [{ key, label: f[0], description: text, multiplier, effect: effectText(multiplier) }];
+		const power = key === 'electricity' ? powerText(cell.electricityAccess, cell.powerService) : null;
+		const description = power ? `${power}. ${text}` : text;
+		return [{ key, label: f[0], description, multiplier, effect: effectText(multiplier) }];
 	});
 }
 

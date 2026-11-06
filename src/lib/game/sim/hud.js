@@ -4,6 +4,7 @@ import { defaultData } from './data/index.js';
 import { frameAt } from './frame.js';
 import { populationAt } from './population.js';
 import { whyHere } from './explanations.js';
+import { powerText } from './format.js';
 
 const realEvents = defaultData.events.events.filter((e) => e.kind === 'history');
 const isRealWar = (e) => e.effects?.war || (e.effects?.conquer && e.effects?.mortality);
@@ -43,8 +44,12 @@ export function statsAt(run, national, year) {
 			: [
 					{
 						key: 'electricityAccess',
-						label: 'Electricity access',
+						label: 'Has electricity',
 						value: f.totals.electricityAccess,
+						extra:
+							!Number.isFinite(f.totals.powerService) || !f.totals.electricityAccess
+								? null
+								: `about ${Math.round((24 * f.totals.powerService) / f.totals.electricityAccess)} hours a day`,
 						// Show observed national totals only in survey years, never label a carried estimate as observed.
 						ours:
 							defaultData.development.snapshots.find((s) => s.year === Math.floor(year))?.national
@@ -219,7 +224,12 @@ export function placeAt(run, frame, cellId) {
 		ours: real && real !== polity.name ? `In our world: ${real}` : null,
 		cellIds: polity.cellIds,
 		// This state alone, so a region's reading is not hidden in the whole country's average.
-		here: { pop: cell.pop, litSchool: cell.litSchool, litAny: cell.litAny },
+		here: {
+			pop: cell.pop,
+			litSchool: cell.litSchool,
+			litAny: cell.litAny,
+			power: powerText(cell.electricityAccess, cell.powerService)
+		},
 		pop,
 		litSchool: avg((c) => c.litSchool),
 		litAny: avg((c) => c.litAny),

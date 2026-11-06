@@ -262,6 +262,7 @@ export function snapshot(world) {
 			lifeExp: round(w('lifeExp'), 1),
 			urban: round(w('urban')),
 			electricityAccess: round(w('electricityAccess')),
+			powerService: round(w('powerService')),
 			incomePc: Math.round(w('incomePc')),
 			foodStress: round(w('foodStress')),
 			wars: world.polities.reduce((s, p) => s + p.atWarWith.length, 0) / 2
