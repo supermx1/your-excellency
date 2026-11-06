@@ -3,6 +3,10 @@ import { PARAMS as P } from '../params.js';
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, Number.isFinite(v) ? v : lo));
 
+/** How much road and market a place's income can build and maintain (0–1). */
+export const roadsFor = (incomePc) =>
+	clamp(Math.log10(incomePc / P.infraBaseIncome) / P.infraIncomeSpan, 0, 1);
+
 /** Income, urbanisation and infrastructure per cell. Same rules for every cell. */
 /** @param {import('../types.js').World} world */
 export function stepEconomy(world) {
@@ -70,10 +74,9 @@ export function stepEconomy(world) {
 			0.95
 		);
 		c.urban = clamp(c.urban + (urbanTarget - c.urban) * P.urbanAdjust, 0, 1);
-		c.infra = clamp(
-			c.infra + P.infraGrowth * Math.log10(c.incomePc / 100) * (power ? 2 : 1) - 0.01 * c.warDamage,
-			0,
-			1
-		);
+		// Roads and markets settle where income can build and keep them: below that they grow
+		// (faster with reliable power), above it they wear down. They no longer only ever grow.
+		const gap = roadsFor(c.incomePc) - c.infra;
+		c.infra = clamp(c.infra + gap * P.infraAdjust * (gap > 0 && power ? 2 : 1) - 0.01 * c.warDamage, 0, 1);
 	}
 }

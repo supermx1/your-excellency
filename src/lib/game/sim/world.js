@@ -6,7 +6,7 @@ import { stepPolities } from './rules/polities.js';
 import { stepConflict } from './rules/conflict.js';
 import { stepReligion } from './rules/religion.js';
 import { stepTech } from './rules/tech.js';
-import { stepEconomy } from './rules/economy.js';
+import { stepEconomy, roadsFor } from './rules/economy.js';
 import { stepDemography } from './rules/demography.js';
 import { stepFamilies, createFamilies } from './rules/families.js';
 import { defaultData } from './data/index.js';
@@ -14,7 +14,7 @@ import { PARAMS as P } from './params.js';
 import { populationAt } from './population.js';
 import { stepLivelihoods } from './rules/livelihoods.js';
 
-export const ENGINE_VERSION = 7;
+export const ENGINE_VERSION = 8;
 
 const RULES = [
 	stepEvents,
@@ -173,6 +173,7 @@ export function createWorld(inputs, data = defaultData) {
 		.filter((s) => s.year <= inputs.startYear)
 		.at(-1);
 	for (const [index, c] of cells.entries()) {
+		c.infra = roadsFor(c.incomePc); // roads start at what the starting income keeps up
 		const profile = observed?.cells[c.id];
 		const polity = polities.find((p) => p.id === c.polityId);
 		if (profile) {
