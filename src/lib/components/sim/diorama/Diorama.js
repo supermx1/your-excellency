@@ -19,7 +19,8 @@ export class Diorama {
 	/** @param {HTMLCanvasElement} canvas @param {{ lowDetail?: boolean }} [opts] */
 	constructor(canvas, { lowDetail = false } = {}) {
 		this.lowDetail = lowDetail;
-		this.renderer = new THREE.WebGLRenderer({ canvas, antialias: !lowDetail, preserveDrawingBuffer: true });
+		// Keeping each frame for capture costs speed; phones never capture, so they skip it.
+		this.renderer = new THREE.WebGLRenderer({ canvas, antialias: !lowDetail, preserveDrawingBuffer: !lowDetail });
 		this.renderer.setPixelRatio(lowDetail ? 1 : Math.min(window.devicePixelRatio || 1, 2));
 		this.renderer.shadowMap.enabled = !lowDetail;
 		this.scene = new THREE.Scene();
@@ -184,6 +185,8 @@ export class Diorama {
 			o.geometry?.dispose();
 			o.material?.dispose();
 		});
+		this.dipQuad.geometry.dispose(); // lives in its own scene, so the traverse above misses it
+		this.dipQuad.material.dispose();
 		this.sun.shadow.dispose();
 		this.renderer.dispose();
 		// dispose() keeps the WebGL context alive; browsers cap live contexts (~16), so release it.

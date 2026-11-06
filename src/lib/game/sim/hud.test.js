@@ -29,6 +29,18 @@ describe('colours', () => {
 		const d = Math.abs(hue(polityColor('kano-1901')) - hue(polityColor('lagos-1901')));
 		expect(Math.min(d, 360 - d)).toBeGreaterThanOrEqual(30);
 	});
+	it('give neighbouring 1850 states clearly different colours', () => {
+		const rgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+		const owner = new Map(defaultData.polities.flatMap((p) => p.cellIds.map((id) => [id, p.id])));
+		for (const c of defaultData.cells)
+			for (const n of c.neighbours) {
+				const [a, b] = [owner.get(c.id), owner.get(n)];
+				if (!a || !b || a === b) continue;
+				const [x, y] = [rgb(polityColor(a)), rgb(polityColor(b))];
+				// The old south-western greens were about 28 apart.
+				expect(Math.hypot(...x.map((v, i) => v - y[i])), `${a} next to ${b}`).toBeGreaterThan(60);
+			}
+	});
 });
 
 describe('hud data', () => {
