@@ -95,3 +95,23 @@ test('Share on the ending copies a /sim/run/ link', async ({ page, context }) =>
 	await expect(page.getByText('Link copied')).toBeVisible();
 	expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/\/sim\/run\/[0-9a-zA-Z]{10}$/);
 });
+
+test('a saved run replays the same history from its link', async ({ page, context }) => {
+	await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+	const s = Buffer.from(JSON.stringify({ seed: 11, switches: {}, startYear: 2018, endYear: 2025 })).toString('base64url');
+	await page.goto(`/sim/play?s=${s}`);
+	await page.getByRole('button', { name: '×4' }).click();
+	const popRow = page.getByRole('row', { name: /Population/ });
+	await expect(popRow).toBeVisible({ timeout: 60000 });
+	const before = await popRow.textContent();
+	await page.getByRole('button', { name: /Share/ }).click();
+	await expect(page.getByText('Link copied')).toBeVisible();
+	await page.goto(await page.evaluate(() => navigator.clipboard.readText()));
+	await page.getByRole('button', { name: '×4' }).click();
+	await expect(page.getByRole('row', { name: /Population/ })).toHaveText(before, { timeout: 60000 });
+});
+
+test('an unknown run link shows not found', async ({ page }) => {
+	await page.goto('/sim/run/doesnotexs');
+	await expect(page.getByText(/doesn't exist/)).toBeVisible();
+});

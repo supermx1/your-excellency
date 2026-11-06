@@ -19,9 +19,11 @@
 	/** inputs: run these in the worker; recorded: play a saved recording instead; runId: the saved run, if any. */
 	let { inputs, recorded = null, runId = null, notice = '', loadError = '' } = $props();
 
-	let run = $state.raw(recorded);
+	let workerRun = $state.raw(null);
+	const run = $derived(recorded ?? workerRun);
 	let summary = $state.raw(null);
-	let error = $state(loadError);
+	let workerError = $state('');
+	const error = $derived(loadError || workerError);
 	let narrations = $state({});
 	let t = $state(0);
 	let playing = $state(true);
@@ -83,7 +85,7 @@
 	$effect(() => {
 		if (recorded || !inputs) return;
 		const job = startRun(inputs, { extraSeeds: 50 });
-		job.result.then((r) => (run = r)).catch((e) => (error = e.message));
+		job.result.then((r) => (workerRun = r)).catch((e) => (workerError = e.message));
 		job.summary.then((s) => (summary = s));
 		return () => job.cancel();
 	});
