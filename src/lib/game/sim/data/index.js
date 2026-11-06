@@ -9,3 +9,7 @@ import tech from './tech.json';
 import names from './names.json';
 
 export const defaultData = { cells, national, regional, polities, realBorders, events, tech, names };
+
+// Globe and neighbour outlines (Plan 2b). Not part of defaultData: the engine never needs them.
+export { default as world } from './world.json';
+export { default as region } from './region.json';

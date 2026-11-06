@@ -19,7 +19,9 @@ export const SOURCES = [
 		url: 'https://en.wikipedia.org/w/api.php?action=parse&page=List_of_Nigerian_states_by_population&prop=wikitext&format=json&formatversion=2',
 		name: 'Wikipedia — List of Nigerian states by population (2006 census)',
 		licence: 'CC BY-SA 4.0'
-	}
+	},
+	{ file: 'ne-110m-countries.geojson', url: 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson/ne_110m_admin_0_countries.geojson', name: 'Natural Earth — Admin 0 countries 1:110m', licence: 'Public domain' },
+	{ file: 'ne-50m-countries.geojson', url: 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson/ne_50m_admin_0_countries.geojson', name: 'Natural Earth — Admin 0 countries 1:50m', licence: 'Public domain' }
 ];
 
 if (import.meta.url === `file://${process.argv[1]}`) {
