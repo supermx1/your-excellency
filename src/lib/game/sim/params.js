@@ -11,7 +11,9 @@ export const PARAMS = {
 	urbanScale: 4.3, // urban target = (ln income − ln urbanBaseIncome) / urbanScale
 	urbanBaseIncome: 450,
 	urbanAdjust: 0.04,
-	infraGrowth: 0.004, // per year, scaled by income
+	infraBaseIncome: 400, // income ($ a head) below which a place keeps up no roads or markets
+	infraIncomeSpan: 2, // full roads at 10^span times that income
+	infraAdjust: 0.03, // share of the gap to the affordable level closed each year
 	// Gameplay assumptions, not fitted causal estimates from DHS (see docs/timeline-data.md).
 	powerReliability: 0.5, // ordinary connected access supplies half of the ideal service index
 	powerIncomeReturn: 0.15, // full effective service adds at most 15% to non-oil potential income

@@ -201,3 +201,14 @@ describe('light public budget and river trade', () => {
 		expect(kogi.marketAccess).toBeGreaterThan(0.2 + 0.5 * kogi.infra + 0.2 * kogi.urban + 0.07);
 	});
 });
+
+describe('roads and markets', () => {
+	const roads2025 = (startYear) => {
+		const r = runSimulation({ seed: 7, switches: defaultSwitches(), startYear, endYear: 2025 });
+		const cells = r.history.at(-1).cells;
+		return cells.reduce((t, c) => t + c.incomeFactors.infrastructure, 0) / cells.length;
+	};
+	it('settle at what income keeps up, so a long run and a short run agree in 2025', () => {
+		expect(Math.abs(roads2025(1850) - roads2025(2015))).toBeLessThan(0.2);
+	});
+});
