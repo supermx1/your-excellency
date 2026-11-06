@@ -68,9 +68,9 @@ describe('camera', () => {
 import { endingRows, realFrame } from './hud.js';
 
 describe('ending', () => {
-	it('has six comparison rows, plus 50-run lines when a summary is given', () => {
+	it('has seven comparison rows, plus 50-run lines when a summary is given', () => {
 		const rows = endingRows(never, defaultData.national, null);
-		expect(rows.map((r) => r.label)).toEqual(['Population', 'Can read', 'Life expectancy', 'Wars', 'Biggest city', 'Religious mix']);
+		expect(rows.map((r) => r.label)).toEqual(['Population', 'Can read (school)', 'Can read (any script)', 'Life expectancy', 'Wars', 'Biggest city', 'Religious mix']);
 		const withSummary = endingRows(never, defaultData.national, { runs: 50, withWar: 41, nigeriaFormed: 3 });
 		expect(withSummary.find((r) => r.label === 'In 50 runs').theirs).toBe('41 had a war · 3 formed a Nigeria');
 	});

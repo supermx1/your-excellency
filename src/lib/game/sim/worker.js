@@ -42,6 +42,7 @@ function summarizeOutcomes(rows) {
 			Object.entries({
 				population: 'pop',
 				literacy: 'litSchool',
+				literacyAny: 'litAny',
 				lifeExpectancy: 'lifeExp',
 				income: 'incomePc'
 			}).map(([label, key]) => [label, stats(rows.map((r) => r.end[key]))])

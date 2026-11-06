@@ -25,10 +25,12 @@ export function statsAt(run, national, year) {
 		},
 		{
 			key: 'litSchool', // school literacy, as surveys measure it, so it compares with ours
-			label: 'Can read',
+			label: 'Can read (school)',
 			value: f.totals.litSchool,
 			ours: nationalAt(national, 'litSchool', year)
 		},
+		// Any script, Quranic Ajami and Arabic included. No national series counts it, so no "ours".
+		{ key: 'litAny', label: 'Can read (any script)', value: f.totals.litAny, ours: null },
 		{
 			key: 'lifeExp',
 			label: 'Life expectancy',
@@ -162,11 +164,12 @@ export function endingRows(run, national, summary) {
 			key: 'pop'
 		},
 		{
-			label: 'Can read',
+			label: 'Can read (school)',
 			theirs: last.totals.litSchool,
 			ours: lastKnown(national, 'litSchool', year),
 			key: 'litSchool'
 		},
+		{ label: 'Can read (any script)', theirs: last.totals.litAny, ours: null, key: 'litAny' },
 		{
 			label: 'Life expectancy',
 			theirs: last.totals.lifeExp,
@@ -217,6 +220,7 @@ export function placeAt(run, frame, cellId) {
 		cellIds: polity.cellIds,
 		pop,
 		litSchool: avg((c) => c.litSchool),
+		litAny: avg((c) => c.litAny),
 		incomePc: avg((c) => c.incomePc),
 		religion: {
 			islam: avg((c) => c.religion.islam),

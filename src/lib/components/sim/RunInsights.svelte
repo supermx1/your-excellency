@@ -17,7 +17,8 @@
 		summary?.endYear === last.year && summary?.outcomes
 			? [
 					{ label: 'Population', key: 'pop', values: summary.outcomes.population },
-					{ label: 'Can read', key: 'litSchool', values: summary.outcomes.literacy },
+					{ label: 'Can read (school)', key: 'litSchool', values: summary.outcomes.literacy },
+					{ label: 'Can read (any script)', key: 'litAny', values: summary.outcomes.literacyAny },
 					{ label: 'Life expectancy', key: 'lifeExp', values: summary.outcomes.lifeExpectancy }
 				].filter((r) => r.values)
 			: []
