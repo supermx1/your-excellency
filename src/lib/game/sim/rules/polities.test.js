@@ -25,3 +25,20 @@ describe('coups are named for their era', () => {
 		for (const e of restored.filter((x) => x.year < 1900)) expect(e.title).not.toMatch(/Civilian rule/);
 	});
 });
+
+describe('a breakaway state and the grid', () => {
+	it('takes its share of power stations; none are made or lost', async () => {
+		const { createWorld, stepWorld } = await import('../world.js');
+		const { secede } = await import('./polities.js');
+		const { defaultSwitches } = await import('../switches.js');
+		const world = createWorld({ seed: 4, switches: defaultSwitches(), startYear: 1990, endYear: 2000 });
+		for (let i = 0; i < 3; i++) stepWorld(world);
+		const ng = world.polities.find((p) => p.id === 'nigeria');
+		const total = () => world.polities.reduce((s, p) => s + (p.powerSupply ?? 0), 0);
+		const before = total();
+		const rebel = secede(world, ng, ['anambra', 'enugu', 'imo'], 'Test Republic');
+		expect(total()).toBeCloseTo(before, 6);
+		expect(rebel.powerSupply).toBeGreaterThan(0);
+		expect(rebel.powerSupply).toBeLessThan(before / 2);
+	});
+});
