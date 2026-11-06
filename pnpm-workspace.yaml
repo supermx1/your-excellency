@@ -3,3 +3,4 @@ allowBuilds:
   esbuild: true
   sharp: true
   workerd: true
+  protobufjs: false # its install script only prints a notice; the voice engine does not need it
