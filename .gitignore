@@ -28,3 +28,5 @@ test-results
 # brainstorm mockups
 .superpowers/
 scripts/sim-data/.cache/
+scripts/sim-data/__pycache__/
+.impeccable/hook.cache.json

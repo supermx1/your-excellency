@@ -12,6 +12,21 @@ export const PARAMS = {
 	urbanBaseIncome: 450,
 	urbanAdjust: 0.04,
 	infraGrowth: 0.004, // per year, scaled by income
+	// Gameplay assumptions, not fitted causal estimates from DHS (see docs/timeline-data.md).
+	powerReliability: 0.5, // ordinary connected access supplies half of the ideal service index
+	powerIncomeReturn: 0.15, // full effective service adds at most 15% to non-oil potential income
+	connectionGrowth: 0.03, // annual share of the affordable connection gap closed
+	schoolExpansionRate: 0.12, // free-school capacity expands gradually, scaled by resources and skills
+	schoolPolicyCoverage: 0.4,
+	// Livelihood rules are sensitivity assumptions, not household-survey estimates.
+	warFoodPressure: 0.35,
+	foodRecovery: 0.06,
+	foodDepletion: 0.1,
+	foodIncomeLoss: 0.1,
+	migrationThreshold: 0.15,
+	opportunityMigration: 0.0015,
+	pressureMigration: 0.01,
+	maxMigration: 0.02,
 	// demography
 	birthBase: 0.05,
 	birthLitDrop: 0.01,

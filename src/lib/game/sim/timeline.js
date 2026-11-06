@@ -4,17 +4,31 @@
 import { INTRO } from './intro.js';
 
 const EVENT_KINDS = new Set(['war', 'peace', 'secession', 'union', 'coup', 'invention', 'history']);
-const FAMILY_KINDS = new Set(['born', 'death', 'war-death', 'reads']);
+const FAMILY_KINDS = new Set([
+	'born',
+	'death',
+	'war-death',
+	'reads',
+	'hardship',
+	'recovery',
+	'electricity'
+]);
 
 /** @param {import('./types.js').RunResult} run */
-export function buildTimeline(run, { quietSecondsPerYear = 0.35, eventSecondsPerYear = 2.5, intro = INTRO } = {}) {
+export function buildTimeline(
+	run,
+	{ quietSecondsPerYear = 0.35, eventSecondsPerYear = 2.5, intro = INTRO } = {}
+) {
 	const start = run.history[0].year;
 	const end = run.history.at(-1).year;
 	const busy = new Set(run.events.filter((e) => EVENT_KINDS.has(e.kind)).map((e) => e.year));
-	for (const f of run.families) for (const m of f.members) for (const e of m.lifeEvents) if (FAMILY_KINDS.has(e.kind)) busy.add(e.year);
+	for (const f of run.families)
+		for (const m of f.members)
+			for (const e of m.lifeEvents) if (FAMILY_KINDS.has(e.kind)) busy.add(e.year);
 
 	const lengths = [];
-	for (let y = start; y < end; y++) lengths.push(busy.has(y) ? eventSecondsPerYear : quietSecondsPerYear);
+	for (let y = start; y < end; y++)
+		lengths.push(busy.has(y) ? eventSecondsPerYear : quietSecondsPerYear);
 	const prefix = [intro];
 	for (const l of lengths) prefix.push(prefix.at(-1) + l);
 	const duration = prefix.at(-1);
@@ -39,7 +53,12 @@ export function buildTimeline(run, { quietSecondsPerYear = 0.35, eventSecondsPer
 
 	const key = new Set([start, ...[1914, 1960, 1967, 2025].filter((y) => y > start && y <= end)]);
 	for (const e of run.events) {
-		if (e.kind === 'secession' || e.kind === 'union' || (e.kind === 'invention' && e.aheadOfReal > 10)) key.add(e.year);
+		if (
+			e.kind === 'secession' ||
+			e.kind === 'union' ||
+			(e.kind === 'invention' && e.aheadOfReal > 10)
+		)
+			key.add(e.year);
 	}
 	return { duration, yearAt, timeAt, keyYears: [...key].sort((a, b) => a - b) };
 }

@@ -72,7 +72,7 @@ describe('ending', () => {
 		const rows = endingRows(never, defaultData.national, null);
 		expect(rows.map((r) => r.label)).toEqual(['Population', 'Can read', 'Life expectancy', 'Wars', 'Biggest city', 'Religious mix']);
 		const withSummary = endingRows(never, defaultData.national, { runs: 50, withWar: 41, nigeriaFormed: 3 });
-		expect(withSummary.some((r) => r.label === 'In 50 runs')).toBe(true);
+		expect(withSummary.find((r) => r.label === 'In 50 runs').theirs).toBe('41 had a war · 3 formed a Nigeria');
 	});
 
 	it('the real side uses Lagos as the biggest city', () => {

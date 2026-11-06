@@ -7,15 +7,26 @@ import { defaultData } from './data/index.js';
 
 const MAX_CHAPTER = 25;
 const KIND_ORDER = ['war', 'secession', 'union', 'invention', 'history', 'coup', 'peace', 'world'];
-const FAMILY_KINDS = new Set(['reads', 'migrates', 'war-death', 'death', 'child', 'work']);
+const FAMILY_KINDS = new Set([
+	'hardship',
+	'recovery',
+	'electricity',
+	'reads',
+	'migrates',
+	'war-death',
+	'death',
+	'child',
+	'work'
+]);
 const LIMITS = { polities: 20, events: 25, ours: 5, families: 6, str: 160 };
 const cut = (s) => String(s).slice(0, LIMITS.str);
 
 /** Name of the preset whose switches all match, else "What if". */
 export function scenarioLabel(inputs) {
 	return (
-		Object.values(PRESETS).find((p) => Object.entries(p.switches).every(([k, v]) => inputs?.switches?.[k] === v))?.label ??
-		'What if'
+		Object.values(PRESETS).find((p) =>
+			Object.entries(p.switches).every(([k, v]) => inputs?.switches?.[k] === v)
+		)?.label ?? 'What if'
 	);
 }
 
@@ -61,7 +72,12 @@ export function digestChapter(run, { from, to }) {
 			f.members.flatMap((m) =>
 				m.lifeEvents
 					.filter((e) => inWindow(e.year) && FAMILY_KINDS.has(e.kind))
-					.map((e) => ({ surname: cut(f.surname), member: cut(m.name), year: e.year, text: cut(`${m.name} ${f.surname} ${e.text}.`) }))
+					.map((e) => ({
+						surname: cut(f.surname),
+						member: cut(m.name),
+						year: e.year,
+						text: cut(`${m.name} ${f.surname} ${e.text}.`)
+					}))
 			)
 		)
 		.sort((a, b) => a.year - b.year)
@@ -81,21 +97,52 @@ export function digestChapter(run, { from, to }) {
 
 const isYear = (y) => Number.isInteger(y) && y >= 1850 && y <= 2100;
 const isStr = (s) => typeof s === 'string' && s.length <= LIMITS.str;
-const exactKeys = (o, keys) => o && typeof o === 'object' && !Array.isArray(o) && Object.keys(o).sort().join() === [...keys].sort().join();
-const isTotals = (t) => exactKeys(t, ['pop', 'litAny', 'lifeExp']) && Object.values(t).every((v) => typeof v === 'number' && Number.isFinite(v));
+const exactKeys = (o, keys) =>
+	o &&
+	typeof o === 'object' &&
+	!Array.isArray(o) &&
+	Object.keys(o).sort().join() === [...keys].sort().join();
+const isTotals = (t) =>
+	exactKeys(t, ['pop', 'litAny', 'lifeExp']) &&
+	Object.values(t).every((v) => typeof v === 'number' && Number.isFinite(v));
 
 /** @returns {{ ok: true, digest: object } | { ok: false, error: string }} */
 export function validateDigest(d) {
 	const bad = (error) => ({ ok: false, error });
-	if (!exactKeys(d, ['scenario', 'from', 'to', 'totals', 'polities', 'events', 'ours', 'families'])) return bad('unexpected fields');
-	if (!isStr(d.scenario) || !isYear(d.from) || !isYear(d.to) || d.to <= d.from) return bad('bad chapter');
-	if (!exactKeys(d.totals, ['start', 'end']) || !isTotals(d.totals.start) || !isTotals(d.totals.end)) return bad('bad totals');
+	if (!exactKeys(d, ['scenario', 'from', 'to', 'totals', 'polities', 'events', 'ours', 'families']))
+		return bad('unexpected fields');
+	if (!isStr(d.scenario) || !isYear(d.from) || !isYear(d.to) || d.to <= d.from)
+		return bad('bad chapter');
+	if (
+		!exactKeys(d.totals, ['start', 'end']) ||
+		!isTotals(d.totals.start) ||
+		!isTotals(d.totals.end)
+	)
+		return bad('bad totals');
 	const list = (xs, max, ok) => Array.isArray(xs) && xs.length <= max && xs.every(ok);
 	if (!list(d.polities, LIMITS.polities, isStr)) return bad('bad polities');
-	if (!list(d.events, LIMITS.events, (e) => exactKeys(e, ['year', 'kind', 'title']) && isYear(e.year) && isStr(e.kind) && isStr(e.title)))
+	if (
+		!list(
+			d.events,
+			LIMITS.events,
+			(e) =>
+				exactKeys(e, ['year', 'kind', 'title']) && isYear(e.year) && isStr(e.kind) && isStr(e.title)
+		)
+	)
 		return bad('bad events');
 	if (!list(d.ours, LIMITS.ours, isStr)) return bad('bad ours');
-	if (!list(d.families, LIMITS.families, (f) => exactKeys(f, ['surname', 'member', 'year', 'text']) && isStr(f.surname) && isStr(f.member) && isYear(f.year) && isStr(f.text)))
+	if (
+		!list(
+			d.families,
+			LIMITS.families,
+			(f) =>
+				exactKeys(f, ['surname', 'member', 'year', 'text']) &&
+				isStr(f.surname) &&
+				isStr(f.member) &&
+				isYear(f.year) &&
+				isStr(f.text)
+		)
+	)
 		return bad('bad families');
 	return { ok: true, digest: d };
 }
@@ -107,5 +154,8 @@ export function fallbackNarration(d) {
 	const top = d.events.slice(0, 3).map((e) => `${e.year}: ${e.title}.`);
 	const growth = `Over these years the population goes from ${millions(d.totals.start.pop)} to ${millions(d.totals.end.pop)}, and ${Math.round(d.totals.end.litAny * 100)}% can read.`;
 	const quiet = top.length ? '' : `${d.from} to ${d.to} passes without major upheaval.`;
-	return { text: [quiet, ...top, growth].filter(Boolean).join(' '), vignettes: d.families.map((f) => f.text) };
+	return {
+		text: [quiet, ...top, growth].filter(Boolean).join(' '),
+		vignettes: d.families.map((f) => f.text)
+	};
 }

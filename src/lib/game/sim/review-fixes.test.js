@@ -16,7 +16,8 @@ describe('review fixes', () => {
 	});
 
 	it('rejects inherited object keys', () => {
-		for (const key of ['toString', 'constructor', 'hasOwnProperty']) expect(validateSwitches({ [key]: 1 }).ok).toBe(false);
+		for (const key of ['toString', 'constructor', 'hasOwnProperty'])
+			expect(validateSwitches({ [key]: 1 }).ok).toBe(false);
 		expect(validateSwitches(JSON.parse('{"__proto__":{"x":1}}')).ok).toBe(false);
 	});
 
@@ -42,5 +43,18 @@ describe('review fixes', () => {
 	it('an early independence year does not cancel later conquests on a late start', () => {
 		const r = run(1, { independenceYear: 1890 }, 1900);
 		expect(r.events.some((e) => e.id === 'amalgamation')).toBe(true);
+	});
+});
+
+describe('dated events on modern starts', () => {
+	it('does not replay independence or oil discovery after they are already in the past', () => {
+		const r = run(42, {}, 2018, 2025);
+		expect(r.events.filter((e) => e.id === 'independence' || e.id === 'oil-oloibiri')).toEqual([]);
+	});
+
+	it('still fires an explicitly postponed discovery and independence in the chosen year', () => {
+		const r = run(42, { oilYear: 2030, independenceYear: 2030 }, 2020, 2032);
+		expect(r.events.find((e) => e.id === 'oil-oloibiri')?.year).toBe(2030);
+		expect(r.events.find((e) => e.id === 'independence')?.year).toBe(2030);
 	});
 });

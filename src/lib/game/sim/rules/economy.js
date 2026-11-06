@@ -8,20 +8,53 @@ const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, Number.isFinite(v) ? v : 
 export function stepEconomy(world) {
 	const oilCells = new Set(world.data.events?.groups?.oil ?? []);
 	const oilOn = world.flags.oilFound && world.switches.oilInGround !== false;
-	const power = world.switches.power24hFromYear != null && world.year >= world.switches.power24hFromYear;
+	const power =
+		world.switches.power24hFromYear != null && world.year >= world.switches.power24hFromYear;
 	const polityById = new Map(world.polities.map((p) => [p.id, p]));
 	for (const c of world.cells) {
 		const polity = polityById.get(c.polityId);
+		const resources = (polity?.stability ?? 0.5) * Math.min(1, c.incomePc / 2000);
+		if (power)
+			c.electricityAccess = 1; // This scenario explicitly supplies universal, uninterrupted power.
+		else if (polity?.tech.includes('electricity')) {
+			const target = clamp(c.infra * (0.5 + 0.5 * Math.min(1, c.incomePc / 4000)), 0, 1);
+			c.electricityAccess +=
+				Math.max(0, target - c.electricityAccess) * P.connectionGrowth * resources;
+		}
+		// Connected access and usable service are different. War disrupts service, not recorded connections.
+		c.powerService = c.electricityAccess * (power ? 1 : P.powerReliability) * (1 - c.warDamage);
+		const freeSchool =
+			world.switches.freeSchoolingFromYear != null &&
+			world.year >= world.switches.freeSchoolingFromYear;
+		if (freeSchool) {
+			const teachers = 0.2 + 0.8 * c.litAny;
+			c.schoolExpansion +=
+				(P.schoolPolicyCoverage - c.schoolExpansion) * P.schoolExpansionRate * resources * teachers;
+		}
+		c.schoolExpansion = clamp(
+			c.schoolExpansion * (1 - 0.05 * c.warDamage),
+			0,
+			P.schoolPolicyCoverage
+		);
 		if (polity?.tech.includes('printing')) {
 			const funding = polity.stability * Math.min(1, c.incomePc / 2000);
-			c.schools.state = clamp(c.schools.state + P.stateSchoolGrowth * funding * (1 - c.schools.state), 0, 1);
+			c.schools.state = clamp(
+				c.schools.state + P.stateSchoolGrowth * funding * (1 - c.schools.state),
+				0,
+				1
+			);
 		}
+		c.incomeFactors = {
+			literacy: 1 + P.litReturn * c.litAny,
+			infrastructure: 1 + P.infraReturn * c.infra,
+			electricity: 1 + P.powerIncomeReturn * c.powerService,
+			conflict: 1 - 0.5 * c.warDamage,
+			food: 1 - P.foodIncomeLoss * c.foodStress
+		};
 		const potential =
 			P.baseIncome *
-			c.mods.productivity *
-			(1 + P.litReturn * c.litAny) *
-			(1 + P.infraReturn * c.infra) *
-			(1 - 0.5 * c.warDamage) +
+				c.mods.productivity *
+				Object.values(c.incomeFactors).reduce((a, b) => a * b, 1) +
 			(oilOn && oilCells.has(c.id) ? P.oilIncome * (world.oilPrice ?? 1) : 0);
 		c.incomePc = clamp(c.incomePc + (potential - c.incomePc) * P.incomeAdjust, 100, 1e6);
 

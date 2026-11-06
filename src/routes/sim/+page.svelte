@@ -48,7 +48,12 @@
 			return;
 		}
 		const seed = crypto.getRandomValues(new Uint32Array(1))[0];
-		const checked = validateInputs({ seed, switches: $state.snapshot(switches), startYear: Number(startYear), endYear: Number(endYear) });
+		const checked = validateInputs({
+			seed,
+			switches: $state.snapshot(switches),
+			startYear: Number(startYear),
+			endYear: Number(endYear)
+		});
 		if (!checked.ok) {
 			error = checked.error;
 			return;
@@ -59,7 +64,10 @@
 
 <svelte:head>
 	<title>The Timeline · Your Excellency</title>
-	<meta name="description" content="Flip history's switches and watch a different Nigeria unfold." />
+	<meta
+		name="description"
+		content="Flip history's switches and watch a different Nigeria unfold."
+	/>
 </svelte:head>
 
 <main class="min-h-screen bg-amber-100 pb-16 text-black">
@@ -68,9 +76,12 @@
 			<a href="/" class="text-sm font-black uppercase underline">← All games</a>
 			<h1 class="mt-3 text-4xl font-black uppercase md:text-6xl">The Timeline</h1>
 			<p class="mt-2 max-w-2xl border-l-4 border-black pl-3 text-lg font-medium">
-				Pick a what-if, flip the switches, and watch a different Nigeria unfold from the year you choose. Everything you don't
-				switch stays real.
+				Pick a what-if, flip the switches, and watch a different Nigeria unfold from the year you
+				choose. Historical starting conditions and shared rules shape each possible story.
 			</p>
+			<a href="/sim/sources" class="mt-4 inline-block text-sm font-bold underline"
+				>Explore the data &amp; assumptions →</a
+			>
 		</div>
 	</section>
 
@@ -81,8 +92,12 @@
 				<div class="mt-3 grid gap-4 md:grid-cols-3">
 					{#each data.featured as run (run.id)}
 						<a href="/sim/run/{run.id}" class="{card} block p-5 transition hover:-translate-y-1">
-							<p class="text-xs font-black uppercase opacity-60">{scenarioLabel(run.inputs)} · from {run.inputs.startYear}</p>
-							<h3 class="mt-1 text-xl font-black uppercase">{run.title ?? scenarioLabel(run.inputs)}</h3>
+							<p class="text-xs font-black uppercase opacity-60">
+								{scenarioLabel(run.inputs)} · from {run.inputs.startYear}
+							</p>
+							<h3 class="mt-1 text-xl font-black uppercase">
+								{run.title ?? scenarioLabel(run.inputs)}
+							</h3>
 							<span class="mt-3 inline-block font-black uppercase underline">Watch →</span>
 						</a>
 					{/each}
@@ -94,7 +109,9 @@
 			{#each [...Object.entries(PRESETS), ['blank', { label: 'Start from scratch', description: 'Every switch as in history. Change what you like.' }]] as [id, p] (id)}
 				<button
 					type="button"
-					class="{card} p-5 text-left transition hover:-translate-y-1 {chosen === id ? 'bg-yellow-200' : ''}"
+					class="{card} p-5 text-left transition hover:-translate-y-1 {chosen === id
+						? 'bg-yellow-200'
+						: ''}"
 					aria-pressed={chosen === id}
 					onclick={() => choose(id)}
 				>
@@ -104,23 +121,39 @@
 			{/each}
 		</div>
 
-		<div class="{card} flex flex-wrap items-end gap-6 p-5">
-			<label class="font-bold">
-				Start year
-				<input type="number" min="1850" max="2025" class="mt-1 block w-32 border-2 border-black px-2 py-1" bind:value={startYear} />
-			</label>
-			<label class="font-bold">
-				End year
-				<input
-					type="number"
-					min={Number(startYear) + 1}
-					max="2100"
-					class="mt-1 block w-32 border-2 border-black px-2 py-1"
-					bind:value={endYear}
-				/>
-				<span class="mt-1 block text-xs font-medium text-black/60">Up to 2100. After 2025, "ours" uses UN projections.</span>
-			</label>
-			<button type="button" class="{btn} ml-auto bg-emerald-400 px-6 py-3 text-lg" onclick={run}>Run history →</button>
+		<div class="{card} flex flex-wrap items-center gap-6 p-5">
+			<!-- The hint sits under both inputs (not inside one label) so the inputs share a baseline,
+			     and stays with them when the button wraps on narrow screens. -->
+			<div>
+				<div class="flex flex-wrap gap-6">
+					<label class="font-bold">
+						Start year
+						<input
+							type="number"
+							min="1850"
+							max="2025"
+							class="mt-1 block w-32 border-2 border-black px-2 py-1"
+							bind:value={startYear}
+						/>
+					</label>
+					<label class="font-bold">
+						End year
+						<input
+							type="number"
+							min={Number(startYear) + 1}
+							max="2100"
+							class="mt-1 block w-32 border-2 border-black px-2 py-1"
+							bind:value={endYear}
+						/>
+					</label>
+				</div>
+				<p class="mt-2 text-xs font-medium text-black/60">
+					Up to 2100. After 2025, "ours" uses UN projections.
+				</p>
+			</div>
+			<button type="button" class="{btn} ml-auto bg-emerald-400 px-6 py-3 text-lg" onclick={run}
+				>Run history →</button
+			>
 			{#if error}<p class="w-full font-bold text-red-700" role="alert">{error}</p>{/if}
 		</div>
 

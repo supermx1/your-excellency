@@ -10,8 +10,11 @@ import { stepEconomy } from './rules/economy.js';
 import { stepDemography } from './rules/demography.js';
 import { stepFamilies, createFamilies } from './rules/families.js';
 import { defaultData } from './data/index.js';
+import { PARAMS as P } from './params.js';
+import { populationAt } from './population.js';
+import { stepLivelihoods } from './rules/livelihoods.js';
 
-export const ENGINE_VERSION = 1;
+export const ENGINE_VERSION = 3;
 
 const RULES = [
 	stepEvents,
@@ -20,6 +23,7 @@ const RULES = [
 	stepReligion,
 	stepTech,
 	stepEconomy,
+	stepLivelihoods,
 	stepDemography,
 	stepFamilies
 ];
@@ -27,18 +31,14 @@ const RULES = [
 const round = (n, p = 4) => Math.round(n * 10 ** p) / 10 ** p;
 
 /** Population and religion for a cell at the start year, from the regional data (if present). */
-function startingCell(id, year, data) {
+function startingCell(id, year, data, populations) {
 	if (!data.regional) return {};
-	const years = Object.keys(data.regional.pop).map(Number).filter((y) => y <= year);
-	const base = Math.max(...years);
-	const natIdx = data.national.years.indexOf(year);
-	const scale = data.national.pop[natIdx] / data.national.pop[data.national.years.indexOf(base)];
 	const r0 = data.regional.religion[1850][id];
 	const r1 = data.regional.religion[2018][id];
 	const t = Math.min(1, Math.max(0, (year - 1850) / (2018 - 1850)));
 	const mix = (k) => r0[k] * (1 - t) + r1[k] * t;
 	return {
-		pop: data.regional.pop[base][id] * scale,
+		pop: populations[id],
 		religion: { islam: mix('islam'), christian: mix('christian'), traditional: mix('traditional') }
 	};
 }
@@ -54,15 +54,33 @@ function startingMap(inputs, data) {
 	if (!snap) return { polities: data.polities ?? [], flags: {}, cellDefaults: {} };
 
 	const at = (key) => data.national[key]?.[data.national.years.indexOf(year)] ?? null;
-	const known = (data.tech ?? []).filter((t) => t.nigeriaYear != null && t.nigeriaYear <= year).map((t) => t.id);
+	const known = (data.tech ?? [])
+		.filter((t) => t.nigeriaYear != null && t.nigeriaYear <= year)
+		.map((t) => t.id);
 	const litSchool = at('litSchool') ?? 0.02;
 	const british = snap.polities.filter((p) => p.british && p.id !== 'nigeria');
-	const merged = british.length > 1
-		? [...snap.polities.filter((p) => !british.includes(p)), { id: 'british', name: 'British territories', british: true, cellIds: british.flatMap((p) => p.cellIds) }]
-		: snap.polities;
+	const merged =
+		british.length > 1
+			? [
+					...snap.polities.filter((p) => !british.includes(p)),
+					{
+						id: 'british',
+						name: 'British territories',
+						british: true,
+						cellIds: british.flatMap((p) => p.cellIds)
+					}
+				]
+			: snap.polities;
 	const polities = merged.map((p) => ({
 		...p,
-		capitalCell: p.id === 'nigeria' ? (year >= 1991 ? 'fct' : 'lagos') : p.cellIds.includes('lagos') ? 'lagos' : p.cellIds[0],
+		capitalCell:
+			p.id === 'nigeria'
+				? year >= 1991
+					? 'fct'
+					: 'lagos'
+				: p.cellIds.includes('lagos')
+					? 'lagos'
+					: p.cellIds[0],
 		government: p.british ? 'colony' : year >= 1960 ? 'federation' : 'monarchy',
 		tech: known,
 		knowledge: 1 + 0.05 * known.length + 2 * litSchool
@@ -74,7 +92,8 @@ function startingMap(inputs, data) {
 			britishRule: polities.some((p) => p.british),
 			nigeriaExists,
 			independent: nigeriaExists && year >= (sw.independenceYear ?? 1960),
-			oilFound: sw.oilInGround !== false && sw.oilDiscovery !== false && year >= (sw.oilYear ?? 1956)
+			oilFound:
+				sw.oilInGround !== false && sw.oilDiscovery !== false && year >= (sw.oilYear ?? 1956)
 		},
 		cellDefaults: Object.fromEntries(
 			Object.entries({
@@ -98,6 +117,16 @@ function makeCell(src, polityId) {
 		lifeExp: 28,
 		incomePc: 700,
 		infra: 0.02,
+		electricityAccess: 0,
+		powerService: 0,
+		schoolExpansion: 0,
+		developmentYear: null,
+		foodBuffer: 0.4,
+		foodStress: 0,
+		harvestShock: 0,
+		marketAccess: 0.2,
+		netMigration: 0,
+		incomeFactors: null,
 		warDamage: 0,
 		tension: 0,
 		religion: { islam: 0, christian: 0, traditional: 1 },
@@ -131,12 +160,36 @@ export function createWorld(inputs, data = defaultData) {
 	const start = startingMap(inputs, data);
 	const polities = start.polities.map(makePolity);
 	const owner = new Map(polities.flatMap((p) => p.cellIds.map((c) => [c, p.id])));
+	const populations = populationAt(data, inputs.startYear);
 	const cells = data.cells.map((c) =>
-		makeCell({ ...startingCell(c.id, inputs.startYear, data), ...start.cellDefaults, ...c }, owner.get(c.id) ?? null)
+		makeCell(
+			{ ...startingCell(c.id, inputs.startYear, data, populations), ...start.cellDefaults, ...c },
+			owner.get(c.id) ?? null
+		)
 	);
+	// Evidence initializes a run only. Never pull the evolving counterfactual back to history.
+	const observed = (data.development?.snapshots ?? [])
+		.filter((s) => s.year <= inputs.startYear)
+		.at(-1);
+	for (const [index, c] of cells.entries()) {
+		const profile = observed?.cells[c.id];
+		const polity = polities.find((p) => p.id === c.polityId);
+		if (profile) {
+			c.electricityAccess = profile.electricityAccess.value;
+			const formal = c.schools.mission + c.schools.state;
+			const missionShare = formal > 0 ? c.schools.mission / formal : 0;
+			// Attendance is a proxy for formal learning capacity, not an adult-literacy value.
+			c.schools.mission = profile.primaryAttendance.value * missionShare;
+			c.schools.state = profile.primaryAttendance.value * (1 - missionShare);
+			c.developmentYear = observed.year;
+		} else if (data.cells[index].electricityAccess == null && polity?.tech.includes('electricity'))
+			c.electricityAccess = c.infra;
+		c.powerService = c.electricityAccess * P.powerReliability;
+	}
 	const world = {
 		year: inputs.startYear,
 		rand: rng(hashString(`timeline:${inputs.seed}`)),
+		familyRand: rng(hashString(`timeline-families:${inputs.seed}`)),
 		cells,
 		cellById: new Map(cells.map((c) => [c.id, c])),
 		polities,
@@ -167,6 +220,16 @@ export function snapshot(world) {
 			litSchool: round(c.litSchool),
 			lifeExp: round(c.lifeExp, 1),
 			incomePc: Math.round(c.incomePc),
+			electricityAccess: round(c.electricityAccess),
+			powerService: round(c.powerService),
+			schoolExpansion: round(c.schoolExpansion),
+			foodStress: round(c.foodStress),
+			foodBuffer: round(c.foodBuffer),
+			marketAccess: round(c.marketAccess),
+			netMigration: Math.round(c.netMigration),
+			incomeFactors:
+				c.incomeFactors &&
+				Object.fromEntries(Object.entries(c.incomeFactors).map(([k, v]) => [k, round(v)])),
 			tension: round(c.tension),
 			religion: {
 				islam: round(c.religion.islam),
@@ -174,13 +237,21 @@ export function snapshot(world) {
 				traditional: round(c.religion.traditional)
 			}
 		})),
-		polities: world.polities.map((p) => ({ id: p.id, name: p.name, capitalCell: p.capitalCell, cellIds: [...p.cellIds] })),
+		polities: world.polities.map((p) => ({
+			id: p.id,
+			name: p.name,
+			capitalCell: p.capitalCell,
+			cellIds: [...p.cellIds]
+		})),
 		totals: {
 			pop: Math.round(pop),
 			litAny: round(w('litAny')),
 			litSchool: round(w('litSchool')),
 			lifeExp: round(w('lifeExp'), 1),
 			urban: round(w('urban')),
+			electricityAccess: round(w('electricityAccess')),
+			incomePc: Math.round(w('incomePc')),
+			foodStress: round(w('foodStress')),
 			wars: world.polities.reduce((s, p) => s + p.atWarWith.length, 0) / 2
 		}
 	};
@@ -198,7 +269,9 @@ export function stepWorld(world) {
 	const ids = new Set(world.polities.map((p) => p.id));
 	const byId = new Map(world.polities.map((p) => [p.id, p]));
 	for (const p of world.polities)
-		p.atWarWith = p.atWarWith.filter((x) => x !== p.id && ids.has(x) && byId.get(x).atWarWith.includes(p.id));
+		p.atWarWith = p.atWarWith.filter(
+			(x) => x !== p.id && ids.has(x) && byId.get(x).atWarWith.includes(p.id)
+		);
 	world.year += 1;
 	world.history.push(snapshot(world));
 }

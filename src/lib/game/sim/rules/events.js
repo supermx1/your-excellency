@@ -76,7 +76,8 @@ function apply(world, event) {
 		const brit = world.polities.find((p) => p.british);
 		if (brit) {
 			const old = brit.id;
-			for (const p of world.polities) p.atWarWith = p.atWarWith.map((x) => (x === old ? fx.merge.id : x));
+			for (const p of world.polities)
+				p.atWarWith = p.atWarWith.map((x) => (x === old ? fx.merge.id : x));
 			for (const w of world.wars ?? []) {
 				if (w.a === old) w.a = fx.merge.id;
 				if (w.b === old) w.b = fx.merge.id;
@@ -121,7 +122,13 @@ function apply(world, event) {
 		const scaled = { ...fx[kind] };
 		if (scaled.share) scaled.share *= drought;
 		if (scaled.mult && kind === 'productivity') scaled.mult = 1 - (1 - scaled.mult) * drought;
-		world.activeEffects.push({ kind, ...scaled, cells: cellsFor(world, fx[kind].cells ?? 'all'), until: world.year + (fx[kind].years ?? 1) });
+		world.activeEffects.push({
+			kind,
+			source: event.id,
+			...scaled,
+			cells: cellsFor(world, fx[kind].cells ?? 'all'),
+			until: world.year + (fx[kind].years ?? 1)
+		});
 	}
 }
 
@@ -133,7 +140,12 @@ export function stepEvents(world) {
 		world.activeEffects = [];
 		// Flags from events before the start year (e.g. missionaries arriving in 1842).
 		for (const e of all)
-			if (e.year < world.inputs.startYear && e.effects?.flags && !e.requires && scheduledYear(e, sw) !== null)
+			if (
+				e.year < world.inputs.startYear &&
+				e.effects?.flags &&
+				!e.requires &&
+				scheduledYear(e, sw) !== null
+			)
 				Object.assign(world.flags, e.effects.flags);
 	}
 
@@ -145,7 +157,12 @@ export function stepEvents(world) {
 		const waits = e.switch === 'independenceYear' || e.id === 'oil-oloibiri';
 		if (waits ? year > world.year : year !== world.year) continue;
 		if (e.kind === 'history' && !(e.requires ?? []).every((f) => world.flags[f])) continue;
-		if (waits && year < world.inputs.startYear && world.year === world.inputs.startYear && e.year < world.inputs.startYear) continue;
+		// Skipping only the first step lets completed historical events replay the next year.
+		// Explicitly postponed events have a future scheduled year and remain eligible.
+		if (waits && year < world.inputs.startYear && e.year < world.inputs.startYear) {
+			world.fired.add(e.id);
+			continue;
+		}
 		world.fired.add(e.id);
 		apply(world, e);
 		world.events.push({ year: world.year, kind: e.kind, id: e.id, title: e.title });

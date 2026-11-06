@@ -2,7 +2,18 @@
 // The state shown at a fractional year: snapshots interpolated, plus war fronts and epidemics.
 import { defaultData } from './data/index.js';
 
-const NUMERIC = ['pop', 'urban', 'litAny', 'litSchool', 'lifeExp', 'incomePc', 'tension'];
+const NUMERIC = [
+	'pop',
+	'urban',
+	'litAny',
+	'litSchool',
+	'lifeExp',
+	'incomePc',
+	'tension',
+	'electricityAccess',
+	'powerService',
+	'schoolExpansion'
+];
 const neighbours = new Map(defaultData.cells.map((c) => [c.id, c.neighbours]));
 const lerp = (a, b, t) => a + (b - a) * t;
 
@@ -14,7 +25,12 @@ function epidemicCells(run, year) {
 		if (e.year !== year || e.kind !== 'world') continue;
 		const spec = defaultData.events.events.find((x) => x.id === e.id)?.effects?.mortality?.cells;
 		if (!spec) continue;
-		const ids = spec === 'all' ? [...neighbours.keys()] : typeof spec === 'string' ? (groups[spec] ?? []) : spec;
+		const ids =
+			spec === 'all'
+				? [...neighbours.keys()]
+				: typeof spec === 'string'
+					? (groups[spec] ?? [])
+					: spec;
 		for (const id of ids) hit.add(id);
 	}
 	return hit;
@@ -50,7 +66,12 @@ export function frameAt(run, year) {
 
 	const cells = a.cells.map((ca) => {
 		const cb = bById.get(ca.id) ?? ca;
-		const cell = { id: ca.id, polityId: ca.polityId, nextPolityId: cb.polityId, religion: ca.religion };
+		const cell = {
+			id: ca.id,
+			polityId: ca.polityId,
+			nextPolityId: cb.polityId,
+			religion: ca.religion
+		};
 		for (const k of NUMERIC) cell[k] = lerp(ca[k] ?? 0, cb[k] ?? 0, t);
 		cell.warFront = wars.some(
 			([p, q]) =>

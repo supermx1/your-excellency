@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "src/routes/sim/+page.svelte"
+        ],
+        "createdAt": "2026-11-06T01:39:54.519Z",
+        "reason": "Agent review: pre-existing black paragraph rule in HEAD, also used in the hub, Campaign and City introductions; preserves the incumbent shared visual system and is not a colored card accent."
+      }
+    ]
+  }
+}

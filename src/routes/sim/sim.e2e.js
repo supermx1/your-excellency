@@ -18,13 +18,22 @@ test('choosing Never colonized and Run reaches /sim/play', async ({ page }) => {
 });
 
 const never = () =>
-	Buffer.from(JSON.stringify({ seed: 7, switches: { britishConquest: false, amalgamation: false }, startYear: 1850, endYear: 2025 })).toString('base64url');
+	Buffer.from(
+		JSON.stringify({
+			seed: 7,
+			switches: { britishConquest: false, amalgamation: false },
+			startYear: 1850,
+			endYear: 2025
+		})
+	).toString('base64url');
 
 test('live view advances the year', async ({ page }) => {
 	await page.goto(`/sim/play?s=${never()}`);
 	const year = page.getByTestId('year');
 	await expect(year).toBeVisible({ timeout: 15000 });
-	await expect(async () => expect(Number(await year.textContent())).toBeGreaterThan(1851)).toPass({ timeout: 10000 });
+	await expect(async () => expect(Number(await year.textContent())).toBeGreaterThan(1851)).toPass({
+		timeout: 10000
+	});
 });
 
 test('space pauses and scrubbing jumps to a year', async ({ page }) => {
@@ -44,11 +53,15 @@ test('a damaged link shows an error with a way back', async ({ page }) => {
 });
 
 test('a short run reaches the ending table', async ({ page }) => {
-	const s = Buffer.from(JSON.stringify({ seed: 3, switches: {}, startYear: 2015, endYear: 2025 })).toString('base64url');
+	const s = Buffer.from(
+		JSON.stringify({ seed: 3, switches: {}, startYear: 2015, endYear: 2025 })
+	).toString('base64url');
 	await page.goto(`/sim/play?s=${s}`);
 	await expect(page.getByTestId('year')).toBeVisible({ timeout: 15000 });
 	await page.getByRole('button', { name: '×4' }).click();
-	await expect(page.getByRole('heading', { name: /Their Nigeria in 2025/ })).toBeVisible({ timeout: 60000 });
+	await expect(page.getByRole('heading', { name: /Their Nigeria in 2025/ })).toBeVisible({
+		timeout: 60000
+	});
 	await expect(page.getByRole('button', { name: 'Run again' })).toBeVisible();
 	await expect(page.getByRole('row', { name: /Religious mix/ })).toBeVisible();
 });
@@ -60,11 +73,15 @@ test.describe('on a phone', () => {
 		await page.goto(`/sim/play?s=${never()}`);
 		await expect(page.getByTestId('year')).toBeVisible({ timeout: 15000 });
 		await expect(page.locator('canvas').first()).toBeVisible();
-		expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
+		expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+			375
+		);
 	});
 });
 
-test('scrubbing through a key year while paused does not leave the split screen stuck', async ({ page }) => {
+test('scrubbing through a key year while paused does not leave the split screen stuck', async ({
+	page
+}) => {
 	await page.goto(`/sim/play?s=${never()}`);
 	await expect(page.getByTestId('year')).toBeVisible({ timeout: 15000 });
 	await page.keyboard.press('Space');
@@ -88,27 +105,36 @@ test('narration falls back to built-in text when the AI request fails', async ({
 
 test('Share on the ending copies a /sim/run/ link', async ({ page, context }) => {
 	await context.grantPermissions(['clipboard-read', 'clipboard-write']);
-	const s = Buffer.from(JSON.stringify({ seed: 5, switches: {}, startYear: 2020, endYear: 2025 })).toString('base64url');
+	const s = Buffer.from(
+		JSON.stringify({ seed: 5, switches: {}, startYear: 2020, endYear: 2025 })
+	).toString('base64url');
 	await page.goto(`/sim/play?s=${s}`);
 	await page.getByRole('button', { name: '×4' }).click();
 	await page.getByRole('button', { name: /Share/ }).click({ timeout: 60000 });
 	await expect(page.getByText('Link copied')).toBeVisible();
-	expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/\/sim\/run\/[0-9a-zA-Z]{10}$/);
+	expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(
+		/\/sim\/run\/[0-9a-zA-Z]{10}$/
+	);
 });
 
 test('a saved run replays the same history from its link', async ({ page, context }) => {
 	await context.grantPermissions(['clipboard-read', 'clipboard-write']);
-	const s = Buffer.from(JSON.stringify({ seed: 11, switches: {}, startYear: 2018, endYear: 2025 })).toString('base64url');
+	const s = Buffer.from(
+		JSON.stringify({ seed: 11, switches: {}, startYear: 2018, endYear: 2025 })
+	).toString('base64url');
 	await page.goto(`/sim/play?s=${s}`);
 	await page.getByRole('button', { name: '×4' }).click();
-	const popRow = page.getByRole('row', { name: /Population/ });
+	// .first(): the ending table, not the run-spread table below it.
+	const popRow = page.getByRole('row', { name: /Population/ }).first();
 	await expect(popRow).toBeVisible({ timeout: 60000 });
-	const before = (await popRow.textContent()) ?? "";
+	const before = (await popRow.textContent()) ?? '';
 	await page.getByRole('button', { name: /Share/ }).click();
 	await expect(page.getByText('Link copied')).toBeVisible();
 	await page.goto(await page.evaluate(() => navigator.clipboard.readText()));
 	await page.getByRole('button', { name: '×4' }).click();
-	await expect(page.getByRole('row', { name: /Population/ })).toHaveText(before, { timeout: 60000 });
+	await expect(page.getByRole('row', { name: /Population/ }).first()).toHaveText(before, {
+		timeout: 60000
+	});
 });
 
 test('an unknown run link shows not found', async ({ page }) => {
@@ -136,13 +162,17 @@ test('an end year before the start year is rejected', async ({ page }) => {
 });
 
 test.describe('globe opening and closing', () => {
-	test('a run opens on the globe with a Skip intro button, then the year counter starts', async ({ page }) => {
+	test('a run opens on the globe with a Skip intro button, then the year counter starts', async ({
+		page
+	}) => {
 		await page.goto(`/sim/play?s=${never()}`);
 		const skip = page.getByRole('button', { name: 'Skip intro' });
 		await expect(skip).toBeVisible({ timeout: 15000 });
 		await expect(page.getByTestId('view')).toHaveAttribute('data-camera', 'globe');
 		await expect(skip).toBeHidden({ timeout: 8000 });
-		await expect(async () => expect(Number(await page.getByTestId('year').textContent())).toBeGreaterThan(1850)).toPass({ timeout: 5000 });
+		await expect(async () =>
+			expect(Number(await page.getByTestId('year').textContent())).toBeGreaterThan(1850)
+		).toPass({ timeout: 5000 });
 	});
 
 	test('Skip intro jumps straight to the start year on the diorama', async ({ page }) => {
@@ -157,13 +187,60 @@ test.describe('globe opening and closing', () => {
 	});
 
 	test('a 2015–2025 run plays the outro before the ending table', async ({ page }) => {
-		const s = Buffer.from(JSON.stringify({ seed: 3, switches: {}, startYear: 2015, endYear: 2025 })).toString('base64url');
+		const s = Buffer.from(
+			JSON.stringify({ seed: 3, switches: {}, startYear: 2015, endYear: 2025 })
+		).toString('base64url');
 		await page.goto(`/sim/play?s=${s}`);
 		await page.getByRole('button', { name: 'Skip intro' }).click({ timeout: 15000 });
 		await page.getByRole('button', { name: '×4' }).click();
 		await expect(page.getByTestId('year')).toHaveText('2025', { timeout: 60000 });
-		await expect(page.getByTestId('view')).toHaveAttribute('data-camera', 'globe', { timeout: 15000 });
+		await expect(page.getByTestId('view')).toHaveAttribute('data-camera', 'globe', {
+			timeout: 15000
+		});
 		await expect(page.getByRole('heading', { name: /Their Nigeria in 2025/ })).toHaveCount(0);
-		await expect(page.getByRole('heading', { name: /Their Nigeria in 2025/ })).toBeVisible({ timeout: 10000 });
+		await expect(page.getByRole('heading', { name: /Their Nigeria in 2025/ })).toBeVisible({
+			timeout: 10000
+		});
 	});
+});
+
+test('ending explains local conditions and reports the chosen year across seeds', async ({
+	page
+}) => {
+	await page.route('**/api/sim/narrate', (r) => r.abort());
+	/** @type {string[]} */
+	const errors = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	const s = Buffer.from(
+		JSON.stringify({
+			seed: 42,
+			switches: { freeSchoolingFromYear: 2018 },
+			startYear: 2018,
+			endYear: 2021
+		})
+	).toString('base64url');
+	await page.goto(`/sim/play?s=${s}`);
+	await page.getByRole('button', { name: 'Skip intro' }).click({ timeout: 15000 });
+	await page.getByRole('button', { name: '×4' }).click();
+	await expect(page.getByRole('heading', { name: 'Their Nigeria in 2021' })).toBeVisible({
+		timeout: 60000
+	});
+	await expect(page.getByText(/all ending in 2021/)).toBeVisible({ timeout: 15000 });
+	await page.getByText('What shaped this world?', { exact: true }).click();
+	await page.getByLabel('Inspect a region').selectOption('kano');
+	await expect(page.getByRole('heading', { name: 'Income factors in 2021' })).toBeVisible();
+	await expect(page.getByText('Usable electricity', { exact: false })).toBeVisible();
+	expect(errors).toEqual([]);
+});
+
+test('historical data page makes the 1850 proxy and state footprints explicit', async ({
+	page
+}) => {
+	await page.goto('/sim/sources');
+	await expect(page.getByRole('heading', { name: 'The historical starting world' })).toBeVisible();
+	await page
+		.getByText('Inspect reconstructed populations in 1850 and 1900', { exact: true })
+		.click();
+	await expect(page.locator('details[open] tbody tr')).toHaveCount(37);
+	await expect(page.getByRole('columnheader', { name: '1850 (1861 pattern)' })).toBeVisible();
 });
