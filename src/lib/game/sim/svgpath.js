@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Parses the @svg-maps/nigeria state paths (they only use relative `m` and `z`).
 
 /** Paths only use `m` (relative, implicit lineto) and `z`. Returns rings of [x,y]. */

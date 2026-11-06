@@ -16,3 +16,29 @@ test('choosing Never colonized and Run reaches /sim/play', async ({ page }) => {
 	await page.getByRole('button', { name: /Run history/ }).click();
 	await expect(page).toHaveURL(/\/sim\/play\?s=/);
 });
+
+const never = () =>
+	Buffer.from(JSON.stringify({ seed: 7, switches: { britishConquest: false, amalgamation: false }, startYear: 1850, endYear: 2025 })).toString('base64url');
+
+test('live view advances the year', async ({ page }) => {
+	await page.goto(`/sim/play?s=${never()}`);
+	const year = page.getByTestId('year');
+	await expect(year).toBeVisible({ timeout: 15000 });
+	await expect(async () => expect(Number(await year.textContent())).toBeGreaterThan(1851)).toPass({ timeout: 10000 });
+});
+
+test('space pauses and scrubbing jumps to a year', async ({ page }) => {
+	await page.goto(`/sim/play?s=${never()}`);
+	await expect(page.getByTestId('year')).toBeVisible({ timeout: 15000 });
+	await page.keyboard.press('Space');
+	await page.getByLabel('Jump to year').fill('1960');
+	await expect(page.getByTestId('year')).toHaveText('1960');
+	await page.waitForTimeout(1000);
+	await expect(page.getByTestId('year')).toHaveText('1960');
+});
+
+test('a damaged link shows an error with a way back', async ({ page }) => {
+	await page.goto('/sim/play?s=garbage');
+	await expect(page.getByRole('alert')).toContainText("couldn't load");
+	await expect(page.getByRole('link', { name: /Back to setup/ })).toHaveAttribute('href', '/sim');
+});

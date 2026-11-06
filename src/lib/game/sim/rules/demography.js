@@ -20,7 +20,7 @@ export function stepDemography(world) {
 		c.birthRate = birth;
 		c.deathRate = death;
 		c.pop = clamp(c.pop * (1 + birth - death), 0, 1e10);
-		c.lifeExp = clamp(P.lifeExpBase + (0.045 - death) * P.lifeExpSlope, 15, 95);
+		c.lifeExp = clamp(P.lifeExpBase + (0.045 - death) * P.lifeExpSlope, 20, 95);
 
 		const learn = P.learnRate * c.mods.learning;
 		const extra = freeSchool ? 0.4 : 0;

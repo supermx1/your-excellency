@@ -20,8 +20,8 @@ export const PARAMS = {
 	deathIncomeDrop: 0.35, // share of deaths removed as income approaches incomeForLowDeath
 	incomeForLowDeath: 12000,
 	warDeath: 0.05, // extra death rate at full war damage
-	lifeExpBase: 15,
-	lifeExpSlope: 1200,
+	lifeExpBase: 25,
+	lifeExpSlope: 950,
 	// religion (one set of weights for every faith)
 	relRate: 0.01, // share of the gap to the pulled mix closed each year
 	relNeighbour: 0.15,
