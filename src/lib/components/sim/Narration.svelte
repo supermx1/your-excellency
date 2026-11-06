@@ -1,29 +1,43 @@
 <script>
 	// @ts-nocheck
-	import { pickVoice } from '$lib/game/sim/speech.js';
+	import { readWithSano, readWithBrowser } from '$lib/game/sim/speech.js';
 
 	let { narration, chapter = null } = $props();
 	let open = $state(false);
-	// Read aloud: once on, each new chapter (or the AI text replacing the built-in one) is read in turn.
+	// Read aloud: once on, each new chapter (or the AI text replacing the built-in one) is read in turn,
+	// with the site's own sanoTTS voice; the browser's voice takes over if that can't load or run.
 	let reading = $state(false);
-	const canSpeak = typeof window !== 'undefined' && 'speechSynthesis' in window;
+	let voice = $state(''); // 'loading' | 'sano' | 'browser' (shown on the button and for tests)
+	let fallback = false;
+	let ctx = null;
+	const canSpeak = typeof window !== 'undefined' && ('AudioContext' in window || 'speechSynthesis' in window);
 	const spoken = $derived([narration.text, ...(narration.vignettes ?? [])].join(' '));
 
+	function toggle() {
+		reading = !reading;
+		// Phones only allow audio started from a tap, so the AudioContext is made here, not in the effect.
+		if (reading && !ctx && 'AudioContext' in window) ctx = new AudioContext();
+		ctx?.resume();
+	}
+
 	$effect(() => {
-		if (!canSpeak || !reading) return;
-		const voice = pickVoice(speechSynthesis.getVoices());
-		speechSynthesis.cancel();
-		// One utterance per sentence: Chrome's online voices go silent ~15 s into a long one.
-		for (const sentence of spoken.match(/[^.!?]+[.!?]*\s*/g) ?? [spoken]) {
-			const say = new SpeechSynthesisUtterance(sentence.trim());
-			if (voice) {
-				say.voice = voice;
-				say.lang = voice.lang;
-			}
-			say.rate = 0.95;
-			speechSynthesis.speak(say);
-		}
-		return () => speechSynthesis.cancel();
+		if (!reading) return;
+		const text = spoken;
+		const stop = new AbortController();
+		const browser = () => {
+			voice = 'browser';
+			readWithBrowser(text, stop.signal);
+		};
+		if (ctx && !fallback) {
+			voice = 'loading';
+			readWithSano(text, ctx, stop.signal, () => (voice = 'sano')).catch((err) => {
+				if (stop.signal.aborted) return;
+				console.warn('sanoTTS unavailable, using the browser voice:', err);
+				fallback = true;
+				browser();
+			});
+		} else browser();
+		return () => stop.abort();
 	});
 </script>
 
@@ -39,8 +53,8 @@
 	<div class="mt-1 flex gap-4 text-xs font-black tracking-wider text-amber-300 uppercase">
 		<button type="button" aria-expanded={open} onclick={() => (open = !open)}>{open ? 'Less' : 'More'}</button>
 		{#if canSpeak}
-			<button type="button" aria-pressed={reading} onclick={() => (reading = !reading)}>
-				{reading ? '■ Stop reading' : '▶ Listen'}
+			<button type="button" aria-pressed={reading} data-voice={reading ? voice : ''} onclick={toggle}>
+				{!reading ? '▶ Listen' : voice === 'loading' ? 'Loading voice…' : '■ Stop reading'}
 			</button>
 		{/if}
 	</div>
