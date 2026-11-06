@@ -75,3 +75,20 @@ describe('neighbour names follow real history', () => {
 		expect(neighbourName('GNQ', 2000)).toBe('Equatorial Guinea');
 	});
 });
+
+import { westAfrica } from './data/index.js';
+
+describe('West Africa close-up outlines for the globe', () => {
+	it('has a finer Nigeria than the world map, the rivers, and stays small', () => {
+		const pts = (c) => c.rings.reduce((s, r) => s + r.length, 0);
+		const nga = westAfrica.countries.find((c) => c.id === 'NGA');
+		expect(pts(nga)).toBeGreaterThan(3 * pts(world.find((c) => c.id === 'NGA')));
+		expect(westAfrica.rivers.map((r) => r.name)).toEqual(expect.arrayContaining(['Niger', 'Benue']));
+		for (const c of westAfrica.countries)
+			for (const [lon, lat] of c.rings.flat()) {
+				expect(lon).toBeGreaterThanOrEqual(westAfrica.box.lon0);
+				expect(lat).toBeLessThanOrEqual(westAfrica.box.lat1);
+			}
+		expect(readFileSync(new URL('./data/westafrica.json', import.meta.url)).length).toBeLessThanOrEqual(150 * 1024);
+	});
+});

@@ -24,3 +24,4 @@ export const defaultData = {
 // Globe and neighbour outlines (Plan 2b). Not part of defaultData: the engine never needs them.
 export { default as world } from './world.json';
 export { default as region } from './region.json';
+export { default as westAfrica } from './westafrica.json';

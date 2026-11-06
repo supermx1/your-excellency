@@ -1,7 +1,30 @@
 <script>
 	// @ts-nocheck
+	import { pickVoice } from '$lib/game/sim/speech.js';
+
 	let { narration, chapter = null } = $props();
 	let open = $state(false);
+	// Read aloud: once on, each new chapter (or the AI text replacing the built-in one) is read in turn.
+	let reading = $state(false);
+	const canSpeak = typeof window !== 'undefined' && 'speechSynthesis' in window;
+	const spoken = $derived([narration.text, ...(narration.vignettes ?? [])].join(' '));
+
+	$effect(() => {
+		if (!canSpeak || !reading) return;
+		const voice = pickVoice(speechSynthesis.getVoices());
+		speechSynthesis.cancel();
+		// One utterance per sentence: Chrome's online voices go silent ~15 s into a long one.
+		for (const sentence of spoken.match(/[^.!?]+[.!?]*\s*/g) ?? [spoken]) {
+			const say = new SpeechSynthesisUtterance(sentence.trim());
+			if (voice) {
+				say.voice = voice;
+				say.lang = voice.lang;
+			}
+			say.rate = 0.95;
+			speechSynthesis.speak(say);
+		}
+		return () => speechSynthesis.cancel();
+	});
 </script>
 
 <aside
@@ -13,7 +36,12 @@
 	{#if open}
 		{#each narration.vignettes as v, i (i)}<p class="mt-2 text-sm italic opacity-80">{v}</p>{/each}
 	{/if}
-	<button type="button" class="mt-1 text-xs font-black tracking-wider text-amber-300 uppercase" aria-expanded={open} onclick={() => (open = !open)}>
-		{open ? 'Less' : 'More'}
-	</button>
+	<div class="mt-1 flex gap-4 text-xs font-black tracking-wider text-amber-300 uppercase">
+		<button type="button" aria-expanded={open} onclick={() => (open = !open)}>{open ? 'Less' : 'More'}</button>
+		{#if canSpeak}
+			<button type="button" aria-pressed={reading} onclick={() => (reading = !reading)}>
+				{reading ? '■ Stop reading' : '▶ Listen'}
+			</button>
+		{/if}
+	</div>
 </aside>

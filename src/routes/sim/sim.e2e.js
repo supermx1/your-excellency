@@ -246,6 +246,7 @@ test('historical data page makes the 1850 proxy and state footprints explicit', 
 });
 
 test.describe('map controls', () => {
+	/** @param {import("@playwright/test").Page} page */
 	const start = async (page) => {
 		await page.goto(`/sim/play?s=${never()}`);
 		await page.getByRole('button', { name: 'Skip intro' }).click({ timeout: 15000 });
@@ -255,7 +256,7 @@ test.describe('map controls', () => {
 
 	test('clicking a state shows who rules it then and what it is today', async ({ page }) => {
 		const map = await start(page);
-		const box = await map.boundingBox();
+		const box = /** @type {{ x: number, y: number, width: number, height: number }} */ (await map.boundingBox());
 		await map.click({ position: { x: box.width * 0.5, y: box.height * 0.3 } });
 		const card = page.getByRole('region', { name: /^About / });
 		await expect(card).toBeVisible();
@@ -266,7 +267,7 @@ test.describe('map controls', () => {
 
 	test('dragging the map takes over the camera until Reset view', async ({ page }) => {
 		const map = await start(page);
-		const box = await map.boundingBox();
+		const box = /** @type {{ x: number, y: number, width: number, height: number }} */ (await map.boundingBox());
 		await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
 		await page.mouse.down();
 		await page.mouse.move(box.x + box.width / 2 - 120, box.y + box.height / 2 - 40, { steps: 5 });

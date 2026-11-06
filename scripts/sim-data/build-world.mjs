@@ -63,10 +63,10 @@ const project = ([lon, lat]) => [fit.a * lon + fit.b, fit.c * LAT[fit.kind](lat)
 // --- region.json: neighbours clipped to the frame, in SVG units -----------------
 const FRAME = { lon0: -1, lon1: 17, lat0: 1, lat1: 17 };
 /** Sutherland–Hodgman against the frame rectangle */
-function clip(ring) {
+function clip(ring, box = FRAME) {
 	const edges = [
-		[(p) => p[0] >= FRAME.lon0, 0, FRAME.lon0], [(p) => p[0] <= FRAME.lon1, 0, FRAME.lon1],
-		[(p) => p[1] >= FRAME.lat0, 1, FRAME.lat0], [(p) => p[1] <= FRAME.lat1, 1, FRAME.lat1]
+		[(p) => p[0] >= box.lon0, 0, box.lon0], [(p) => p[0] <= box.lon1, 0, box.lon1],
+		[(p) => p[1] >= box.lat0, 1, box.lat0], [(p) => p[1] <= box.lat1, 1, box.lat1]
 	];
 	let out = ring;
 	for (const [inside, k, v] of edges) {
@@ -107,11 +107,11 @@ const neighbours = NEIGHBOURS.map((id) => {
 	return { id, name: f.properties.NAME, rings, label: biggest.at };
 });
 // --- rivers and lakes: Niger, Benue, Lake Chad, Kainji --------------------------
-const inFrame = ([lon, lat]) => lon >= FRAME.lon0 && lon <= FRAME.lon1 && lat >= FRAME.lat0 && lat <= FRAME.lat1;
+const inFrame = ([lon, lat], box = FRAME) => lon >= box.lon0 && lon <= box.lon1 && lat >= box.lat0 && lat <= box.lat1;
 /** Polyline → the runs of points inside the frame (ponytail: drops the edge sliver, invisible at this scale). */
-const clipLine = (line) =>
+const clipLine = (line, box = FRAME) =>
 	line.reduce((runs, p) => {
-		if (!inFrame(p)) runs.push([]);
+		if (!inFrame(p, box)) runs.push([]);
 		else runs.at(-1).push(p);
 		return runs;
 	}, [[]]);
@@ -121,7 +121,7 @@ const rivers = read('ne-50m-rivers.geojson')
 	.map((f) => ({
 		name: f.properties.name,
 		lines: (f.geometry.type === 'LineString' ? [f.geometry.coordinates] : f.geometry.coordinates)
-			.flatMap(clipLine)
+			.flatMap((l) => clipLine(l))
 			.map(svgLine)
 			.filter((l) => l.length > 1)
 	}))
@@ -140,3 +140,40 @@ writeFileSync(
 	JSON.stringify({ fit, frame: { x0: r1(fx0), y0: r1(fy0), x1: r1(fx1), y1: r1(fy1) }, neighbours, rivers, lakes })
 );
 console.log(`world: ${world.length} countries; fit ${fit.kind} error ${fit.error} (other: ${fits[1].kind} ${fits[1].error})`);
+
+// --- westafrica.json: a sharp 1:50m close-up for the globe's dive (lon/lat) -----------
+// The world texture is ~20 km a pixel; this patch is painted at ~1.4 km so Nigeria stays crisp.
+const PATCH = { lon0: -10, lon1: 30, lat0: -5, lat1: 25 };
+const r2 = (n) => Math.round(n * 50) / 50;
+const lonLat = (pts) => dedupe(pts.map(([a, b]) => [r2(a), r2(b)]), 0.03);
+const overlaps = (f) => {
+	const pts = ringsOf(f).flat();
+	return pts.some((p) => inFrame(p, PATCH));
+};
+const riverFeatures = read('ne-50m-rivers.geojson').features;
+writeFileSync(
+	new URL('westafrica.json', OUT),
+	JSON.stringify({
+		box: PATCH,
+		countries: ne50
+			.filter(overlaps)
+			.map((f) => ({
+				id: f.properties.ADM0_A3,
+				rings: ringsOf(f).map((r) => lonLat(clip(r, PATCH))).filter((r) => r.length > 2)
+			}))
+			.filter((c) => c.rings.length),
+		rivers: riverFeatures
+			.filter((f) => ['Niger', 'Benue'].includes(f.properties.name))
+			.map((f) => ({
+				name: f.properties.name,
+				lines: (f.geometry.type === 'LineString' ? [f.geometry.coordinates] : f.geometry.coordinates)
+					.flatMap((l) => clipLine(l, PATCH))
+					.map(lonLat)
+					.filter((l) => l.length > 1)
+			})),
+		lakes: read('ne-50m-lakes.geojson')
+			.features.filter((f) => ['Lake Chad', 'Kainji Reservoir', 'Lake Volta'].includes(f.properties.name))
+			.map((f) => ({ name: f.properties.name, rings: ringsOf(f).map((r) => lonLat(clip(r, PATCH))).filter((r) => r.length > 2) }))
+	})
+);
+

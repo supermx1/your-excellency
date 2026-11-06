@@ -2,7 +2,7 @@
 // The stylised Earth for the opening and closing shots. Drawn from (renderer, globeCam) alone, like the
 // diorama, so live view and video export match. Country outlines are painted onto a canvas texture once.
 import * as THREE from 'three';
-import { world } from '$lib/game/sim/data/index.js';
+import { world, westAfrica } from '$lib/game/sim/data/index.js';
 import { rng, hashString } from '$lib/game/engine.js';
 
 const RAD = Math.PI / 180;
@@ -13,32 +13,68 @@ export function lonLatToVec3(lon, lat, r) {
 	return [r * c * Math.sin(lon * RAD), r * Math.sin(lat * RAD), r * c * Math.cos(lon * RAD)];
 }
 
-function paint(w, h) {
+const WORLD_BOX = { lon0: -180, lon1: 180, lat0: -90, lat1: 90 };
+
+/** Equirectangular painting of `countries` (and optional rivers/lakes) for the lon/lat box onto a w×h canvas. */
+function paint(w, h, box, countries, water = null) {
 	const canvas = document.createElement('canvas');
 	canvas.width = w;
 	canvas.height = h;
 	const ctx = canvas.getContext('2d');
+	const at = ([lon, lat]) => [((lon - box.lon0) / (box.lon1 - box.lon0)) * w, ((box.lat1 - lat) / (box.lat1 - box.lat0)) * h];
+	const trace = (line, close) => {
+		line.forEach((p, i) => (i ? ctx.lineTo(...at(p)) : ctx.moveTo(...at(p))));
+		if (close) ctx.closePath();
+	};
+	// Border width in degrees, so the world texture and the close-up patch draw borders alike on screen.
+	const degree = w / (box.lon1 - box.lon0);
 	ctx.fillStyle = '#0f2236';
 	ctx.fillRect(0, 0, w, h);
 	ctx.strokeStyle = '#1b1b1b';
-	ctx.lineWidth = w / 1400;
-	for (const country of world) {
+	ctx.lineJoin = 'round';
+	ctx.lineWidth = Math.max(1, degree * (water ? 0.1 : 0.26));
+	for (const country of countries) {
 		ctx.beginPath();
-		for (const ring of country.rings) {
-			ring.forEach(([lon, lat], i) => {
-				const x = ((lon + 180) / 360) * w;
-				const y = ((90 - lat) / 180) * h;
-				if (i) ctx.lineTo(x, y);
-				else ctx.moveTo(x, y);
-			});
-			ctx.closePath();
-		}
+		for (const ring of country.rings) trace(ring, true);
 		ctx.fillStyle = country.id === 'NGA' ? '#f5c542' : '#3a4a3f';
 		ctx.fill('evenodd');
 		ctx.stroke();
 	}
+	if (water) {
+		ctx.fillStyle = ctx.strokeStyle = '#3d7fc4';
+		for (const lake of water.lakes) {
+			ctx.beginPath();
+			for (const ring of lake.rings) trace(ring, true);
+			ctx.fill('evenodd');
+		}
+		ctx.lineWidth = Math.max(1, degree * 0.08);
+		for (const river of water.rivers)
+			for (const line of river.lines) {
+				ctx.beginPath();
+				trace(line, false);
+				ctx.stroke();
+			}
+	}
 	const tex = new THREE.CanvasTexture(canvas);
 	tex.colorSpace = THREE.SRGBColorSpace;
+	return tex;
+}
+
+/** A sphere section covering a lon/lat box (SphereGeometry's phi = lon + 90°, theta = 90° − lat in our frame). */
+function patchGeometry(box, r, segments) {
+	return new THREE.SphereGeometry(
+		r,
+		segments,
+		segments,
+		(box.lon0 + 90) * RAD,
+		(box.lon1 - box.lon0) * RAD,
+		(90 - box.lat1) * RAD,
+		(box.lat1 - box.lat0) * RAD
+	);
+}
+
+function worldTexture(w, h) {
+	const tex = paint(w, h, WORLD_BOX, world);
 	// SphereGeometry's u = 0 sits at lon −90 in lonLatToVec3's frame; shift so the texture's lon 0 lands on +z.
 	tex.wrapS = THREE.RepeatWrapping;
 	tex.offset.x = 0.25;
@@ -51,12 +87,16 @@ export function createGlobe({ lowDetail = false } = {}) {
 	scene.background = new THREE.Color('#05070b');
 	const camera = new THREE.PerspectiveCamera(40, 16 / 9, 0.01, 200);
 
-	const map = paint(lowDetail ? 1024 : 2048, lowDetail ? 512 : 1024);
+	const map = worldTexture(lowDetail ? 1024 : 2048, lowDetail ? 512 : 1024);
 	const earth = new THREE.Mesh(
 		new THREE.SphereGeometry(1, lowDetail ? 32 : 64, lowDetail ? 24 : 48),
 		new THREE.MeshBasicMaterial({ map })
 	);
 	scene.add(earth);
+	// The close-up: West Africa at ~1.4 km a pixel (~2.8 km on phones), just above the world texture.
+	const box = westAfrica.box;
+	const detail = paint(lowDetail ? 1536 : 3072, lowDetail ? 1152 : 2304, box, westAfrica.countries, westAfrica);
+	earth.add(new THREE.Mesh(patchGeometry(box, 1.0006, lowDetail ? 24 : 48), new THREE.MeshBasicMaterial({ map: detail })));
 	scene.add(new THREE.Mesh(
 		new THREE.SphereGeometry(1.08, 32, 24),
 		new THREE.MeshBasicMaterial({ color: '#4a8cff', transparent: true, opacity: 0.18, side: THREE.BackSide, blending: THREE.AdditiveBlending, depthWrite: false })
@@ -97,6 +137,7 @@ export function createGlobe({ lowDetail = false } = {}) {
 				o.material?.dispose();
 			});
 			map.dispose();
+			detail.dispose();
 		}
 	};
 }

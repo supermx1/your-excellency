@@ -27,7 +27,12 @@ export function stepPolities(world) {
 		p.army = 0.015 + 0.02 * (p.atWarWith.length > 0);
 
 		if (coupMult && !p.british && world.rand() < P.coupBase * coupMult * (1 - p.stability)) coup(world, p);
-		else if (p.government === 'military' && world.rand() < 0.06) setGovernment(world, p, 'republic', 'Civilian rule returns');
+		else if (p.government === 'military' && world.rand() < 0.06) {
+			// Hand power back to whatever ruled before (a kingdom stays a kingdom), worded for the era.
+			const before = p.governmentBeforeCoup ?? 'republic';
+			const modern = ['republic', 'federation', 'colony'].includes(before);
+			setGovernment(world, p, before, modern ? `Civilian rule returns in ${p.name}` : `The old order is restored in ${p.name}`);
+		}
 	}
 
 	// secessions: an unstable polity loses its most tense non-capital cell and like-minded neighbours
@@ -52,8 +57,11 @@ export function stepPolities(world) {
 }
 
 export function coup(world, p, { log = true } = {}) {
+	if (p.government !== 'military') p.governmentBeforeCoup = p.government;
 	p.government = 'military';
-	if (log) world.events.push({ year: world.year, kind: 'coup', polityIds: [p.id], title: `Military coup in ${p.name}` });
+	// Same rule in every era; only the name changes (an 1850 kingdom has palace coups, not military ones).
+	const what = world.year < 1900 ? 'Palace coup' : 'Military coup';
+	if (log) world.events.push({ year: world.year, kind: 'coup', polityIds: [p.id], title: `${what} in ${p.name}` });
 	p.stability = Math.max(0, p.stability - 0.1);
 }
 
