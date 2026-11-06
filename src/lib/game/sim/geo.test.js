@@ -44,9 +44,34 @@ describe('world and region data', () => {
 		for (const n of region.neighbours) expect(n.rings.length).toBeGreaterThan(0);
 	});
 
+	it('has the Niger and Benue meeting in Kogi (Lokoja), and Lake Chad', () => {
+		const pts = (name) => region.rivers.filter((r) => r.name === name).flatMap((r) => r.lines.flat());
+		const niger = pts('Niger');
+		const benue = pts('Benue');
+		expect(niger.length).toBeGreaterThan(10);
+		expect(benue.length).toBeGreaterThan(10);
+		const meet = benue.find((b) => niger.some((n) => Math.hypot(n[0] - b[0], n[1] - b[1]) < 6));
+		expect(meet && rings.get('kogi').some((r) => inside(meet, r))).toBe(true);
+		expect(region.lakes.map((l) => l.name)).toContain('Lake Chad');
+	});
+
 	it('stays small: world ≤ 150 KB, region ≤ 120 KB', () => {
 		const size = (f) => readFileSync(new URL(`./data/${f}`, import.meta.url)).length;
 		expect(size('world.json')).toBeLessThanOrEqual(150 * 1024);
 		expect(size('region.json')).toBeLessThanOrEqual(120 * 1024);
+	});
+});
+
+import { neighbourName } from './geo.js';
+
+describe('neighbour names follow real history', () => {
+	it('uses the name each neighbour had in that year', () => {
+		expect(neighbourName('BEN', 1850)).toBe('Dahomey');
+		expect(neighbourName('BEN', 1900)).toBe('French Dahomey');
+		expect(neighbourName('BEN', 1980)).toBe('Benin');
+		expect(neighbourName('CMR', 1890)).toBe('German Kamerun');
+		expect(neighbourName('CMR', 1970)).toBe('Cameroon');
+		expect(neighbourName('TGO', 1850)).toBe('Ewe states');
+		expect(neighbourName('GNQ', 2000)).toBe('Equatorial Guinea');
 	});
 });

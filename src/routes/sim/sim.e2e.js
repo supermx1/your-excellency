@@ -244,3 +244,36 @@ test('historical data page makes the 1850 proxy and state footprints explicit', 
 	await expect(page.locator('details[open] tbody tr')).toHaveCount(37);
 	await expect(page.getByRole('columnheader', { name: '1850 (1861 pattern)' })).toBeVisible();
 });
+
+test.describe('map controls', () => {
+	const start = async (page) => {
+		await page.goto(`/sim/play?s=${never()}`);
+		await page.getByRole('button', { name: 'Skip intro' }).click({ timeout: 15000 });
+		await page.getByRole('button', { name: 'Pause' }).click();
+		return page.getByRole('application');
+	};
+
+	test('clicking a state shows who rules it then and what it is today', async ({ page }) => {
+		const map = await start(page);
+		const box = await map.boundingBox();
+		await map.click({ position: { x: box.width * 0.5, y: box.height * 0.3 } });
+		const card = page.getByRole('region', { name: /^About / });
+		await expect(card).toBeVisible();
+		await expect(card).toContainText(/today/);
+		await card.getByRole('button', { name: 'Close' }).click();
+		await expect(card).toHaveCount(0);
+	});
+
+	test('dragging the map takes over the camera until Reset view', async ({ page }) => {
+		const map = await start(page);
+		const box = await map.boundingBox();
+		await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+		await page.mouse.down();
+		await page.mouse.move(box.x + box.width / 2 - 120, box.y + box.height / 2 - 40, { steps: 5 });
+		await page.mouse.up();
+		await expect(page.getByRole('button', { name: 'Follow events' })).toHaveAttribute('aria-pressed', 'false');
+		await page.getByRole('button', { name: 'Reset view' }).click();
+		await expect(page.getByRole('button', { name: 'Reset view' })).toHaveCount(0);
+		await expect(page.getByRole('button', { name: 'Follow events' })).toHaveAttribute('aria-pressed', 'true');
+	});
+});

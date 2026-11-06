@@ -2,7 +2,7 @@
 // The 3D diorama. draw(frame, camera) renders one picture from (frame, camera) alone — no internal
 // clock — so live mode and video export produce the same image for the same time.
 import * as THREE from 'three';
-import { cellShapes, sharedEdges, toWorld } from './geometry.js';
+import { cellShapes, sharedEdges, toWorld, fromWorld } from './geometry.js';
 import { addNeighbours } from './neighbours.js';
 import { createGlobe } from './globe.js';
 import { polityColor } from '$lib/game/sim/colors.js';
@@ -12,6 +12,8 @@ const DEPTH = 0.25;
 const TILT = (52 * Math.PI) / 180;
 const SICK = new THREE.Color('#9acd32');
 const RED = new THREE.Color('#ff3b1f');
+const GLOW = new THREE.Color('#ffffff');
+export const DEFAULT_TILT = TILT;
 
 export class Diorama {
 	/** @param {HTMLCanvasElement} canvas @param {{ lowDetail?: boolean }} [opts] */
@@ -32,7 +34,7 @@ export class Diorama {
 		Object.assign(sun.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14 });
 		this.scene.add(sun);
 		this.sun = sun;
-		this.disposeNeighbours = addNeighbours(this.scene);
+		this.surroundings = addNeighbours(this.scene);
 
 		this.cells = new Map();
 		const segments = lowDetail ? 6 : 12;
@@ -74,8 +76,8 @@ export class Diorama {
 	 * @param {ReturnType<import('$lib/game/sim/frame.js').frameAt>} frame
 	 * @param {{ mode?: 'globe' | 'diorama', globe?: object, target?: number[], zoom?: number, dip?: number }} camera
 	 */
-	draw(frame, camera) {
-		this.last = [frame, camera];
+	draw(frame, camera, highlight = null) {
+		this.last = [frame, camera, highlight];
 		if (camera.mode === 'globe') {
 			// Created on first use: split-screen dioramas never show the globe.
 			if (!this.globe) {
@@ -83,7 +85,7 @@ export class Diorama {
 				this.globe.resize(this.camera.aspect, 1);
 			}
 			this.globe.draw(this.renderer, camera.globe);
-		} else this.drawDiorama(frame, camera);
+		} else this.drawDiorama(frame, camera, highlight);
 		if (camera.dip > 0) {
 			this.dipQuad.material.opacity = Math.min(1, camera.dip);
 			this.renderer.autoClear = false;
@@ -92,7 +94,7 @@ export class Diorama {
 		}
 	}
 
-	drawDiorama(frame, camera) {
+	drawDiorama(frame, camera, highlight) {
 		const pulse = 0.4 + 0.4 * Math.sin(2 * Math.PI * frame.t * 2);
 		for (const c of frame.cells) {
 			const view = this.cells.get(c.id);
@@ -102,21 +104,53 @@ export class Diorama {
 			if (c.epidemic) view.color.lerp(SICK, 0.55 * (1 - frame.t));
 			const mat = view.mesh.material;
 			mat.color.copy(view.color);
-			mat.emissive.copy(c.warFront ? RED : view.color);
-			mat.emissiveIntensity = c.warFront ? pulse : 0.05;
+			const lit = !c.warFront && highlight?.includes(c.id);
+			mat.emissive.copy(c.warFront ? RED : lit ? GLOW : view.color);
+			mat.emissiveIntensity = c.warFront ? pulse : lit ? 0.22 : 0.05;
 			const h = 0.2 + (4 * c.urban * c.pop) / 20e6;
 			view.tower.scale.y = h;
 			view.tower.position.y = DEPTH + h / 2;
 		}
 		this.updateBorders(frame);
+		this.surroundings.setYear(frame.yearInt);
 
 		const [tx, tz] = toWorld(camera.target);
 		// Far enough that the 20-unit-wide map fits the screen width, whatever the aspect ratio.
 		const fitWidth = 11.5 / (Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2)) * this.camera.aspect);
 		const dist = Math.max(22, fitWidth) / camera.zoom;
-		this.camera.position.set(tx, Math.sin(TILT) * dist, tz + Math.cos(TILT) * dist);
+		// yaw/tilt only come from the viewer's own map controls; the automatic camera leaves them unset.
+		const yaw = camera.yaw ?? 0;
+		const tilt = camera.tilt ?? TILT;
+		this.dist = dist;
+		this.camera.position.set(
+			tx + Math.sin(yaw) * Math.cos(tilt) * dist,
+			Math.sin(tilt) * dist,
+			tz + Math.cos(yaw) * Math.cos(tilt) * dist
+		);
 		this.camera.lookAt(tx, 0, tz);
 		this.renderer.render(this.scene, this.camera);
+	}
+
+	/** The state under a point on the canvas (CSS pixels), or null (also null on the globe). */
+	pick(x, y) {
+		if (!this.last || this.last[1].mode === 'globe') return null;
+		const el = this.renderer.domElement;
+		this.raycaster ??= new THREE.Raycaster();
+		this.raycaster.setFromCamera(new THREE.Vector2((x / el.clientWidth) * 2 - 1, -(y / el.clientHeight) * 2 + 1), this.camera);
+		const hit = this.raycaster.intersectObjects([...this.cells.values()].map((v) => v.mesh))[0];
+		return hit ? [...this.cells].find(([, v]) => v.mesh === hit.object)[0] : null;
+	}
+
+	/** A dragged view's new SVG target: the map follows the pointer by (dx, dy) CSS pixels. */
+	panTarget(view, dx, dy) {
+		const el = this.renderer.domElement;
+		const perPx = (2 * (this.dist ?? 22) * Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2))) / el.clientHeight;
+		const yaw = view.yaw ?? 0;
+		const tilt = view.tilt ?? TILT;
+		const [tx, tz] = toWorld(view.target);
+		const right = -dx * perPx;
+		const fwd = (dy * perPx) / Math.max(0.3, Math.sin(tilt));
+		return fromWorld([tx + right * Math.cos(yaw) - fwd * Math.sin(yaw), tz - right * Math.sin(yaw) - fwd * Math.cos(yaw)]);
 	}
 
 	updateBorders(frame) {
@@ -144,7 +178,7 @@ export class Diorama {
 	}
 
 	dispose() {
-		this.disposeNeighbours();
+		this.surroundings.dispose();
 		this.globe?.dispose();
 		this.scene.traverse((o) => {
 			o.geometry?.dispose();

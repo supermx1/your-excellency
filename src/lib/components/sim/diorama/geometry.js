@@ -11,9 +11,11 @@ const TOUCH = 1.5;
 
 /** SVG [x, y] → world [x, z] (map centred on the origin, y down becomes z towards the viewer). */
 export const toWorld = ([x, y]) => [(x - VB_W / 2) * SCALE, (y - VB_H / 2) * SCALE];
+/** World [x, z] → SVG [x, y] (inverse of toWorld). */
+export const fromWorld = ([x, z]) => [x / SCALE + VB_W / 2, z / SCALE + VB_H / 2];
 
 let rings;
-const allRings = () => (rings ??= new Map(map.locations.map((l) => [l.id, parsePath(l.path)])));
+export const allRings = () => (rings ??= new Map(map.locations.map((l) => [l.id, parsePath(l.path)])));
 
 let shapes;
 /** @returns {Map<string, THREE.Shape[]>} one Shape per ring, in world x / −z (so a −90° X rotation lays it flat) */

@@ -46,7 +46,7 @@
  * @property {string[]} tech
  * @property {string[]} atWarWith
  *
- * @typedef {{ year: number, kind: string, title: string, polityIds?: string[], cellIds?: string[], deaths?: number, techId?: string, aheadOfReal?: number }} SimEvent
+ * @typedef {{ year: number, kind: string, title: string, polityIds?: string[], cellIds?: string[], deaths?: number, techId?: string, aheadOfReal?: number, worldFirst?: boolean }} SimEvent
  * @typedef {{ name: string, born: number, died?: number, cell: string, occupation: string, canRead: boolean, faith: string, lifeEvents: {year:number, kind:string, text:string}[] }} FamilyMember
  * @typedef {{ id: string, surname: string, homeCell: string, members: FamilyMember[] }} Family
  *

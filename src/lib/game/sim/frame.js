@@ -90,6 +90,7 @@ export function frameAt(run, year) {
 		t,
 		cells,
 		polities: a.polities,
+		wars,
 		totals,
 		events: run.events.filter((e) => e.year === a.year)
 	};

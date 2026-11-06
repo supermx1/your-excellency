@@ -1,5 +1,5 @@
 {
-	"note": "Technologies with the year they existed in the outside world (worldYear) and when they reached Nigeria in real history (nigeriaYear, null if not meaningful). threshold = knowledge a polity needs to invent it itself. Effects are multipliers applied to cells of polities that have it. Dates per Wikipedia timelines of inventions and of Nigerian history; spot-check before publishing claims.",
+	"note": "Technologies with the year they existed in the outside world (worldYear) and when they reached Nigeria in real history (nigeriaYear, null if not meaningful). threshold = knowledge a polity needs to invent it itself. Effects are multipliers applied to cells of polities that have it. Dates per Wikipedia timelines of inventions and of Nigerian history; spot-check before publishing claims. Future ladder (adoptable: false): capabilities a country must build itself, never imported; worldYear null means nobody has done it yet, so inventing it is a world first. Thresholds sit above what ordinary runs reach by 2100 (~5.5) so only very fast-learning worlds get there.",
 	"sources": [
 		{ "name": "Wikidata — time of discovery or invention (P575)", "url": "https://www.wikidata.org/wiki/Property:P575", "licence": "CC0" },
 		{ "name": "Wikipedia — Timeline of historic inventions; Rail transport in Nigeria; Telecommunications in Nigeria", "url": "https://en.wikipedia.org/wiki/Timeline_of_historic_inventions", "licence": "CC BY-SA 4.0" }
@@ -31,6 +31,14 @@
 		{ "id": "mobile-phone", "name": "Mobile phones", "worldYear": 1983, "nigeriaYear": 2001, "threshold": 4, "requires": ["computer", "telephone"], "effects": { "productivity": 1.06 } },
 		{ "id": "internet", "name": "The internet", "worldYear": 1983, "nigeriaYear": 1996, "threshold": 4.2, "requires": ["computer"], "effects": { "productivity": 1.05, "literacy": 1.04 } },
 		{ "id": "solar-power", "name": "Cheap solar power", "worldYear": 2010, "nigeriaYear": 2015, "threshold": 4.4, "requires": ["electricity"], "effects": { "productivity": 1.04, "infra": 0.03 } },
-		{ "id": "conversational-ai", "name": "Conversational AI", "worldYear": 2022, "nigeriaYear": 2022, "threshold": 5, "requires": ["internet"], "effects": { "productivity": 1.03 } }
+		{ "id": "conversational-ai", "name": "Conversational AI", "worldYear": 2022, "nigeriaYear": 2022, "threshold": 5, "requires": ["internet"], "effects": { "productivity": 1.03 } },
+		{ "id": "crewed-spaceflight", "name": "Crewed spaceflight", "worldYear": 1961, "nigeriaYear": null, "threshold": 7, "requires": ["satellite"], "effects": { "productivity": 1.01 }, "adoptable": false },
+		{ "id": "space-station", "name": "Orbital space station", "worldYear": 1971, "nigeriaYear": null, "threshold": 8.5, "requires": ["crewed-spaceflight"], "effects": { "productivity": 1.01 }, "adoptable": false },
+		{ "id": "reusable-rockets", "name": "Reusable rockets", "worldYear": 2015, "nigeriaYear": null, "threshold": 9.5, "requires": ["crewed-spaceflight"], "effects": { "productivity": 1.02 }, "adoptable": false },
+		{ "id": "moon-base", "name": "Moon base", "worldYear": null, "nigeriaYear": null, "threshold": 12, "requires": ["space-station", "reusable-rockets"], "effects": { "productivity": 1.02 }, "adoptable": false },
+		{ "id": "fusion-power", "name": "Fusion power", "worldYear": null, "nigeriaYear": null, "threshold": 13, "requires": ["nuclear"], "effects": { "productivity": 1.15 }, "adoptable": false },
+		{ "id": "mars-landing", "name": "Crewed Mars landing", "worldYear": null, "nigeriaYear": null, "threshold": 15.5, "requires": ["moon-base"], "effects": { "productivity": 1.01 }, "adoptable": false },
+		{ "id": "asteroid-mining", "name": "Asteroid mining", "worldYear": null, "nigeriaYear": null, "threshold": 19, "requires": ["mars-landing"], "effects": { "productivity": 1.05 }, "adoptable": false },
+		{ "id": "interstellar-probe", "name": "Interstellar probe", "worldYear": null, "nigeriaYear": null, "threshold": 23, "requires": ["asteroid-mining", "fusion-power"], "effects": { "productivity": 1.01 }, "adoptable": false }
 	]
 }

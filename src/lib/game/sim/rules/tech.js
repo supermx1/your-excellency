@@ -20,7 +20,8 @@ export function stepTech(world) {
 
 		for (const t of techs) {
 			if (p.tech.includes(t.id) || !t.requires.every((r) => p.tech.includes(r))) continue;
-			if (t.worldYear <= world.year) {
+			// adoptable: false = a capability a country must build itself (spaceflight); never imported.
+			if (t.adoptable !== false && t.worldYear != null && t.worldYear <= world.year) {
 				const chance = P.adoptBase + P.adoptLit * lit + P.adoptTrade * (coast + urban) + (p.british ? P.adoptColonial : 0);
 				if (world.rand() < chance) adopt(world, p, t, 'adoption');
 			} else if (p.knowledge >= t.threshold + P.inventMargin && world.rand() < P.inventChance) {
@@ -51,7 +52,14 @@ function adopt(world, p, t, kind) {
 		kind,
 		techId: t.id,
 		polityIds: [p.id],
-		aheadOfReal: kind === 'invention' ? t.worldYear - world.year : 0,
-		title: kind === 'invention' ? `${p.name} invents the ${t.name.toLowerCase()}` : `${t.name} reaches ${p.name}`
+		// worldYear null: nobody in our world has done it yet, so any invention is a world first.
+		aheadOfReal: kind === 'invention' && t.worldYear != null ? t.worldYear - world.year : 0,
+		worldFirst: kind === 'invention' && (t.worldYear == null || t.worldYear > world.year),
+		title:
+			kind !== 'invention'
+				? `${t.name} reaches ${p.name}`
+				: t.worldYear == null || t.worldYear > world.year
+					? `World first: ${t.name} in ${p.name}`
+					: `Breakthrough in ${p.name}: ${t.name}`
 	});
 }

@@ -85,3 +85,38 @@ describe('ending', () => {
 		expect(f.cells).toHaveLength(37);
 	});
 });
+
+import { placeAt } from './hud.js';
+import { frameAt } from './frame.js';
+
+describe('placeAt (hover and click on the map)', () => {
+	it('names the polity ruling a state at that time, and the state today', () => {
+		const p = placeAt(never, frameAt(never, 1850), 'kano');
+		expect(p.name).toBe('Sokoto Caliphate');
+		expect(p.today).toBe('Kano State today');
+		expect(p.cellIds).toContain('sokoto');
+		expect(placeAt(never, frameAt(never, 1850), 'fct').today).toBe('Federal Capital Territory today');
+	});
+
+	it('adds the real-history name only when it differs', () => {
+		expect(placeAt(never, frameAt(never, 1850), 'kano').ours).toBeNull();
+		const real = placeAt(baseline, frameAt(baseline, 1950), 'kano');
+		expect(real.ours).toBeNull();
+		const late = frameAt(never, 1950);
+		const p = placeAt(never, late, 'kano');
+		expect(p.name).not.toBe('Nigeria');
+		expect(p.ours).toMatch(/^In our world: /);
+	});
+
+	it('totals the whole polity and lists its wars', () => {
+		const f = frameAt(never, 1900);
+		const p = placeAt(never, f, 'kano');
+		const total = f.cells.filter((c) => p.cellIds.includes(c.id)).reduce((s, c) => s + c.pop, 0);
+		expect(p.pop).toBeCloseTo(total, 0);
+		expect(p.litAny).toBeGreaterThanOrEqual(0);
+		expect(p.religion.islam + p.religion.christian + p.religion.traditional).toBeCloseTo(1, 1);
+		expect(Array.isArray(p.atWarWith)).toBe(true);
+	});
+
+	it('returns null for an unknown cell', () => expect(placeAt(never, frameAt(never, 1900), 'atlantis')).toBeNull());
+});

@@ -184,3 +184,41 @@ export function endingRows(run, national, summary) {
 		});
 	return rows;
 }
+
+/**
+ * What the map shows when you point at a state: the polity ruling it in this frame, the state's
+ * modern name, the real-history ruler if different, and the whole polity's numbers.
+ * @param {import('./types.js').RunResult} run
+ * @param {ReturnType<typeof frameAt>} frame
+ * @param {string} cellId
+ */
+export function placeAt(run, frame, cellId) {
+	const cell = frame.cells.find((c) => c.id === cellId);
+	const polity = cell && frame.polities.find((p) => p.id === cell.polityId);
+	if (!polity) return null;
+	const cells = frame.cells.filter((c) => polity.cellIds.includes(c.id));
+	const pop = cells.reduce((s, c) => s + c.pop, 0);
+	const avg = (f) => cells.reduce((s, c) => s + f(c) * c.pop, 0) / (pop || 1);
+	const real = realBordersAt(frame.yearInt).find((p) => p.cellIds.includes(cellId))?.name;
+	const name = cellName.get(cellId) ?? cellId;
+	const names = new Map(frame.polities.map((p) => [p.id, p.name]));
+	return {
+		cellId,
+		polityId: polity.id,
+		name: polity.name,
+		today: `${name}${cellId === 'fct' ? '' : ' State'} today`,
+		ours: real && real !== polity.name ? `In our world: ${real}` : null,
+		cellIds: polity.cellIds,
+		pop,
+		litAny: avg((c) => c.litAny),
+		incomePc: avg((c) => c.incomePc),
+		religion: {
+			islam: avg((c) => c.religion.islam),
+			christian: avg((c) => c.religion.christian),
+			traditional: avg((c) => c.religion.traditional)
+		},
+		atWarWith: (frame.wars ?? [])
+			.filter((pair) => pair.includes(polity.id))
+			.map(([p, q]) => names.get(p === polity.id ? q : p) ?? 'a former state')
+	};
+}

@@ -7,12 +7,13 @@
 	import TwoNigerias from '$lib/components/sim/TwoNigerias.svelte';
 	import Ending from '$lib/components/sim/Ending.svelte';
 	import Narration from '$lib/components/sim/Narration.svelte';
+	import PlaceCard from '$lib/components/sim/PlaceCard.svelte';
 	import { encodeInputs } from '$lib/game/sim/inputs.js';
 	import { startRun } from '$lib/game/sim/client.js';
 	import { chaptersFor, digestChapter, fallbackNarration, scenarioLabel } from '$lib/game/sim/narration.js';
 	import { buildTimeline, createClock } from '$lib/game/sim/timeline.js';
 	import { frameAt } from '$lib/game/sim/frame.js';
-	import { statsAt, captionsAt, familyCardsAt } from '$lib/game/sim/hud.js';
+	import { statsAt, captionsAt, familyCardsAt, placeAt } from '$lib/game/sim/hud.js';
 	import { shotsFor, cameraAt, WIDE } from '$lib/game/sim/camera.js';
 	import { INTRO, OUTRO, introCamera, outroCamera } from '$lib/game/sim/intro.js';
 	import { defaultData } from '$lib/game/sim/data/index.js';
@@ -30,6 +31,10 @@
 	let playing = $state(true);
 	let speed = $state(1);
 	let follow = $state(true);
+	// The viewer's own camera from the map controls; null = the automatic camera.
+	let userView = $state(null);
+	let hover = $state(null); // { cellId, x, y } under the mouse
+	let pinned = $state(null); // cellId clicked or tapped
 	let showSplit = $state(false);
 	let showFamilies = $state(false);
 	let autoSplit = $state(false);
@@ -43,8 +48,10 @@
 	const camera = $derived.by(() => {
 		if (t < INTRO) return introCamera(t);
 		if (timeline && t > timeline.duration) return outroCamera(t - timeline.duration);
-		return follow && shots ? cameraAt(shots, t) : WIDE;
+		return userView ?? (follow && shots ? cameraAt(shots, t) : WIDE);
 	});
+	const hovered = $derived(run && hover?.cellId ? placeAt(run, frame, hover.cellId) : null);
+	const place = $derived(run && pinned ? placeAt(run, frame, pinned) : null);
 	const stats = $derived(run ? statsAt(run, defaultData.national, year) : []);
 	const caption = $derived.by(() => {
 		if (!run) return null;
@@ -165,8 +172,44 @@
 		<p class="flex h-full items-center justify-center font-serif text-xl text-[#f2efe6]" aria-live="polite">Running history…</p>
 	{:else}
 		<div class="absolute inset-0 bottom-40 md:bottom-14" data-testid="view" data-camera={camera.mode ?? 'diorama'} data-dip={camera.dip ?? 0}>
-			<DioramaCanvas {frame} {camera} label={camera.mode === 'globe' ? 'The Earth, turning towards Nigeria' : `Map of Nigeria in ${Math.floor(year)}`} />
+			<DioramaCanvas
+				{frame}
+				{camera}
+				interactive
+				highlight={(place ?? hovered)?.cellIds ?? null}
+				label={camera.mode === 'globe' ? 'The Earth, turning towards Nigeria' : `Map of Nigeria in ${Math.floor(year)}`}
+				onView={(v) => {
+					userView = v;
+					follow = false;
+				}}
+				onHover={(cellId, x, y) => (hover = cellId ? { cellId, x, y } : null)}
+				onPick={(cellId) => (pinned = cellId)}
+			/>
 		</div>
+		{#if hovered && !place}
+			<div
+				class="pointer-events-none fixed z-30 max-w-xs bg-black/85 px-2 py-1 text-sm text-[#f2efe6]"
+				style:left="{hover.x + 14}px"
+				style:top="{hover.y + 14}px"
+			>
+				<PlaceCard place={hovered} />
+			</div>
+		{/if}
+		{#if (place || userView) && t >= INTRO}
+			<div class="absolute top-14 left-3 z-20 flex w-64 max-w-[calc(100%-1.5rem)] flex-col items-start gap-2 md:top-6 md:left-8">
+				{#if userView}
+					<button
+						type="button"
+						class="border-2 border-black bg-white px-3 py-1 text-xs font-black uppercase shadow-[3px_3px_0_0_#000]"
+						onclick={() => {
+							userView = null;
+							follow = true;
+						}}>Reset view</button
+					>
+				{/if}
+				{#if place}<div class="w-full"><PlaceCard {place} onClose={() => (pinned = null)} /></div>{/if}
+			</div>
+		{/if}
 		{#if camera.title > 0}
 			<div class="pointer-events-none absolute inset-0 bottom-40 flex flex-col items-center justify-center text-[#f2efe6] md:bottom-14" style:opacity={camera.title}>
 				<p class="font-serif text-7xl font-black md:text-9xl">{run.history[0].year}</p>
@@ -205,7 +248,10 @@
 			onToggle={() => (playing = !playing)}
 			onSpeed={(s) => (speed = s)}
 			onSeek={seek}
-			onFollow={() => (follow = !follow)}
+			onFollow={() => {
+				follow = !follow;
+				if (follow) userView = null;
+			}}
 			onSplit={() => (showSplit = !showSplit)}
 		/>
 

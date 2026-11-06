@@ -1,6 +1,6 @@
 # The Timeline: data and model assumptions
 
-Updated 6 November 2026. Engine version: 3. Includes the initial survey batch and the historical population / livelihoods upgrade.
+Updated 6 November 2026. Engine version: 4. Includes the initial survey batch, the historical population / livelihoods upgrade, and the future tech ladder.
 
 ## Evidence added
 
@@ -86,3 +86,12 @@ Modern starts also treat independence and oil discovery already dated before the
 Tests cover known survey values, dates, missing data, state joins, independent family randomness, service versus access, gradual school expansion and the electricity HUD reference. The existing 30-seed historical calibration continues to check population, literacy, life expectancy, urbanisation and selected historical events. Passing it does **not** establish the causal validity of the new rules, validate every regional trajectory, or validate 2050/2100 outcomes.
 
 Remaining research includes finer historical population/settlement and polity reconstructions, explicit sensitivity to data and parameter uncertainty, household consumption/employment/migration from GHS-Panel, electricity generation/reliability and fiscal constraints from NERC, environmental exposure, and conflict/displacement calibration. Those datasets have not been silently substituted into the new scenario rules. The historical baseline still contains scheduled events and remains a limited plausibility check, not causal validation.
+
+## Future tech ladder (engine 4)
+
+Eight capabilities sit above the 27 historical technologies: crewed spaceflight, an orbital space station, reusable rockets, a Moon base, fusion power, a crewed Mars landing, asteroid mining and an interstellar probe. They are **never imported**: a polity must invent them itself. Those with a real date (1961, 1971, 2015) count as ahead of the real world when invented earlier; the rest have no real date, so inventing them is a **world first**. Thresholds sit above the knowledge ordinary runs reach by 2100 (about 5.5 in a 5-seed check), so only very fast-learning worlds (the 200 IQ preset reaches about 8 by 1950 and 26 by 2100) get there. These are game assumptions, not forecasts.
+
+## Map surroundings
+
+The Niger and Benue, Lake Chad and Kainji Reservoir come from Natural Earth 1:50m (public domain), placed with the same longitude/latitude fit as the neighbouring countries. Neighbours are not simulated; they show their real-history names for the year (for example Dahomey → French Dahomey → Dahomey → Benin), with approximate dates.
+

@@ -78,6 +78,18 @@ export const SOURCES = [
 		url: 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson/ne_50m_admin_0_countries.geojson',
 		name: 'Natural Earth — Admin 0 countries 1:50m',
 		licence: 'Public domain'
+	},
+	{
+		file: 'ne-50m-rivers.geojson',
+		url: 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson/ne_50m_rivers_lake_centerlines.geojson',
+		name: 'Natural Earth — Rivers and lake centerlines 1:50m',
+		licence: 'Public domain'
+	},
+	{
+		file: 'ne-50m-lakes.geojson',
+		url: 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson/ne_50m_lakes.geojson',
+		name: 'Natural Earth — Lakes 1:50m',
+		licence: 'Public domain'
 	}
 ];
 

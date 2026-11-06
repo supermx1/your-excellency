@@ -39,7 +39,9 @@ function britishPolity(world) {
 			army: 0.04,
 			stability: 0.6,
 			knowledge: 2.5,
-			tech: world.data.tech.filter((t) => t.worldYear <= world.year).map((t) => t.id),
+			tech: world.data.tech
+				.filter((t) => t.adoptable !== false && t.worldYear != null && t.worldYear <= world.year)
+				.map((t) => t.id),
 			atWarWith: [],
 			british: true
 		};

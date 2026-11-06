@@ -56,7 +56,7 @@ export function buildTimeline(
 		if (
 			e.kind === 'secession' ||
 			e.kind === 'union' ||
-			(e.kind === 'invention' && e.aheadOfReal > 10)
+			(e.kind === 'invention' && (e.aheadOfReal > 10 || (e.worldFirst && e.aheadOfReal === 0)))
 		)
 			key.add(e.year);
 	}
