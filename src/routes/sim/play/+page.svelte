@@ -74,16 +74,19 @@
 		return () => cancelAnimationFrame(raf);
 	});
 
-	// At each key year, pause for a Two Nigerias split screen (4 s, or until Continue).
+	// At each key year reached during playback, pause for a Two Nigerias split screen (4 s, or until Continue).
+	// Scrubbing or jumping while paused never triggers it.
+	let splitTimer;
 	$effect(() => {
-		if (!timeline || ended) return;
+		if (!timeline || ended || !playing) return;
 		const y = Math.floor(year);
 		if (y === timeline.keyYears[0] || shownKeys.has(y) || !timeline.keyYears.includes(y)) return;
 		shownKeys.add(y);
 		autoSplit = true;
-		const timer = setTimeout(() => (autoSplit = false), 4000);
-		return () => clearTimeout(timer);
+		clearTimeout(splitTimer);
+		splitTimer = setTimeout(() => (autoSplit = false), 4000);
 	});
+	$effect(() => () => clearTimeout(splitTimer));
 
 	function runAgain() {
 		const seed = crypto.getRandomValues(new Uint32Array(1))[0];

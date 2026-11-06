@@ -63,3 +63,14 @@ test.describe('on a phone', () => {
 		expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
 	});
 });
+
+test('scrubbing through a key year while paused does not leave the split screen stuck', async ({ page }) => {
+	await page.goto(`/sim/play?s=${never()}`);
+	await expect(page.getByTestId('year')).toBeVisible({ timeout: 15000 });
+	await page.keyboard.press('Space');
+	const jump = page.getByLabel('Jump to year');
+	await jump.fill('1914');
+	await jump.fill('1915');
+	await page.waitForTimeout(500);
+	await expect(page.getByRole('region', { name: /Two Nigerias/ })).toHaveCount(0);
+});

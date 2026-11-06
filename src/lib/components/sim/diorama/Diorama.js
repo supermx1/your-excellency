@@ -29,6 +29,7 @@ export class Diorama {
 		sun.shadow.mapSize.set(1024, 1024);
 		Object.assign(sun.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14 });
 		this.scene.add(sun);
+		this.sun = sun;
 
 		this.cells = new Map();
 		const segments = lowDetail ? 6 : 12;
@@ -117,6 +118,9 @@ export class Diorama {
 			o.geometry?.dispose();
 			o.material?.dispose();
 		});
+		this.sun.shadow.dispose();
 		this.renderer.dispose();
+		// dispose() keeps the WebGL context alive; browsers cap live contexts (~16), so release it.
+		this.renderer.forceContextLoss();
 	}
 }
