@@ -3,8 +3,9 @@
 	import { endingRows } from '$lib/game/sim/hud.js';
 	import { defaultData } from '$lib/game/sim/data/index.js';
 	import { formatStat } from '$lib/game/sim/format.js';
+	import ShareButton from './ShareButton.svelte';
 
-	let { run, summary, onRunAgain, changeHref } = $props();
+	let { run, summary, onRunAgain, changeHref, inputs, runId = null } = $props();
 
 	const rows = $derived(endingRows(run, defaultData.national, summary));
 	const show = (row, v) => (typeof v === 'number' && row.key ? formatStat(row.key, v) : (v ?? '—'));
@@ -37,6 +38,7 @@
 		<div class="mt-6 flex flex-wrap gap-3">
 			<button type="button" class="{btn} bg-emerald-400" onclick={onRunAgain}>Run again</button>
 			<a href={changeHref} class="{btn} bg-white">Change switches</a>
+			<ShareButton {inputs} {summary} {runId} class="{btn} bg-amber-300" />
 		</div>
 	</div>
 </section>

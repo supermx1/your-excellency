@@ -74,3 +74,24 @@ test('scrubbing through a key year while paused does not leave the split screen 
 	await page.waitForTimeout(500);
 	await expect(page.getByRole('region', { name: /Two Nigerias/ })).toHaveCount(0);
 });
+
+test('narration appears soon after playback starts', async ({ page }) => {
+	await page.goto(`/sim/play?s=${never()}`);
+	await expect(page.getByTestId('narration')).not.toBeEmpty({ timeout: 8000 });
+});
+
+test('narration falls back to built-in text when the AI request fails', async ({ page }) => {
+	await page.route('**/api/sim/narrate', (r) => r.abort());
+	await page.goto(`/sim/play?s=${never()}`);
+	await expect(page.getByTestId('narration')).toContainText(/population|1850/, { timeout: 8000 });
+});
+
+test('Share on the ending copies a /sim/run/ link', async ({ page, context }) => {
+	await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+	const s = Buffer.from(JSON.stringify({ seed: 5, switches: {}, startYear: 2020, endYear: 2025 })).toString('base64url');
+	await page.goto(`/sim/play?s=${s}`);
+	await page.getByRole('button', { name: '×4' }).click();
+	await page.getByRole('button', { name: /Share/ }).click({ timeout: 60000 });
+	await expect(page.getByText('Link copied')).toBeVisible();
+	expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/\/sim\/run\/[0-9a-zA-Z]{10}$/);
+});

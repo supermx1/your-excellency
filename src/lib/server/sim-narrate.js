@@ -8,7 +8,7 @@ const MODEL = '@cf/google/gemma-4-26b-a4b-it';
 const FALLBACK_MODEL = '@cf/meta/llama-3.2-3b-instruct';
 const RATES = { [MODEL]: [9091, 27273], [FALLBACK_MODEL]: [4625, 30475] }; // neurons per million tokens [in, out]
 const MAX_TOKENS = 500;
-const TIMEOUT_MS = 6000;
+const TIMEOUT_MS = 20000; // the browser never waits: built-in narration shows until this arrives
 
 const SYSTEM =
 	'You narrate one chapter of a simulated alternate history of Nigeria for a YouTube video. Write in plain, vivid English for a general audience. Describe only what the data says happened in this run; never invent wars, inventions or deaths that are not listed, and never present it as a prediction. Compare with real history only using the "ours" lines. Families are fictional; write one short vignette per family listed, in the third person, present tense. No real living people. Reply with JSON only.';
@@ -17,8 +17,8 @@ const SCHEMA = {
 	type: 'object',
 	required: ['text', 'vignettes'],
 	properties: {
-		text: { type: 'string', maxLength: 900 },
-		vignettes: { type: 'array', maxItems: 4, items: { type: 'string', maxLength: 300 } }
+		text: { type: 'string' },
+		vignettes: { type: 'array', items: { type: 'string' } }
 	}
 };
 
@@ -40,9 +40,9 @@ export function parseNarration(raw) {
 			return null;
 		}
 	}
-	if (!value || typeof value.text !== 'string' || !value.text.trim() || value.text.length > 900) return null;
+	if (!value || typeof value.text !== 'string' || !value.text.trim() || value.text.length > 1200) return null;
 	const vignettes = Array.isArray(value.vignettes) ? value.vignettes : [];
-	if (vignettes.length > 4 || vignettes.some((v) => typeof v !== 'string' || v.length > 300)) return null;
+	if (vignettes.length > 4 || vignettes.some((v) => typeof v !== 'string' || v.length > 400)) return null;
 	return { text: value.text.trim(), vignettes };
 }
 
@@ -64,10 +64,13 @@ async function callModel(ai, model, prompt) {
 				{ role: 'user', content: prompt }
 			],
 			max_tokens: MAX_TOKENS,
+			chat_template_kwargs: { enable_thinking: false }, // Gemma 4 reasons by default and can spend every token thinking
 			response_format: { type: 'json_schema', json_schema: SCHEMA }
 		})
 	);
-	return { raw: out?.response ?? out, usage: out?.usage };
+	// Workers AI returns either { response } or an OpenAI-style chat completion.
+	const raw = out?.response ?? out?.choices?.[0]?.message?.content ?? out;
+	return { raw, usage: out?.usage };
 }
 
 /**
@@ -94,7 +97,8 @@ export async function narrate(platform, { runId, chapterIndex, digest }) {
 	const spent = Number((await kv?.get(budgetKey)) ?? 0);
 	if (spent >= SIM_DAILY_NEURONS) return null;
 
-	const prompt = `Chapter data (JSON):\n${JSON.stringify(digest)}`;
+	// Length limits live in the prompt: a maxLength in the schema truncates mid-string and breaks the JSON.
+	const prompt = `Write "text" in 60 to 110 words and at most 4 "vignettes" of at most 35 words each.\nChapter data (JSON):\n${JSON.stringify(digest)}`;
 	let result = null;
 	let cost = 0;
 	for (const model of [MODEL, FALLBACK_MODEL]) {
@@ -102,6 +106,7 @@ export async function narrate(platform, { runId, chapterIndex, digest }) {
 			const { raw, usage } = await callModel(env.AI, model, prompt);
 			cost += neurons(model, usage, prompt.length);
 			result = parseNarration(raw);
+			if (!result) console.warn('sim-narrate: invalid model output —', JSON.stringify(raw)?.slice(0, 1500));
 			break; // a bad answer is not retried on the other model; only errors are
 		} catch (err) {
 			console.warn(`sim-narrate: ${model} failed —`, err?.message ?? err);

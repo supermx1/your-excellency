@@ -64,7 +64,7 @@ describe('narrate', () => {
 		const ai = fakeAI(() => new Promise(() => {}));
 		const pending = narrate(platform(ai), { chapterIndex: 0, digest });
 		while (!ai.calls.length) await new Promise((r) => setImmediate(r)); // hashing and KV reads finish first
-		await vi.advanceTimersByTimeAsync(7000);
+		await vi.advanceTimersByTimeAsync(21000);
 		expect(await pending).toBe(null);
 	});
 
