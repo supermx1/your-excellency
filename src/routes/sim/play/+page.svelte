@@ -5,6 +5,9 @@
 	import Hud from '$lib/components/sim/Hud.svelte';
 	import FamilyCard from '$lib/components/sim/FamilyCard.svelte';
 	import PlaybackBar from '$lib/components/sim/PlaybackBar.svelte';
+	import TwoNigerias from '$lib/components/sim/TwoNigerias.svelte';
+	import Ending from '$lib/components/sim/Ending.svelte';
+	import { encodeInputs } from '$lib/game/sim/inputs.js';
 	import { startRun } from '$lib/game/sim/client.js';
 	import { decodeInputs } from '$lib/game/sim/inputs.js';
 	import { buildTimeline, createClock } from '$lib/game/sim/timeline.js';
@@ -24,6 +27,8 @@
 	let follow = $state(true);
 	let showSplit = $state(false);
 	let showFamilies = $state(false);
+	let autoSplit = $state(false);
+	const shownKeys = new Set();
 
 	const clock = createClock();
 	const timeline = $derived(run && buildTimeline(run));
@@ -59,7 +64,7 @@
 		let raf;
 		let last = performance.now();
 		const loop = (now) => {
-			clock.playing = playing && !showSplit;
+			clock.playing = playing && !showSplit && !autoSplit;
 			clock.speed = speed;
 			t = Math.min(clock.tick((now - last) / 1000), timeline.duration);
 			last = now;
@@ -68,6 +73,22 @@
 		raf = requestAnimationFrame(loop);
 		return () => cancelAnimationFrame(raf);
 	});
+
+	// At each key year, pause for a Two Nigerias split screen (4 s, or until Continue).
+	$effect(() => {
+		if (!timeline || ended) return;
+		const y = Math.floor(year);
+		if (y === timeline.keyYears[0] || shownKeys.has(y) || !timeline.keyYears.includes(y)) return;
+		shownKeys.add(y);
+		autoSplit = true;
+		const timer = setTimeout(() => (autoSplit = false), 4000);
+		return () => clearTimeout(timer);
+	});
+
+	function runAgain() {
+		const seed = crypto.getRandomValues(new Uint32Array(1))[0];
+		location.href = `/sim/play?s=${encodeInputs({ ...decoded.inputs, seed })}`;
+	}
 
 	function seek(y) {
 		clock.set(timeline.timeAt(y));
@@ -103,13 +124,13 @@
 		<Hud {year} {stats} {caption} {label} />
 
 		<div class="absolute right-4 bottom-36 hidden flex-col gap-2 md:right-8 md:bottom-24 md:flex">
-			{#each families as card (card.familyId + card.year + card.member)}<FamilyCard {card} />{/each}
+			{#each families as card (card.key)}<FamilyCard {card} />{/each}
 		</div>
 		<div class="absolute top-3 left-3 md:hidden">
 			<button type="button" class="border-2 border-black bg-white px-2 py-1 text-xs font-black uppercase" onclick={() => (showFamilies = !showFamilies)}>Families</button>
 			{#if showFamilies}
 				<div class="mt-2 flex flex-col gap-2">
-					{#each families as card (card.familyId + card.year + card.member)}<FamilyCard {card} />{/each}
+					{#each families as card (card.key)}<FamilyCard {card} />{/each}
 				</div>
 			{/if}
 		</div>
@@ -128,5 +149,13 @@
 			onFollow={() => (follow = !follow)}
 			onSplit={() => (showSplit = !showSplit)}
 		/>
+
+		{#if (showSplit || autoSplit) && !ended}
+			<TwoNigerias {run} {year} onContinue={() => (showSplit = autoSplit = false)} />
+		{/if}
+		{#if ended}
+			<div class="absolute inset-0 z-10"><TwoNigerias {run} year={run.history.at(-1).year} /></div>
+			<Ending {run} {summary} onRunAgain={runAgain} changeHref="/sim?s={encodeInputs(decoded.inputs)}" />
+		{/if}
 	{/if}
 </main>

@@ -47,6 +47,14 @@ describe('hud data', () => {
 		expect(familyCardsAt(baseline, 1900).length + familyCardsAt(baseline, 1950).length).toBeGreaterThan(0);
 	});
 
+	it('family cards have unique keys every year', () => {
+		for (const r of [baseline, never])
+			for (let y = 1850; y <= 2025; y++) {
+				const keys = familyCardsAt(r, y).map((c) => c.key);
+				expect(new Set(keys).size).toBe(keys.length);
+			}
+	});
+
 	it('realBordersAt 1920 is one Nigeria', () => expect(realBordersAt(1920).map((p) => p.id)).toEqual(['nigeria']));
 });
 
@@ -54,5 +62,26 @@ describe('camera', () => {
 	it('starts on the wide shot', () => {
 		const shots = shotsFor(baseline, buildTimeline(baseline));
 		expect(cameraAt(shots, 0)).toEqual(WIDE);
+	});
+});
+
+import { endingRows, realFrame } from './hud.js';
+
+describe('ending', () => {
+	it('has six comparison rows, plus 50-run lines when a summary is given', () => {
+		const rows = endingRows(never, defaultData.national, null);
+		expect(rows.map((r) => r.label)).toEqual(['Population', 'Can read', 'Life expectancy', 'Wars', 'Biggest city', 'Religious mix']);
+		const withSummary = endingRows(never, defaultData.national, { runs: 50, withWar: 41, nigeriaFormed: 3 });
+		expect(withSummary.some((r) => r.label === 'In 50 runs')).toBe(true);
+	});
+
+	it('the real side uses Lagos as the biggest city', () => {
+		expect(endingRows(baseline, defaultData.national, null).find((r) => r.label === 'Biggest city').ours).toBe('Lagos');
+	});
+
+	it('realFrame paints the real borders for a year', () => {
+		const f = realFrame(1920);
+		expect(new Set(f.cells.map((c) => c.polityId))).toEqual(new Set(['nigeria']));
+		expect(f.cells).toHaveLength(37);
 	});
 });

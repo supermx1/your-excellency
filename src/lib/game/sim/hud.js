@@ -41,7 +41,7 @@ export function familyCardsAt(run, year) {
 		for (const m of f.members)
 			for (const e of m.lifeEvents)
 				if (e.year <= year && e.year > year - 3)
-					cards.push({ familyId: f.id, surname: f.surname, member: m.name, text: `${m.name} ${f.surname} ${e.text}.`, year: e.year });
+					cards.push({ key: `${f.id}:${m.born}:${m.name}:${e.year}:${e.kind}`, familyId: f.id, surname: f.surname, member: m.name, text: `${m.name} ${f.surname} ${e.text}.`, year: e.year });
 	return cards.sort((a, b) => b.year - a.year).slice(0, 2);
 }
 
@@ -49,4 +49,72 @@ export function familyCardsAt(run, year) {
 export function realBordersAt(year) {
 	const snaps = defaultData.realBorders;
 	return (snaps.filter((s) => s.year <= year).at(-1) ?? snaps[0]).polities;
+}
+
+const cellName = new Map(defaultData.cells.map((c) => [c.id, c.name]));
+const share2006 = (() => {
+	const pop = defaultData.regional.pop[2006];
+	const total = Object.values(pop).reduce((a, b) => a + b, 0);
+	return Object.fromEntries(Object.entries(pop).map(([id, p]) => [id, p / total]));
+})();
+const lastKnown = (national, key, year) => {
+	for (let y = Math.floor(year); y >= national.years[0]; y--) {
+		const v = national[key][national.years.indexOf(y)];
+		if (v != null) return v;
+	}
+	return null;
+};
+const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
+const mix = (r) => `${pct(r.islam)} Muslim · ${pct(r.christian)} Christian · ${pct(r.traditional)} traditional`;
+
+/** A frame of the real Nigeria in `year`: real borders, real national averages spread by 2006 population. */
+export function realFrame(year) {
+	const polities = realBordersAt(year);
+	const owner = new Map(polities.flatMap((p) => p.cellIds.map((id) => [id, p.id])));
+	const national = defaultData.national;
+	const pop = lastKnown(national, 'pop', year) ?? 0;
+	const urban = lastKnown(national, 'urban', year) ?? 0.05;
+	return {
+		year,
+		yearInt: Math.floor(year),
+		t: 0,
+		polities,
+		events: [],
+		cells: defaultData.cells.map((c) => ({
+			id: c.id,
+			polityId: owner.get(c.id),
+			nextPolityId: owner.get(c.id),
+			pop: pop * share2006[c.id],
+			urban,
+			warFront: false,
+			epidemic: false
+		}))
+	};
+}
+
+/** The final "their Nigeria vs ours" table. */
+export function endingRows(run, national, summary) {
+	const last = run.history.at(-1);
+	const year = last.year;
+	const biggest = last.cells.reduce((a, b) => (b.urban * b.pop > a.urban * a.pop ? b : a));
+	const theirMix = { islam: 0, christian: 0, traditional: 0 };
+	const ourMix = { islam: 0, christian: 0, traditional: 0 };
+	for (const c of last.cells) for (const k of Object.keys(theirMix)) theirMix[k] += (c.religion[k] * c.pop) / last.totals.pop;
+	for (const [id, s] of Object.entries(defaultData.regional.religion[2018])) for (const k of Object.keys(ourMix)) ourMix[k] += s[k] * share2006[id];
+	const realWars = realEvents.filter((e) => isRealWar(e) && e.year <= year).length;
+	const rows = [
+		{ label: 'Population', theirs: last.totals.pop, ours: lastKnown(national, 'pop', year), key: 'pop' },
+		{ label: 'Can read', theirs: last.totals.litAny, ours: lastKnown(national, 'litSchool', year), key: 'litAny' },
+		{ label: 'Life expectancy', theirs: last.totals.lifeExp, ours: lastKnown(national, 'lifeExp', year), key: 'lifeExp' },
+		{ label: 'Wars', theirs: run.events.filter((e) => e.kind === 'war').length, ours: realWars, key: 'wars' },
+		{ label: 'Biggest city', theirs: cellName.get(biggest.id) ?? biggest.id, ours: 'Lagos' },
+		{ label: 'Religious mix', theirs: mix(theirMix), ours: mix(ourMix) }
+	];
+	if (summary)
+		rows.push({
+			label: `In ${summary.runs} runs`,
+			theirs: `${summary.withWar} had a war · Nigeria formed in ${summary.nigeriaFormed}`,
+			ours: '—'
+		});
+	return rows;
 }

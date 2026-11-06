@@ -42,3 +42,13 @@ test('a damaged link shows an error with a way back', async ({ page }) => {
 	await expect(page.getByRole('alert')).toContainText("couldn't load");
 	await expect(page.getByRole('link', { name: /Back to setup/ })).toHaveAttribute('href', '/sim');
 });
+
+test('a short run reaches the ending table', async ({ page }) => {
+	const s = Buffer.from(JSON.stringify({ seed: 3, switches: {}, startYear: 2015, endYear: 2025 })).toString('base64url');
+	await page.goto(`/sim/play?s=${s}`);
+	await expect(page.getByTestId('year')).toBeVisible({ timeout: 15000 });
+	await page.getByRole('button', { name: '×4' }).click();
+	await expect(page.getByRole('heading', { name: /Their Nigeria in 2025/ })).toBeVisible({ timeout: 60000 });
+	await expect(page.getByRole('button', { name: 'Run again' })).toBeVisible();
+	await expect(page.getByRole('row', { name: /Religious mix/ })).toBeVisible();
+});
