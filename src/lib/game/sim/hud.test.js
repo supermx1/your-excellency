@@ -114,6 +114,7 @@ describe('placeAt (hover and click on the map)', () => {
 		const total = f.cells.filter((c) => p.cellIds.includes(c.id)).reduce((s, c) => s + c.pop, 0);
 		expect(p.pop).toBeCloseTo(total, 0);
 		expect(p.litSchool).toBeGreaterThanOrEqual(0);
+		expect(p.here.litAny).toBeGreaterThanOrEqual(p.here.litSchool);
 		expect(p.religion.islam + p.religion.christian + p.religion.traditional).toBeCloseTo(1, 1);
 		expect(Array.isArray(p.atWarWith)).toBe(true);
 	});

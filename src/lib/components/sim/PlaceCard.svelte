@@ -21,7 +21,17 @@
 			</div>
 			<button type="button" class="border-2 border-black px-2 text-sm font-black" aria-label="Close" onclick={onClose}>×</button>
 		</div>
-		<dl class="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-sm">
+		<h3 class="mt-2 text-xs font-black uppercase">This state</h3>
+		<dl class="mt-1 grid grid-cols-2 gap-x-3 gap-y-1 text-sm">
+			<dt class="font-bold">Population</dt>
+			<dd class="tabular-nums">{formatStat('pop', place.here.pop)}</dd>
+			<dt class="font-bold">Can read (school)</dt>
+			<dd class="tabular-nums">{formatStat('litSchool', place.here.litSchool)}</dd>
+			<dt class="font-bold">Can read (any script)</dt>
+			<dd class="tabular-nums">{formatStat('litAny', place.here.litAny)}</dd>
+		</dl>
+		<h3 class="mt-2 text-xs font-black uppercase">All of {place.name}</h3>
+		<dl class="mt-1 grid grid-cols-2 gap-x-3 gap-y-1 text-sm">
 			<dt class="font-bold">Population</dt>
 			<dd class="tabular-nums">{formatStat('pop', place.pop)}</dd>
 			<dt class="font-bold">Can read (school)</dt>

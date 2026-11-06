@@ -218,6 +218,8 @@ export function placeAt(run, frame, cellId) {
 		today: `${name}${cellId === 'fct' ? '' : ' State'} today`,
 		ours: real && real !== polity.name ? `In our world: ${real}` : null,
 		cellIds: polity.cellIds,
+		// This state alone, so a region's reading is not hidden in the whole country's average.
+		here: { pop: cell.pop, litSchool: cell.litSchool, litAny: cell.litAny },
 		pop,
 		litSchool: avg((c) => c.litSchool),
 		litAny: avg((c) => c.litAny),
