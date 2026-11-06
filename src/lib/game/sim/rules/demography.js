@@ -6,6 +6,8 @@ const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, Number.isFinite(v) ? v : 
 /** Births, deaths, life expectancy and literacy per cell. Same rules for every cell. */
 /** @param {import('../types.js').World} world */
 export function stepDemography(world) {
+	const meanDensity =
+		world.cells.reduce((s, c) => s + c.pop, 0) / (world.cells.reduce((s, c) => s + (c.area ?? 1), 0) || 1);
 	for (const c of world.cells) {
 		// Fertility transition: as schooling and town life spread, families have far fewer children.
 		const modern = (1 - P.transitionUrbanWeight) * c.litAny + P.transitionUrbanWeight * c.urban;
@@ -40,5 +42,14 @@ export function stepDemography(world) {
 			0,
 			c.litAny
 		);
+		// Parents who read want their children to read, and some of them can teach: communities open more
+		// schools like the ones they have, until every child has a place, faster where more children
+		// live within walking distance. Same rule for every kind of school.
+		const walk = clamp(1 + P.schoolWalk * Math.log10(c.pop / (c.area ?? 1) / (meanDensity || 1)), 0.5, 2);
+		const have = c.schools.quranic + c.schools.mission + c.schools.state;
+		if (have > 0 && have < 1) {
+			const grow = P.communitySchools * walk * c.litAny * (1 - have);
+			for (const k of ['quranic', 'mission', 'state']) c.schools[k] += (grow * c.schools[k]) / have;
+		}
 	}
 }

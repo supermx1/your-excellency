@@ -8,8 +8,8 @@ export const PARAMS = {
 	infraReturn: 2,
 	oilIncome: 900, // $ per head added in oil cells at oil price multiplier 1
 	urbanFloor: 0.03,
-	urbanScale: 4.3, // urban target = (ln income − ln urbanBaseIncome) / urbanScale
-	urbanBaseIncome: 450,
+	urbanScale: 2.6, // urban target = (ln income − ln urbanBaseIncome) / urbanScale
+	urbanBaseIncome: 550,
 	urbanAdjust: 0.04,
 	infraBaseIncome: 400, // income ($ a head) below which a place keeps up no roads or markets
 	infraIncomeSpan: 2, // full roads at 10^span times that income
@@ -31,6 +31,8 @@ export const PARAMS = {
 	foodRecovery: 0.06,
 	foodDepletion: 0.1,
 	foodIncomeLoss: 0.1,
+	governanceLoss: 0.4, // share of income lost under a completely unsteady government (assumption)
+	colonialDrain: 0.3, // share of what a colony makes that goes abroad (assumption)
 	schoolBudgetShare: 0.35, // share of grid-building money free schooling takes while it expands (assumption)
 	riverTrade: 0.08, // market access for states on the Niger or Benue (assumption; coast adds 0.1)
 	migrationThreshold: 0.15,
@@ -39,11 +41,11 @@ export const PARAMS = {
 	maxMigration: 0.02,
 	// demography
 	birthBase: 0.05,
-	birthLitDrop: 0.01,
+	birthLitDrop: 0.007,
 	birthUrbanDrop: 0.008,
 	transitionUrbanWeight: 0.5, // births fall with literacy (any script) and town life equally
-	transitionStart: 0.65, // that blend, where birth rates start falling fast (assumption, see docs/timeline-data.md)
-	transitionDrop: 0.05, // births per person per year removed at full transition (fitted to 2025, 2050 and the UN 2100 projection)
+	transitionStart: 0.75, // that blend, where birth rates start falling fast (assumption, see docs/timeline-data.md)
+	transitionDrop: 0.03, // births per person per year removed at full transition (fitted to 2025, 2050 and the UN 2100 projection)
 	deathBase: 0.045,
 	deathIncomeDrop: 0.35, // share of deaths removed as income approaches incomeForLowDeath
 	incomeForLowDeath: 12000,
@@ -56,6 +58,8 @@ export const PARAMS = {
 	relState: 0.08,
 	relSchool: 5,
 	schoolGrowth: 0.004,
+	communitySchools: 0.02, // yearly school growth per share of parents who read, in their script (assumption)
+	schoolWalk: 0.5, // more school growth for each tenfold more crowded than average: more children within walking distance
 	missionSpread: 1 / 15, // years for missionaries to move on: 15 from one neighbour, less from several
 	missionPresence: 0.8, // where missionaries work, their schools grow as if this share already believed
 	stateSchoolGrowth: 0.003, // government schools, from income and stability
@@ -80,6 +84,6 @@ export const PARAMS = {
 	inventMargin: 1, // knowledge must exceed a tech's threshold by this much to invent it
 	inventChance: 0.2,
 	// literacy
-	learnRate: 0.015, // per year at full school coverage
+	learnRate: 0.018, // per year at full school coverage
 	litDecay: 0.002
 };
