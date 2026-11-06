@@ -14,6 +14,7 @@
 				<div class={i > 1 ? 'hidden md:block' : ''}>
 					<dt class="text-[10px] font-black tracking-[0.15em] uppercase opacity-60">{s.label}</dt>
 					<dd class="text-lg font-bold tabular-nums md:text-xl">{formatStat(s.key, s.value)}</dd>
+					{#if s.extra}<dd class="text-xs font-bold">{s.extra}</dd>{/if}
 					<dd class="text-xs opacity-60">ours: {formatStat(s.key, s.ours)}</dd>
 				</div>
 			{/each}

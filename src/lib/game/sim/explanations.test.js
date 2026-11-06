@@ -55,3 +55,12 @@ describe('playback explanations', () => {
 		]);
 	});
 });
+
+describe('electricity in hours', () => {
+	it('reads as share connected and hours a day', async () => {
+		const { powerText } = await import('./format.js');
+		expect(powerText(0.62, 0.31)).toBe('62% connected · about 12 hours a day');
+		expect(powerText(0, 0)).toBe('No one is connected');
+		expect(powerText(undefined, 0.3)).toBe(null);
+	});
+});

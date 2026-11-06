@@ -29,6 +29,10 @@
 			<dd class="tabular-nums">{formatStat('litSchool', place.here.litSchool)}</dd>
 			<dt class="font-bold">Can read (any script)</dt>
 			<dd class="tabular-nums">{formatStat('litAny', place.here.litAny)}</dd>
+			{#if place.here.power}
+				<dt class="font-bold">Electricity</dt>
+				<dd>{place.here.power}</dd>
+			{/if}
 		</dl>
 		<h3 class="mt-2 text-xs font-black uppercase">All of {place.name}</h3>
 		<dl class="mt-1 grid grid-cols-2 gap-x-3 gap-y-1 text-sm">
