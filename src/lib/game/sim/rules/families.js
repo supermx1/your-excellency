@@ -165,9 +165,9 @@ export function stepFamilies(world) {
 				}
 			}
 			if (age === 15) {
-				m.litAtYouth = cell.litAny;
+				m.litAtYouth = cell.litSchool;
 				// School makes reading likely; without it, some still learn at home or at work.
-				m.canRead = world.familyRand() < (m.schooled ? Math.max(0.85, cell.litAny) : cell.litAny * 0.5);
+				m.canRead = world.familyRand() < (m.schooled ? Math.max(0.85, cell.litSchool) : cell.litSchool * 0.5);
 				if (m.canRead) m.lifeEvents.push({ year: y, kind: 'reads', text: 'learns to read' });
 			}
 			if (age === 18) {

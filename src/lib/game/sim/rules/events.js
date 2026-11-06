@@ -58,6 +58,7 @@ function britishPolity(world) {
 function apply(world, event) {
 	const fx = event.effects ?? {};
 	for (const [flag, value] of Object.entries(fx.flags ?? {})) world.flags[flag] = value;
+	for (const id of fx.missions ?? []) world.missionCells.add(id);
 
 	if (fx.conquer) {
 		const brit = britishPolity(world);
@@ -165,6 +166,9 @@ export function stepEvents(world) {
 				scheduledYear(e, sw) !== null
 			)
 				Object.assign(world.flags, e.effects.flags);
+		for (const e of all)
+			if (e.year < world.inputs.startYear && e.effects?.missions && scheduledYear(e, sw) !== null)
+				for (const id of e.effects.missions) world.missionCells.add(id);
 	}
 
 	world.fired ??= new Set();

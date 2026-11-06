@@ -40,5 +40,25 @@ describe('baseline calibration (mean of 30 seeds)', () => {
 		expect(mean).toBeGreaterThan(300e6);
 		expect(mean).toBeLessThan(700e6);
 	});
+	it('faiths spread to roughly where they are in 2018 (mean state error under 15 points)', () => {
+		const real18 = defaultData.regional.religion[2018];
+		const err = defaultData.cells.reduce((t, c) => {
+			const at = (f) => runs.reduce((s, r) => s + r.history.find((y) => y.year === 2018).cells.find((x) => x.id === c.id).religion[f], 0) / SEEDS;
+			return t + (Math.abs(at('christian') - real18[c.id].christian) + Math.abs(at('islam') - real18[c.id].islam)) / 2;
+		}, 0) / defaultData.cells.length;
+		expect(err).toBeLessThan(0.15);
+	});
+	it('school literacy runs the right way round: south-east above north-west, ranked like survey attendance', () => {
+		const lit = (id) => runs.reduce((s, r) => s + r.history.find((y) => y.year === 2018).cells.find((x) => x.id === id).litSchool, 0) / SEEDS;
+		const mean = (ids) => ids.reduce((t, id) => t + lit(id), 0) / ids.length;
+		expect(mean(['anambra', 'enugu', 'imo', 'abia', 'ebonyi'])).toBeGreaterThan(mean(['kano', 'sokoto', 'katsina', 'zamfara', 'kebbi', 'jigawa']) + 0.25);
+		const att = defaultData.development.snapshots.find((s) => s.year === 2018).cells;
+		const ids = defaultData.cells.map((c) => c.id);
+		const rank = (xs) => { const r = []; xs.map((x, i) => [x, i]).sort((a, b) => a[0] - b[0]).forEach(([, i], k) => (r[i] = k)); return r; };
+		const a = rank(ids.map((id) => att[id].primaryAttendance.value));
+		const b = rank(ids.map(lit));
+		const n = ids.length;
+		expect(1 - (6 * a.reduce((t, v, i) => t + (v - b[i]) ** 2, 0)) / (n * (n * n - 1))).toBeGreaterThan(0.4);
+	});
 	it('civil war happens in at least 50% of seeds', () => expect(civilWar).toBeGreaterThanOrEqual(0.5));
 });

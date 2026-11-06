@@ -25,7 +25,7 @@
 			<dt class="font-bold">Population</dt>
 			<dd class="tabular-nums">{formatStat('pop', place.pop)}</dd>
 			<dt class="font-bold">Can read</dt>
-			<dd class="tabular-nums">{formatStat('litAny', place.litAny)}</dd>
+			<dd class="tabular-nums">{formatStat('litSchool', place.litSchool)}</dd>
 			<dt class="font-bold">States</dt>
 			<dd class="tabular-nums">{place.cellIds.length}</dd>
 		</dl>

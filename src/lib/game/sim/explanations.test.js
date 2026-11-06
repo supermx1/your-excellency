@@ -48,7 +48,7 @@ describe('playback explanations', () => {
 			events: []
 		};
 		expect(whyHere(quiet, { yearInt: 1900 }, 'kano').map((l) => l.text)).toEqual([
-			'More people read here than in most states',
+			'More people have been to school here than in most states',
 			'People are leaving for better-paid states'
 		]);
 	});

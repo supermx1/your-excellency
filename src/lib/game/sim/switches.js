@@ -22,7 +22,7 @@ export const SWITCHES = {
 	malaria: num('Land', 'Malaria burden', 'Multiplies how much malaria raises deaths.', 0.5, 1.5),
 	drought: num('Land', 'Drought severity', 'Multiplies the strength of the real droughts.', 0.5, 1.5),
 	power24hFromYear: year('Policy', '24-hour power from', 'Reliable electricity from this year (blank = as in history).'),
-	freeSchoolingFromYear: year('Policy', 'Free schooling from', 'Free schools for every child from this year.'),
+	freeSchoolingFromYear: year('Policy', 'Free schooling from', 'Free schools for every child from this year (1976 in history, Universal Primary Education; blank = never).', 1976),
 	corruption: pickOne('Policy', 'Corruption', 'Low, as in history, or high.', LEVELS),
 	religiousTolerance: pickOne('Religion', 'Religious tolerance', 'How much religious difference turns into tension, for every faith alike.', LEVELS),
 	christianMissions: bool('Religion', 'Christian missions', 'Missionaries arrive from 1842.'),
