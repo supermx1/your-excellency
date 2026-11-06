@@ -7,6 +7,33 @@ const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, Number.isFinite(v) ? v : 
 export const roadsFor = (incomePc) =>
 	clamp(Math.log10(incomePc / P.infraBaseIncome) / P.infraIncomeSpan, 0, 1);
 
+/**
+ * Each government's grid: investment (stability times income, less what free schooling takes) builds
+ * power stations, and stations wear out. The share of the day they cover everyone connected is the
+ * grid's reliability, so connecting people faster than building supply means fewer hours for all.
+ * Supply is counted in people it could power all day. Same rule for every government.
+ * @returns {Map<string, number>} reliability (0–1) by polity id
+ */
+function gridReliability(world, squeezeOf) {
+	const out = new Map();
+	for (const p of world.polities) {
+		let demand = 0;
+		let invest = 0;
+		for (const id of p.cellIds) {
+			const c = world.cellById.get(id);
+			demand += c.pop * c.electricityAccess;
+			// Richer, steadier governments build more: no cap on what income can pay for.
+			invest += c.pop * p.stability * (c.incomePc / P.gridIncomeUnit) * (1 - squeezeOf(c));
+		}
+		// A new grid (or a government new to the map) starts at the assumed starting reliability.
+		p.powerSupply ??= demand * P.powerReliability;
+		if (p.tech.includes('electricity'))
+			p.powerSupply += P.powerBuild * invest - P.powerWear * p.powerSupply;
+		out.set(p.id, demand > 0 ? clamp(p.powerSupply / demand, 0, 1) : P.powerReliability);
+	}
+	return out;
+}
+
 /** Income, urbanisation and infrastructure per cell. Same rules for every cell. */
 /** @param {import('../types.js').World} world */
 export function stepEconomy(world) {
@@ -19,23 +46,36 @@ export function stepEconomy(world) {
 		world.switches.freeSchoolingFromYear != null && world.year >= world.switches.freeSchoolingFromYear;
 	// Light public budget: a government that is oil-rich feels the squeeze half as much.
 	const oilRich = new Set(oilOn ? [...oilCells].map((id) => world.cellById.get(id)?.polityId) : []);
+	const resourcesOf = (c) => (polityById.get(c.polityId)?.stability ?? 0.5) * Math.min(1, c.incomePc / 2000);
+	// While free schooling is still being built, it takes money that would otherwise go to the grid.
+	const squeezeOf = (c) =>
+		freeSchool && c.schoolExpansion < P.schoolPolicyCoverage - 0.01
+			? P.schoolBudgetShare * (oilRich.has(c.polityId) ? 0.5 : 1)
+			: 0;
+	const reliability = gridReliability(world, squeezeOf);
+	const meanDensity =
+		world.cells.reduce((s, c) => s + c.pop, 0) / (world.cells.reduce((s, c) => s + c.area, 0) || 1);
 	for (const c of world.cells) {
 		const polity = polityById.get(c.polityId);
-		const resources = (polity?.stability ?? 0.5) * Math.min(1, c.incomePc / 2000);
-		// While free schooling is still being built, it takes money that would otherwise extend the grid.
-		const squeeze =
-			freeSchool && c.schoolExpansion < P.schoolPolicyCoverage - 0.01
-				? P.schoolBudgetShare * (oilRich.has(c.polityId) ? 0.5 : 1)
-				: 0;
+		const resources = resourcesOf(c);
+		const squeeze = squeezeOf(c);
 		if (power)
 			c.electricityAccess = 1; // This scenario explicitly supplies universal, uninterrupted power.
 		else if (polity?.tech.includes('electricity')) {
-			const target = clamp(c.infra * (0.5 + 0.5 * Math.min(1, c.incomePc / 4000)), 0, 1);
+			// Crowded places are cheaper to wire per home, so the grid reaches them first;
+			// the rest of the land as roads reach it.
+			const dense = clamp(P.gridDenseBase + P.gridDenseSlope * Math.log10(c.pop / (c.area || 1) / meanDensity), 0, 1);
+			const target = clamp(dense + (1 - dense) * c.infra * P.ruralGridReach, 0, 1);
 			c.electricityAccess +=
-				Math.max(0, target - c.electricityAccess) * P.connectionGrowth * resources * (1 - squeeze);
+				Math.max(0, target - c.electricityAccess) *
+				P.connectionGrowth *
+				(polity.stability * c.incomePc) / P.gridIncomeUnit * // wiring costs money: poor places wire slowly
+				(1 - squeeze);
 		}
-		// Connected access and usable service are different. War disrupts service, not recorded connections.
-		c.powerService = c.electricityAccess * (power ? 1 : P.powerReliability) * (1 - c.warDamage);
+		// Connected access and usable service are different: service is the share of the day the
+		// grid can supply everyone connected. War disrupts service, not recorded connections.
+		const hours = power ? 1 : (reliability.get(c.polityId) ?? P.powerReliability);
+		c.powerService = c.electricityAccess * hours * (1 - c.warDamage);
 		if (freeSchool) {
 			const teachers = 0.2 + 0.8 * c.litAny;
 			c.schoolExpansion +=

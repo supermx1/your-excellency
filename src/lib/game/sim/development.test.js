@@ -212,3 +212,21 @@ describe('roads and markets', () => {
 		expect(Math.abs(roads2025(1850) - roads2025(2015))).toBeLessThan(0.2);
 	});
 });
+
+describe('electricity follows causes', () => {
+	const at2018 = (sw) => {
+		const r = runSimulation({ seed: 3, switches: { ...defaultSwitches(), ...sw }, startYear: 1850, endYear: 2018 });
+		const y = r.history.at(-1);
+		const cell = (id) => y.cells.find((c) => c.id === id);
+		return { hours: (24 * y.totals.powerService) / y.totals.electricityAccess, lagos: cell('lagos').electricityAccess, sokoto: cell('sokoto').electricityAccess };
+	};
+	it('a steadier, cleaner government keeps the lights on longer', () => {
+		expect(at2018({ corruption: 'low' }).hours).toBeGreaterThan(at2018({ corruption: 'high' }).hours + 1);
+	});
+	it('crowded places are wired first, with no state named in the rule', () => {
+		const h = at2018({});
+		expect(h.lagos).toBeGreaterThan(h.sokoto + 0.2);
+		expect(h.hours).toBeGreaterThan(6);
+		expect(h.hours).toBeLessThan(16);
+	});
+});
