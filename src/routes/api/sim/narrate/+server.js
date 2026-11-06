@@ -12,6 +12,7 @@ export async function POST({ request, platform }) {
 	if (!checked.ok) return json({ error: checked.error }, { status: 400 });
 	if (!Number.isInteger(chapterIndex) || chapterIndex < 0 || chapterIndex > 50) return json({ error: 'bad chapter' }, { status: 400 });
 	if (runId !== undefined && !/^[0-9a-zA-Z]{10}$/.test(runId)) return json({ error: 'bad run id' }, { status: 400 });
-	const narration = await narrate(platform, { runId, chapterIndex, digest: checked.digest }).catch(() => null);
+	const ip = request.headers.get('cf-connecting-ip') ?? 'unknown';
+	const narration = await narrate(platform, { runId, chapterIndex, digest: checked.digest, ip }).catch(() => null);
 	return json({ narration });
 }

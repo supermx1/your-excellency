@@ -4,6 +4,7 @@
 import { getRun } from './sim-runs.js';
 
 export const SIM_DAILY_NEURONS = 6000; // of the account's 10,000 free; the rest is left for The Campaign
+export const SIM_DAILY_PER_VISITOR = 40; // model calls a day from one address, so one visitor can't spend everyone's budget
 const MODEL = '@cf/google/gemma-4-26b-a4b-it';
 const FALLBACK_MODEL = '@cf/meta/llama-3.2-3b-instruct';
 const RATES = { [MODEL]: [9091, 27273], [FALLBACK_MODEL]: [4625, 30475] }; // neurons per million tokens [in, out]
@@ -75,10 +76,10 @@ async function callModel(ai, model, prompt) {
 
 /**
  * @param {any} platform
- * @param {{ runId?: string, chapterIndex: number, digest: object }} req digest already validated
+ * @param {{ runId?: string, chapterIndex: number, digest: object, ip?: string }} req digest already validated
  * @returns {Promise<{ text: string, vignettes: string[] } | null>}
  */
-export async function narrate(platform, { runId, chapterIndex, digest }) {
+export async function narrate(platform, { runId, chapterIndex, digest, ip = 'unknown' }) {
 	const env = platform?.env;
 	if (!env) return null;
 
@@ -88,7 +89,9 @@ export async function narrate(platform, { runId, chapterIndex, digest }) {
 	}
 
 	const kv = env.AI_CACHE;
-	const key = `sim-narr:${runId ?? (await sha256(JSON.stringify(digest)))}:${chapterIndex}`;
+	// Keyed by the chapter data itself, never the run id alone: the browser sends the data, so a run-id key
+	// would let anyone store their own text as a saved run's narration for every later viewer.
+	const key = `sim-narr:${await sha256(JSON.stringify(digest))}:${chapterIndex}`;
 	const cached = await kv?.get(key);
 	if (cached) return JSON.parse(cached);
 
@@ -96,6 +99,10 @@ export async function narrate(platform, { runId, chapterIndex, digest }) {
 	const budgetKey = `sim-neurons:${today()}`;
 	const spent = Number((await kv?.get(budgetKey)) ?? 0);
 	if (spent >= SIM_DAILY_NEURONS) return null;
+	const visitorKey = `sim-narr-ip:${today()}:${ip}`;
+	const calls = Number((await kv?.get(visitorKey)) ?? 0);
+	if (calls >= SIM_DAILY_PER_VISITOR) return null;
+	await kv?.put(visitorKey, String(calls + 1), { expirationTtl: 60 * 60 * 26 });
 
 	// Length limits live in the prompt: a maxLength in the schema truncates mid-string and breaks the JSON.
 	const prompt = `Write "text" in 60 to 110 words and at most 4 "vignettes" of at most 35 words each.\nChapter data (JSON):\n${JSON.stringify(digest)}`;
