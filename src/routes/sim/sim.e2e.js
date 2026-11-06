@@ -103,7 +103,7 @@ test('a saved run replays the same history from its link', async ({ page, contex
 	await page.getByRole('button', { name: '×4' }).click();
 	const popRow = page.getByRole('row', { name: /Population/ });
 	await expect(popRow).toBeVisible({ timeout: 60000 });
-	const before = await popRow.textContent();
+	const before = (await popRow.textContent()) ?? "";
 	await page.getByRole('button', { name: /Share/ }).click();
 	await expect(page.getByText('Link copied')).toBeVisible();
 	await page.goto(await page.evaluate(() => navigator.clipboard.readText()));

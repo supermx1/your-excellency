@@ -4,6 +4,7 @@
 	import { defaultData } from '$lib/game/sim/data/index.js';
 	import { formatStat } from '$lib/game/sim/format.js';
 	import ShareButton from './ShareButton.svelte';
+	import FeatureButton from './FeatureButton.svelte';
 
 	let { run, summary, onRunAgain, changeHref, inputs, runId = null } = $props();
 
@@ -39,6 +40,7 @@
 			<button type="button" class="{btn} bg-emerald-400" onclick={onRunAgain}>Run again</button>
 			<a href={changeHref} class="{btn} bg-white">Change switches</a>
 			<ShareButton {inputs} {summary} {runId} class="{btn} bg-amber-300" />
+			<FeatureButton {run} {inputs} {summary} {runId} class="{btn} bg-black text-white" />
 		</div>
 	</div>
 </section>

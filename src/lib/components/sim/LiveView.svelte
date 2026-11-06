@@ -157,7 +157,7 @@
 			<DioramaCanvas {frame} {camera} label="Map of Nigeria in {Math.floor(year)}" />
 		</div>
 		<Hud {year} {stats} {caption} {label} />
-		{#if narration}<Narration {narration} />{/if}
+		{#if narration}<Narration {narration} {chapter} />{/if}
 		{#if notice}
 			<p class="absolute top-14 left-3 max-w-sm border-2 border-black bg-yellow-200 px-2 py-1 text-xs font-bold md:top-3">{notice}</p>
 		{/if}

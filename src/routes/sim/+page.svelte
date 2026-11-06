@@ -7,6 +7,9 @@
 	import SwitchMenu from '$lib/components/sim/SwitchMenu.svelte';
 	import { PRESETS, defaultSwitches } from '$lib/game/sim/switches.js';
 	import { decodeInputs, encodeInputs, validateInputs } from '$lib/game/sim/inputs.js';
+	import { scenarioLabel } from '$lib/game/sim/narration.js';
+
+	let { data } = $props();
 
 	const card = 'border-4 border-black bg-white shadow-[6px_6px_0_0_#000]';
 	const btn =
@@ -72,6 +75,21 @@
 	</section>
 
 	<div class="mx-auto max-w-7xl space-y-8 px-4 pt-8 md:px-8">
+		{#if data.featured.length}
+			<section aria-labelledby="featured-title">
+				<h2 id="featured-title" class="text-2xl font-black uppercase">Featured runs</h2>
+				<div class="mt-3 grid gap-4 md:grid-cols-3">
+					{#each data.featured as run (run.id)}
+						<a href="/sim/run/{run.id}" class="{card} block p-5 transition hover:-translate-y-1">
+							<p class="text-xs font-black uppercase opacity-60">{scenarioLabel(run.inputs)} · from {run.inputs.startYear}</p>
+							<h3 class="mt-1 text-xl font-black uppercase">{run.title ?? scenarioLabel(run.inputs)}</h3>
+							<span class="mt-3 inline-block font-black uppercase underline">Watch →</span>
+						</a>
+					{/each}
+				</div>
+			</section>
+		{/if}
+
 		<div class="grid gap-4 md:grid-cols-3">
 			{#each [...Object.entries(PRESETS), ['blank', { label: 'Start from scratch', description: 'Every switch as in history. Change what you like.' }]] as [id, p] (id)}
 				<button
