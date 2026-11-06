@@ -3,6 +3,7 @@
 import { defaultData } from './data/index.js';
 import { frameAt } from './frame.js';
 import { populationAt } from './population.js';
+import { whyHere } from './explanations.js';
 
 const realEvents = defaultData.events.events.filter((e) => e.kind === 'history');
 const isRealWar = (e) => e.effects?.war || (e.effects?.conquer && e.effects?.mortality);
@@ -71,6 +72,10 @@ export function captionsAt(run, year, windowYears = 1.5) {
 }
 
 /** Up to two family life events from the last three years, newest first. */
+/** @param {number | undefined} months */
+const savingsText = (months) =>
+	months == null ? null : months === 0 ? 'No savings left' : `Savings: about ${months} month${months === 1 ? '' : 's'} of income`;
+
 export function familyCardsAt(run, year) {
 	const cards = [];
 	for (const f of run.families)
@@ -83,7 +88,8 @@ export function familyCardsAt(run, year) {
 						surname: f.surname,
 						member: m.name,
 						text: `${m.name} ${f.surname} ${e.text}.`,
-						year: e.year
+						year: e.year,
+						savings: savingsText(f.months?.[e.year - run.history[0].year])
 					});
 	return cards.sort((a, b) => b.year - a.year).slice(0, 2);
 }
@@ -217,6 +223,7 @@ export function placeAt(run, frame, cellId) {
 			christian: avg((c) => c.religion.christian),
 			traditional: avg((c) => c.religion.traditional)
 		},
+		why: whyHere(run, frame, cellId),
 		atWarWith: (frame.wars ?? [])
 			.filter((pair) => pair.includes(polity.id))
 			.map(([p, q]) => names.get(p === polity.id ? q : p) ?? 'a former state')

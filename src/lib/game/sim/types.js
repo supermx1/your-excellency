@@ -8,6 +8,7 @@
  * @property {string[]} neighbours
  * @property {number} area
  * @property {boolean} coastal
+ * @property {boolean} [river]  on the Niger or Benue (river trade)
  * @property {string} polityId
  * @property {number} pop
  * @property {number} urban        share 0–1

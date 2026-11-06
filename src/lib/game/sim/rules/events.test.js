@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { runSimulation } from '../world.js';
 import { defaultData } from '../data/index.js';
+import { defaultSwitches } from '../switches.js';
 
 const run = (seed, switches = {}, startYear = 1850, endYear = 2025) =>
 	runSimulation({ seed, switches, startYear, endYear });
@@ -41,5 +42,26 @@ describe('technology and events', () => {
 		for (const s of seeds.slice(0, 5))
 			for (const e of run(s).events.filter((e) => e.kind === 'adoption' || e.kind === 'invention'))
 				expect(e.year).toBeGreaterThanOrEqual(realYear[e.techId]);
+	});
+});
+
+describe('post-independence crises follow causes, not dates', () => {
+	const runs = (sw) =>
+		[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((seed) =>
+			runSimulation({ seed, startYear: 1850, endYear: 1995, switches: { ...defaultSwitches(), ...sw } })
+		);
+	const count = (rs, pred) => rs.filter((r) => r.events.some(pred)).length;
+
+	it('no coup to shake the state means no civil war', () => {
+		expect(count(runs({ coups: 'off' }), (e) => e.id === 'civil-war')).toBe(0);
+	});
+	it('a later independence moves the crises with it', () => {
+		const late = runs({ independenceYear: 1975 });
+		for (const r of late) for (const e of r.events.filter((e) => e.id?.startsWith('coup-') || e.id === 'civil-war')) expect(e.year).toBeGreaterThanOrEqual(1981);
+		expect(late.flatMap((r) => r.events).some((e) => e.id === 'coup-1966-jan' && e.title === 'Military coup')).toBe(true);
+	});
+	it('a steadier state rides out more of the coup moments', () => {
+		const coups = (rs) => rs.flatMap((r) => r.events).filter((e) => e.id?.startsWith('coup-')).length;
+		expect(coups(runs({ corruption: 'low' }))).toBeLessThan(coups(runs({ corruption: 'high' })));
 	});
 });

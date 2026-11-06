@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { createWorld, runSimulation, stepWorld } from './world.js';
 import { defaultData } from './data/index.js';
+import { defaultSwitches } from './switches.js';
 import { stepEconomy } from './rules/economy.js';
 import { stepDemography } from './rules/demography.js';
 import { stepFamilies } from './rules/families.js';
@@ -181,5 +182,22 @@ describe('electricity and school capacity', () => {
 		expect(
 			statsAt(later, defaultData.national, 2020).find((s) => s.key === 'electricityAccess').ours
 		).toBeNull();
+	});
+});
+
+describe('light public budget and river trade', () => {
+	it('free schooling slows the grid while it is being built', () => {
+		const at = (sw, year) => {
+			const r = runSimulation({ seed: 3, startYear: 1850, endYear: year, switches: { ...defaultSwitches(), ...sw } });
+			return r.history.at(-1).totals.electricityAccess;
+		};
+		expect(at({ freeSchoolingFromYear: 1960 }, 1985)).toBeLessThan(at({}, 1985));
+	});
+	it('states on the Niger or Benue get river trade', () => {
+		const w = createWorld({ seed: 1, startYear: 1850, endYear: 1851, switches: defaultSwitches() });
+		stepWorld(w);
+		const kogi = w.cellById.get('kogi');
+		expect(kogi.river).toBe(true);
+		expect(kogi.marketAccess).toBeGreaterThan(0.2 + 0.5 * kogi.infra + 0.2 * kogi.urban + 0.07);
 	});
 });

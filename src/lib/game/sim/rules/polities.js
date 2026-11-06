@@ -59,6 +59,7 @@ export function stepPolities(world) {
 export function coup(world, p, { log = true } = {}) {
 	if (p.government !== 'military') p.governmentBeforeCoup = p.government;
 	p.government = 'military';
+	p.lastCoupYear = world.year;
 	// Same rule in every era; only the name changes (an 1850 kingdom has palace coups, not military ones).
 	const what = world.year < 1900 ? 'Palace coup' : 'Military coup';
 	if (log) world.events.push({ year: world.year, kind: 'coup', polityIds: [p.id], title: `${what} in ${p.name}` });

@@ -7,8 +7,10 @@ const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, Number.isFinite(v) ? v : 
 /** @param {import('../types.js').World} world */
 export function stepDemography(world) {
 	for (const c of world.cells) {
+		// Fertility transition: once most children are in formal school, families have far fewer.
+		const transition = clamp((c.litSchool - P.transitionStart) / (1 - P.transitionStart), 0, 1);
 		const birth = clamp(
-			P.birthBase - P.birthLitDrop * c.litAny - P.birthUrbanDrop * c.urban,
+			P.birthBase - P.birthLitDrop * c.litAny - P.birthUrbanDrop * c.urban - P.transitionDrop * transition,
 			0.008,
 			0.06
 		);

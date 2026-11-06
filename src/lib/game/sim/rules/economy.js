@@ -11,21 +11,27 @@ export function stepEconomy(world) {
 	const power =
 		world.switches.power24hFromYear != null && world.year >= world.switches.power24hFromYear;
 	const polityById = new Map(world.polities.map((p) => [p.id, p]));
+	const freeSchool =
+		world.switches.freeSchoolingFromYear != null && world.year >= world.switches.freeSchoolingFromYear;
+	// Light public budget: a government that is oil-rich feels the squeeze half as much.
+	const oilRich = new Set(oilOn ? [...oilCells].map((id) => world.cellById.get(id)?.polityId) : []);
 	for (const c of world.cells) {
 		const polity = polityById.get(c.polityId);
 		const resources = (polity?.stability ?? 0.5) * Math.min(1, c.incomePc / 2000);
+		// While free schooling is still being built, it takes money that would otherwise extend the grid.
+		const squeeze =
+			freeSchool && c.schoolExpansion < P.schoolPolicyCoverage - 0.01
+				? P.schoolBudgetShare * (oilRich.has(c.polityId) ? 0.5 : 1)
+				: 0;
 		if (power)
 			c.electricityAccess = 1; // This scenario explicitly supplies universal, uninterrupted power.
 		else if (polity?.tech.includes('electricity')) {
 			const target = clamp(c.infra * (0.5 + 0.5 * Math.min(1, c.incomePc / 4000)), 0, 1);
 			c.electricityAccess +=
-				Math.max(0, target - c.electricityAccess) * P.connectionGrowth * resources;
+				Math.max(0, target - c.electricityAccess) * P.connectionGrowth * resources * (1 - squeeze);
 		}
 		// Connected access and usable service are different. War disrupts service, not recorded connections.
 		c.powerService = c.electricityAccess * (power ? 1 : P.powerReliability) * (1 - c.warDamage);
-		const freeSchool =
-			world.switches.freeSchoolingFromYear != null &&
-			world.year >= world.switches.freeSchoolingFromYear;
 		if (freeSchool) {
 			const teachers = 0.2 + 0.8 * c.litAny;
 			c.schoolExpansion +=

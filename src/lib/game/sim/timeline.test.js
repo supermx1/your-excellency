@@ -48,8 +48,12 @@ describe('frames', () => {
 	});
 
 	it('marks war fronts and epidemics', () => {
-		const war = baseline.events.find((e) => e.id === 'civil-war');
-		expect(frameAt(baseline, war.year + 1.5).cells.some((c) => c.warFront)).toBe(true);
+		// The civil war now needs a coup to shake the state first, so take the first seed where it happens.
+		const withWar = [1, 2, 3, 4, 5, 6, 7, 8]
+			.map((seed) => runSimulation({ seed, switches: defaultSwitches(), startYear: 1850, endYear: 1975 }))
+			.find((r) => r.events.some((e) => e.id === 'civil-war'));
+		const war = withWar.events.find((e) => e.id === 'civil-war');
+		expect(frameAt(withWar, war.year + 1.5).cells.some((c) => c.warFront)).toBe(true);
 		expect(frameAt(baseline, 1918.5).cells.every((c) => c.epidemic)).toBe(true);
 	});
 });

@@ -32,6 +32,12 @@
 		<p class="mt-2 text-xs">
 			{pct(place.religion.islam)} Muslim · {pct(place.religion.christian)} Christian · {pct(place.religion.traditional)} traditional
 		</p>
+		{#if place.why?.length}
+			<h3 class="mt-2 text-xs font-black uppercase">What's happening here</h3>
+			<ul class="mt-1 space-y-0.5 text-xs" data-why>
+				{#each place.why as line (line.kind)}<li>· {line.text}</li>{/each}
+			</ul>
+		{/if}
 		{#if place.atWarWith.length}
 			<p class="mt-2 text-xs font-bold text-red-700">At war with {place.atWarWith.join(', ')}</p>
 		{/if}

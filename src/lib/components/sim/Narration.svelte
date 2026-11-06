@@ -1,13 +1,13 @@
 <script>
 	// @ts-nocheck
-	import { readWithSano, readWithBrowser } from '$lib/game/sim/speech.js';
+	import { readWithKitten, readWithBrowser } from '$lib/game/sim/speech.js';
 
 	let { narration, chapter = null } = $props();
 	let open = $state(false);
 	// Read aloud: once on, each new chapter (or the AI text replacing the built-in one) is read in turn,
-	// with the site's own sanoTTS voice; the browser's voice takes over if that can't load or run.
+	// with the site's own KittenTTS voice; the browser's voice takes over if that can't load or run.
 	let reading = $state(false);
-	let voice = $state(''); // 'loading' | 'sano' | 'browser' (shown on the button and for tests)
+	let voice = $state(''); // 'loading' | 'kitten' | 'browser' (shown on the button and for tests)
 	let fallback = false;
 	let ctx = null;
 	const canSpeak = typeof window !== 'undefined' && ('AudioContext' in window || 'speechSynthesis' in window);
@@ -30,9 +30,9 @@
 		};
 		if (ctx && !fallback) {
 			voice = 'loading';
-			readWithSano(text, ctx, stop.signal, () => (voice = 'sano')).catch((err) => {
+			readWithKitten(text, ctx, stop.signal, () => (voice = 'kitten')).catch((err) => {
 				if (stop.signal.aborted) return;
-				console.warn('sanoTTS unavailable, using the browser voice:', err);
+				console.warn('KittenTTS unavailable, using the browser voice:', err);
 				fallback = true;
 				browser();
 			});

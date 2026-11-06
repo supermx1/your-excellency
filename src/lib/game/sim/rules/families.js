@@ -7,6 +7,44 @@ export const FAMILY_CELLS = ['kano', 'oyo', 'anambra', 'cross-river'];
 
 const pick = (rand, xs) => xs[Math.floor(rand() * xs.length)];
 
+// Household money, kept simple on purpose: what matters is which choices a family can afford.
+// Pay is relative to the state's income per person; land work loses income in a food crisis.
+const PAY = { farmer: 0.7, herder: 0.7, fisher: 0.8, artisan: 1, trader: 1.2, driver: 1.2, 'factory worker': 1.3, clerk: 1.5, teacher: 1.5, nurse: 1.6, engineer: 2.5, 'shop owner': 1.8 };
+const LAND = new Set(['farmer', 'herder', 'fisher']);
+const SPEND = 0.95; // share of a normal year's income spent on the household itself
+const OBLIGATIONS = 0.15; // share of savings that goes each year to extended family, weddings and funerals
+// Together these settle savings near four months of income, so one bad harvest can empty them.
+const SCHOOL_FEES = 0.25; // of a year's income, for a child's years of school
+const MOVE_COST = 0.3;
+const SHOP_COST = 0.25;
+
+/** One year of household income and spending; returns this year's income (0 if nobody earns). */
+function budget(world, family, y) {
+	let income = 0;
+	let normal = 0;
+	for (const m of family.members) {
+		const age = y - m.born;
+		if (m.died || age < 18 || age >= 65 || !PAY[m.occupation]) continue;
+		const c = world.cellById.get(m.cell);
+		const pay = c.incomePc * PAY[m.occupation];
+		normal += pay;
+		income += LAND.has(m.occupation) ? pay * (1 - 0.6 * c.foodStress) : pay;
+	}
+	if (!normal) return 0;
+	const home = world.cellById.get(family.members.findLast((m) => !m.died)?.cell ?? family.homeCell);
+	const before = family.savings;
+	family.savings = Math.max(0, family.savings * (1 - OBLIGATIONS) + income - normal * SPEND * (1 + 0.5 * home.foodStress)); // food costs more in a shortage
+	if (!family.broke && before > 0 && family.savings === 0) {
+		family.broke = true;
+		const head = family.members.find((m) => !m.died && y - m.born >= 18);
+		head?.lifeEvents.push({ year: y, kind: 'savings-gone', text: home.foodStress > 0.2 ? 'spends the last of the savings on food' : 'runs out of savings' });
+	} else if (family.broke && family.savings > 0.25 * income) family.broke = false;
+	return income;
+}
+
+/** Savings in months of household income, for the family card. */
+const months = (family, income) => (income ? Math.round((12 * family.savings) / income) : 0);
+
 function nameList(world, cellId) {
 	const names = world.data.names;
 	return names?.languages[names.cellLanguage[cellId]];
@@ -44,7 +82,10 @@ export function createFamilies(world) {
 			id: `f${i + 1}`,
 			surname: pick(world.familyRand, nameList(world, cellId).surnames),
 			homeCell: cellId,
-			members: []
+			members: [],
+			savings: 0,
+			broke: false,
+			months: [] // savings in months of income, one entry per year from the start year
 		};
 		const first = newMember(
 			world,
@@ -78,6 +119,8 @@ function occupation(world, cell, m) {
 export function stepFamilies(world) {
 	const y = world.year;
 	for (const family of world.families) {
+		const income = budget(world, family, y);
+		family.months.push(months(family, income));
 		const last = family.members.at(-1);
 		for (const m of family.members) {
 			if (m.died) continue;
@@ -103,9 +146,28 @@ export function stepFamilies(world) {
 				m.lifeEvents.push({ year: y, kind: 'electricity', text: 'gets electricity at home' });
 			}
 
+			if (age === 6) {
+				const s = cell.schools;
+				const nearby = Math.min(1, s.quranic + s.mission + s.state + cell.schoolExpansion);
+				const free = world.switches.freeSchoolingFromYear != null && y >= world.switches.freeSchoolingFromYear;
+				const fees = free ? 0 : SCHOOL_FEES * income;
+				if (world.familyRand() < nearby) {
+					if (family.savings >= fees) {
+						family.savings -= fees;
+						m.schooled = true;
+						m.lifeEvents.push({ year: y, kind: 'school', text: free ? 'starts at a free school' : 'starts school' });
+					} else
+						m.lifeEvents.push({
+							year: y,
+							kind: 'no-school',
+							text: cell.foodStress > 0.2 ? 'misses school: the savings went on food' : 'misses school: the family cannot afford the fees'
+						});
+				}
+			}
 			if (age === 15) {
 				m.litAtYouth = cell.litAny;
-				m.canRead = world.familyRand() < cell.litAny;
+				// School makes reading likely; without it, some still learn at home or at work.
+				m.canRead = world.familyRand() < (m.schooled ? Math.max(0.85, cell.litAny) : cell.litAny * 0.5);
 				if (m.canRead) m.lifeEvents.push({ year: y, kind: 'reads', text: 'learns to read' });
 			}
 			if (age === 18) {
@@ -114,15 +176,28 @@ export function stepFamilies(world) {
 					.filter((n) => n && n.incomePc > cell.incomePc * 1.5)
 					.sort((a, b) => b.incomePc - a.incomePc)[0];
 				if (richer && world.familyRand() < 0.4) {
-					m.cell = richer.id;
-					m.lifeEvents.push({
-						year: y,
-						kind: 'migrates',
-						text: `moves to ${richer.name ?? richer.id}`
-					});
+					const cost = MOVE_COST * (income || cell.incomePc);
+					if (family.savings >= cost) {
+						family.savings -= cost;
+						m.cell = richer.id;
+						m.lifeEvents.push({ year: y, kind: 'migrates', text: `moves to ${richer.name ?? richer.id}` });
+					} else
+						m.lifeEvents.push({ year: y, kind: 'stays', text: `wants work in ${richer.name ?? richer.id} but cannot afford the move` });
 				}
 				m.occupation = occupation(world, world.cellById.get(m.cell), m);
-				m.lifeEvents.push({ year: y, kind: 'work', text: `works as a ${m.occupation}` });
+				m.lifeEvents.push({ year: y, kind: 'work', text: `works as ${/^[aeiou]/.test(m.occupation) ? 'an' : 'a'} ${m.occupation}` });
+			}
+			if (
+				age >= 25 &&
+				age < 55 &&
+				['farmer', 'trader', 'artisan', 'driver'].includes(m.occupation) &&
+				cell.urban > 0.15 &&
+				family.savings >= 0.3 * income &&
+				world.familyRand() < 0.04
+			) {
+				family.savings -= SHOP_COST * income;
+				m.lifeEvents.push({ year: y, kind: 'business', text: m.occupation === 'artisan' ? 'opens a workshop with the family savings' : 'opens a shop with the family savings' });
+				m.occupation = 'shop owner';
 			}
 			if (m === last && y >= m.nextChildAt) {
 				family.members.push(newMember(world, family, m.cell, y, m.faith));

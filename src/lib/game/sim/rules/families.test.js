@@ -39,4 +39,17 @@ describe('families', () => {
 		const warDeaths = runs.flatMap((r) => r.families.flatMap((f) => f.members)).filter((m) => m.lifeEvents.some((e) => e.kind === 'war-death'));
 		expect(warDeaths.length).toBeGreaterThan(0);
 	});
+
+	it('household money decides school, moves and shops, and a crisis can empty it', () => {
+		const families = runs.flatMap((r) => r.families);
+		const events = families.flatMap((f) => f.members.flatMap((m) => m.lifeEvents));
+		for (const kind of ['school', 'no-school', 'business', 'savings-gone']) expect(events.some((e) => e.kind === kind), kind).toBe(true);
+		const start = runs[0].history[0].year;
+		for (const f of families)
+			for (const m of f.members)
+				for (const e of m.lifeEvents.filter((e) => e.kind === 'savings-gone')) expect(f.months[e.year - start]).toBe(0);
+		const members = families.flatMap((f) => f.members).filter((m) => m.litAtYouth != null);
+		const reads = (ms) => ms.filter((m) => m.canRead).length / ms.length;
+		expect(reads(members.filter((m) => m.schooled))).toBeGreaterThan(reads(members.filter((m) => !m.schooled)) + 0.3);
+	});
 });

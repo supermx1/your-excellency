@@ -42,7 +42,8 @@
 	},
 	"dependencies": {
 		"@svg-maps/nigeria": "^2.0.0",
-		"sanotts-web": "0.3.0",
+		"onnxruntime-web": "1.24.3",
+		"phonemizer": "1.2.1",
 		"three": "0.174.0"
 	}
 }

@@ -23,6 +23,8 @@ export const PARAMS = {
 	foodRecovery: 0.06,
 	foodDepletion: 0.1,
 	foodIncomeLoss: 0.1,
+	schoolBudgetShare: 0.35, // share of grid-building money free schooling takes while it expands (assumption)
+	riverTrade: 0.08, // market access for states on the Niger or Benue (assumption; coast adds 0.1)
 	migrationThreshold: 0.15,
 	opportunityMigration: 0.0015,
 	pressureMigration: 0.01,
@@ -31,6 +33,8 @@ export const PARAMS = {
 	birthBase: 0.05,
 	birthLitDrop: 0.01,
 	birthUrbanDrop: 0.008,
+	transitionStart: 0.62, // formal-school literacy where birth rates start falling fast (assumption, see docs/timeline-data.md)
+	transitionDrop: 0.03, // births per person per year removed at full transition: ~35/1000 → ~12/1000, as in countries that finished it
 	deathBase: 0.045,
 	deathIncomeDrop: 0.35, // share of deaths removed as income approaches incomeForLowDeath
 	incomeForLowDeath: 12000,
@@ -49,6 +53,10 @@ export const PARAMS = {
 	warTension: 0.03,
 	warWeakness: 0.01,
 	coupBase: 0.02,
+	// Post-independence crises: our coup years are moments of high risk, counted from independence.
+	// A coup happens only if the state is shaky then; civil war needs a recent coup and a shaken state.
+	coupWindowStability: 0.64,
+	civilWarStability: 0.55,
 	secessionBase: 0.03,
 	unionBase: 0.004,
 	// technology
