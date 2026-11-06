@@ -1,3 +1,5 @@
+import { PARAMS as P } from './params.js';
+
 /** Labels interpret recorded factors; never recompute an old run using new engine constants. */
 const FACTORS = {
 	literacy: ['Literacy', 'Reading skills raise productive capacity in the model.'],
@@ -75,6 +77,10 @@ export function whyHere(run, frame, cellId) {
 		.sort((x, y) => Math.abs(Math.log(y[1])) - Math.abs(Math.log(x[1])))[0] ?? [];
 	if (key && Math.abs(Math.log(ratio)) >= 0.08)
 		lines.push({ kind: 'income', text: factorText[/** @type {keyof typeof factorText} */ (key)][ratio >= 1 ? 0 : 1] });
+
+	const school = run.inputs?.switches?.freeSchoolingFromYear;
+	if (school != null && frame.yearInt >= school && (cell.schoolExpansion ?? 1) < P.schoolPolicyCoverage - 0.01 && (cell.electricityAccess ?? 1) < 0.9)
+		lines.push({ kind: 'budget', text: 'Free schools are taking money that would extend the power grid' });
 
 	const share = (cell.netMigration ?? 0) / (cell.pop || 1);
 	if (share < -0.003) lines.push({ kind: 'migration', text: 'People are leaving for better-paid states' });

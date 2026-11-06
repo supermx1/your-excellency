@@ -5,6 +5,7 @@ import map from '@svg-maps/nigeria';
 import { parsePath } from './svgpath.js';
 import { lonLatToSvg, SVG_FIT } from './geo.js';
 import { world, region } from './data/index.js';
+import cells from './data/cells.json';
 
 const W = 744;
 const rings = new Map(map.locations.map((l) => [l.id, parsePath(l.path)]));
@@ -53,6 +54,12 @@ describe('world and region data', () => {
 		const meet = benue.find((b) => niger.some((n) => Math.hypot(n[0] - b[0], n[1] - b[1]) < 6));
 		expect(meet && rings.get('kogi').some((r) => inside(meet, r))).toBe(true);
 		expect(region.lakes.map((l) => l.name)).toContain('Lake Chad');
+	});
+
+	it('marks as river states exactly those the Niger or Benue runs through', () => {
+		const pts = region.rivers.filter((r) => ['Niger', 'Benue'].includes(r.name)).flatMap((r) => r.lines.flat());
+		const hits = (id) => pts.filter((p) => rings.get(id).some((r) => inside(p, r))).length;
+		for (const c of cells) expect(hits(c.id) >= 2, c.id).toBe(c.river);
 	});
 
 	it('stays small: world ≤ 150 KB, region ≤ 120 KB', () => {

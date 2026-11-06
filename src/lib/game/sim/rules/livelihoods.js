@@ -13,6 +13,7 @@ export function stepLivelihoods(world) {
 				0.5 * c.infra +
 				0.2 * c.urban +
 				(c.coastal ? 0.1 : 0) +
+				(c.river ? P.riverTrade : 0) + // the Niger and Benue carried trade long before roads
 				(tech.includes('railway') ? 0.15 : 0)
 		);
 		let harvest = 1;

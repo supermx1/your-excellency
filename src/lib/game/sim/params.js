@@ -23,6 +23,8 @@ export const PARAMS = {
 	foodRecovery: 0.06,
 	foodDepletion: 0.1,
 	foodIncomeLoss: 0.1,
+	schoolBudgetShare: 0.35, // share of grid-building money free schooling takes while it expands (assumption)
+	riverTrade: 0.08, // market access for states on the Niger or Benue (assumption; coast adds 0.1)
 	migrationThreshold: 0.15,
 	opportunityMigration: 0.0015,
 	pressureMigration: 0.01,
