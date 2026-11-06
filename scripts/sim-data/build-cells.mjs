@@ -2,37 +2,12 @@
 // centroid, area (viewBox units²), coastal flag and neighbours (shapes that touch).
 import map from '@svg-maps/nigeria';
 import { mkdirSync, writeFileSync } from 'node:fs';
+import { parsePath } from '../../src/lib/game/sim/svgpath.js';
 
 const OUT = new URL('../../src/lib/game/sim/data/cells.json', import.meta.url);
 // ponytail: the SVG has no sea polygon, so coast is hand-listed.
 const COASTAL = new Set(['lagos', 'ogun', 'ondo', 'delta', 'bayelsa', 'rivers', 'akwa-ibom', 'cross-river']);
 const TOUCH = 1.5; // viewBox units; vertices closer than this count as a shared border
-
-/** Paths only use `m` (relative, implicit lineto) and `z`. Returns rings of [x,y]. */
-export function parsePath(d) {
-	const rings = [];
-	let ring = null;
-	let x = 0;
-	let y = 0;
-	for (const token of d.match(/[mz]|-?\d*\.?\d+(?:e-?\d+)?,-?\d*\.?\d+(?:e-?\d+)?/gi)) {
-		if (token === 'm') {
-			ring = [];
-			rings.push(ring);
-		} else if (token === 'z') {
-			ring = null;
-		} else {
-			const [dx, dy] = token.split(',').map(Number);
-			if (!ring) {
-				ring = [];
-				rings.push(ring);
-			}
-			x += dx;
-			y += dy;
-			ring.push([x, y]);
-		}
-	}
-	return rings.filter((r) => r.length > 2);
-}
 
 const area = (ring) =>
 	Math.abs(ring.reduce((s, [x, y], i) => {
