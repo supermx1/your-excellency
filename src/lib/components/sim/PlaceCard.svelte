@@ -24,8 +24,10 @@
 		<dl class="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-sm">
 			<dt class="font-bold">Population</dt>
 			<dd class="tabular-nums">{formatStat('pop', place.pop)}</dd>
-			<dt class="font-bold">Can read</dt>
+			<dt class="font-bold">Can read (school)</dt>
 			<dd class="tabular-nums">{formatStat('litSchool', place.litSchool)}</dd>
+			<dt class="font-bold">Can read (any script)</dt>
+			<dd class="tabular-nums">{formatStat('litAny', place.litAny)}</dd>
 			<dt class="font-bold">States</dt>
 			<dd class="tabular-nums">{place.cellIds.length}</dd>
 		</dl>

@@ -157,7 +157,7 @@ const millions = (n) => `${(n / 1e6).toFixed(1)} million`;
 /** Built-in narration from the digest alone. */
 export function fallbackNarration(d) {
 	const top = d.events.slice(0, 3).map((e) => `${e.year}: ${e.title}.`);
-	const growth = `Over these years the population goes from ${millions(d.totals.start.pop)} to ${millions(d.totals.end.pop)}, and ${Math.round(d.totals.end.litSchool * 100)}% can read.`;
+	const growth = `Over these years the population goes from ${millions(d.totals.start.pop)} to ${millions(d.totals.end.pop)}, and ${Math.round(d.totals.end.litSchool * 100)}% can read at school.`;
 	const quiet = top.length ? '' : `${d.from} to ${d.to} passes without major upheaval.`;
 	return {
 		text: [quiet, ...top, growth].filter(Boolean).join(' '),
