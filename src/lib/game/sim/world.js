@@ -14,7 +14,7 @@ import { PARAMS as P } from './params.js';
 import { populationAt } from './population.js';
 import { stepLivelihoods } from './rules/livelihoods.js';
 
-export const ENGINE_VERSION = 9;
+export const ENGINE_VERSION = 10;
 
 const RULES = [
 	stepEvents,

@@ -26,6 +26,15 @@ const FACTORS = {
 		[0.995, 'No war damage.'],
 		[0, 'War damage is holding work back.']
 	]],
+	government: ['Government', [
+		[0.9, 'A steady government lets people plan, trade and invest.'],
+		[0.8, 'An unsteady government makes trade and investment risky.'],
+		[0, 'Coups, war or chaos make it hard to plan, trade or invest.']
+	]],
+	colonial: ['Colonial rule', [
+		[0.995, 'No foreign ruler takes a share of what is made here.'],
+		[0, 'Part of what is made here goes abroad, as company profits and taxes.']
+	]],
 	food: ['Food', [
 		[0.995, 'There was enough food last year.'],
 		[0, 'Food ran short last year, leaving people less able to work.']

@@ -99,7 +99,11 @@ export function stepEconomy(world) {
 			infrastructure: 1 + P.infraReturn * c.infra,
 			electricity: 1 + P.powerIncomeReturn * c.powerService,
 			conflict: 1 - 0.5 * c.warDamage,
-			food: 1 - P.foodIncomeLoss * c.foodStress
+			food: 1 - P.foodIncomeLoss * c.foodStress,
+			// Coups, war and graft make it hard to plan, trade or invest.
+			government: 1 - P.governanceLoss * (1 - (polity?.stability ?? 0.5)),
+			// A government that rules from abroad sends part of what is made home: company profits, taxes.
+			colonial: polity?.british ? 1 - P.colonialDrain : 1
 		};
 		const potential =
 			P.baseIncome *
