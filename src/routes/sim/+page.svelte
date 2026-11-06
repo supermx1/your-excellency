@@ -18,7 +18,7 @@
 	let chosen = $state('neverColonized');
 	let switches = $state({ ...defaultSwitches(), ...PRESETS.neverColonized.switches });
 	let startYear = $state(PRESETS.neverColonized.startYear);
-	let toFuture = $state(false);
+	let endYear = $state(2025);
 	let registered = $state(false);
 	let showRegister = $state(false);
 	let error = $state('');
@@ -31,7 +31,7 @@
 			chosen = 'custom';
 			switches = back.inputs.switches;
 			startYear = back.inputs.startYear;
-			toFuture = back.inputs.endYear > 2025;
+			endYear = back.inputs.endYear;
 		}
 	});
 
@@ -48,7 +48,7 @@
 			return;
 		}
 		const seed = crypto.getRandomValues(new Uint32Array(1))[0];
-		const checked = validateInputs({ seed, switches: $state.snapshot(switches), startYear: Number(startYear), endYear: toFuture ? 2100 : 2025 });
+		const checked = validateInputs({ seed, switches: $state.snapshot(switches), startYear: Number(startYear), endYear: Number(endYear) });
 		if (!checked.ok) {
 			error = checked.error;
 			return;
@@ -109,9 +109,16 @@
 				Start year
 				<input type="number" min="1850" max="2025" class="mt-1 block w-32 border-2 border-black px-2 py-1" bind:value={startYear} />
 			</label>
-			<label class="flex items-center gap-2 font-bold">
-				<input type="checkbox" class="size-5 border-2 border-black" bind:checked={toFuture} />
-				Continue to 2100
+			<label class="font-bold">
+				End year
+				<input
+					type="number"
+					min={Number(startYear) + 1}
+					max="2100"
+					class="mt-1 block w-32 border-2 border-black px-2 py-1"
+					bind:value={endYear}
+				/>
+				<span class="mt-1 block text-xs font-medium text-black/60">Up to 2100. After 2025, "ours" uses UN projections.</span>
 			</label>
 			<button type="button" class="{btn} ml-auto bg-emerald-400 px-6 py-3 text-lg" onclick={run}>Run history →</button>
 			{#if error}<p class="w-full font-bold text-red-700" role="alert">{error}</p>{/if}
