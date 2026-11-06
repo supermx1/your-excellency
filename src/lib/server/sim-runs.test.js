@@ -45,6 +45,8 @@ describe('admin password', () => {
 		const platform = { env: { ADMIN_PASSWORD: 'secret' } };
 		expect(isAdmin(platform, 'secret')).toBe(true);
 		expect(isAdmin(platform, 'emeka-local-admin')).toBe(false);
-		expect(isAdmin({ env: {} }, 'emeka-local-admin')).toBe(true);
+		expect(isAdmin({ env: {} }, 'emeka-local-admin')).toBe(false); // no secret, no admin
+		expect(isAdmin(platform, 'secre')).toBe(false);
+		expect(isAdmin(platform, 'secret!')).toBe(false);
 	});
 });
