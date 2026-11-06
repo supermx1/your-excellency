@@ -52,3 +52,14 @@ test('a short run reaches the ending table', async ({ page }) => {
 	await expect(page.getByRole('button', { name: 'Run again' })).toBeVisible();
 	await expect(page.getByRole('row', { name: /Religious mix/ })).toBeVisible();
 });
+
+test.describe('on a phone', () => {
+	test.use({ viewport: { width: 375, height: 812 } });
+
+	test('the live view fits without sideways scrolling', async ({ page }) => {
+		await page.goto(`/sim/play?s=${never()}`);
+		await expect(page.getByTestId('year')).toBeVisible({ timeout: 15000 });
+		await expect(page.locator('canvas').first()).toBeVisible();
+		expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
+	});
+});
