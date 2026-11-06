@@ -1,6 +1,8 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "your-excellency",
+	// The live site, D1 and KV are on "Emeka account" (not avgtechdad).
+	"account_id": "b63a84699997cca4d0cdcc5c596e04a3",
 	"main": ".svelte-kit/cloudflare/_worker.js",
 	"compatibility_date": "2026-07-02",
 	"compatibility_flags": [
