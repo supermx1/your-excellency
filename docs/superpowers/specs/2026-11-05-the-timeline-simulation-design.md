@@ -158,3 +158,15 @@ Scripts in the repo (e.g. `scripts/sim-data/`, my call) download raw files into 
 ## Left to the builder
 
 Exact equations and parameter values, data-cleaning details, the narration prompts and model, Three.js implementation, the HyperFrames composition structure, file and route names marked "my call", and the order of work (the plan should land the engine, data and baseline calibration before the visuals and export).
+
+## Addendum (2026-11-06): globe opening and neighbouring countries
+
+Agreed in conversation after Plan 3:
+
+- **Globe opening.** A run opens on a slowly turning, stylised Earth in dark space with a year title card; the camera swings to West Africa and dives in, and the globe hands over to the 3D diorama at the same place and size; then playback starts. Skippable. About 6 seconds.
+- **Globe closing.** When a run ends, the camera pulls back out to the globe behind the ending comparison.
+- **Not a globe-wide simulation.** The simulation and the diorama stay as they are; the globe is for the opening and closing shots only (readability and phone performance).
+- **Stylised globe, light data.** Country outlines from public-domain Natural Earth data drawn onto the globe at runtime; no photo textures (several MB). Nigeria highlighted.
+- **Neighbours on the diorama (my suggestion, accepted).** Benin, Niger, Chad, Cameroon, the sea and the Gulf of Guinea coastline drawn dimmed around Nigeria, so Nigeria no longer floats alone and the globe hand-off is seamless.
+- **Export-ready.** The intro and outro camera are pure functions of playback time like the rest, so Plan 4's export reuses them.
+- Setup page: the end year is now typed (up to 2100), replacing the "Continue to 2100" checkbox.
