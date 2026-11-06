@@ -3,6 +3,7 @@
 import { defaultData } from './data/index.js';
 import { frameAt } from './frame.js';
 import { populationAt } from './population.js';
+import { whyHere } from './explanations.js';
 
 const realEvents = defaultData.events.events.filter((e) => e.kind === 'history');
 const isRealWar = (e) => e.effects?.war || (e.effects?.conquer && e.effects?.mortality);
@@ -217,6 +218,7 @@ export function placeAt(run, frame, cellId) {
 			christian: avg((c) => c.religion.christian),
 			traditional: avg((c) => c.religion.traditional)
 		},
+		why: whyHere(run, frame, cellId),
 		atWarWith: (frame.wars ?? [])
 			.filter((pair) => pair.includes(polity.id))
 			.map(([p, q]) => names.get(p === polity.id ? q : p) ?? 'a former state')

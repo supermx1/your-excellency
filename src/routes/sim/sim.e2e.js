@@ -261,6 +261,7 @@ test.describe('map controls', () => {
 		const card = page.getByRole('region', { name: /^About / });
 		await expect(card).toBeVisible();
 		await expect(card).toContainText(/today/);
+		await expect(card.locator('[data-why] li').first()).toBeVisible(); // why this state differs, during playback
 		await card.getByRole('button', { name: 'Close' }).click();
 		await expect(card).toHaveCount(0);
 	});

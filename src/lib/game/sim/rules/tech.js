@@ -57,7 +57,7 @@ function adopt(world, p, t, kind) {
 		worldFirst: kind === 'invention' && (t.worldYear == null || t.worldYear > world.year),
 		title:
 			kind !== 'invention'
-				? `${t.name} reaches ${p.name}`
+				? `${t.name} ${/(?<!s)s$| and /.test(t.name) ? 'reach' : 'reaches'} ${p.name}`
 				: t.worldYear == null || t.worldYear > world.year
 					? `World first: ${t.name} in ${p.name}`
 					: `Breakthrough in ${p.name}: ${t.name}`

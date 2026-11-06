@@ -34,5 +34,11 @@ describe('baseline calibration (mean of 30 seeds)', () => {
 	it('life expectancy 2020 within ±5 years', () => expect(Math.abs(sim('lifeExp', 2020) - real('lifeExp', 2020))).toBeLessThan(5));
 	it('urban share 2020 within ±10 points', () => expect(Math.abs(sim('urban', 2020) - real('urban', 2020))).toBeLessThan(0.1));
 	it('Nigeria forms in at least 90% of seeds', () => expect(nigeriaFormed).toBeGreaterThanOrEqual(0.9));
+	it('population 2100 stays near the UN projection (WPP 2024 medium ≈477M)', () => {
+		const pops = [1, 2, 3, 4, 5].map((seed) => runSimulation({ seed, switches: defaultSwitches(), startYear: 1850, endYear: 2100 }).history.at(-1).totals.pop);
+		const mean = pops.reduce((a, b) => a + b) / pops.length;
+		expect(mean).toBeGreaterThan(300e6);
+		expect(mean).toBeLessThan(700e6);
+	});
 	it('civil war happens in at least 50% of seeds', () => expect(civilWar).toBeGreaterThanOrEqual(0.5));
 });

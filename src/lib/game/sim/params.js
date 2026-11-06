@@ -31,6 +31,8 @@ export const PARAMS = {
 	birthBase: 0.05,
 	birthLitDrop: 0.01,
 	birthUrbanDrop: 0.008,
+	transitionStart: 0.62, // formal-school literacy where birth rates start falling fast (assumption, see docs/timeline-data.md)
+	transitionDrop: 0.03, // births per person per year removed at full transition: ~35/1000 → ~12/1000, as in countries that finished it
 	deathBase: 0.045,
 	deathIncomeDrop: 0.35, // share of deaths removed as income approaches incomeForLowDeath
 	incomeForLowDeath: 12000,
