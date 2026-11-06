@@ -33,8 +33,9 @@ export const PARAMS = {
 	birthBase: 0.05,
 	birthLitDrop: 0.01,
 	birthUrbanDrop: 0.008,
-	transitionStart: 0.62, // formal-school literacy where birth rates start falling fast (assumption, see docs/timeline-data.md)
-	transitionDrop: 0.03, // births per person per year removed at full transition: ~35/1000 → ~12/1000, as in countries that finished it
+	transitionUrbanWeight: 0.5, // births fall with literacy (any script) and town life equally
+	transitionStart: 0.65, // that blend, where birth rates start falling fast (assumption, see docs/timeline-data.md)
+	transitionDrop: 0.05, // births per person per year removed at full transition (fitted to 2025, 2050 and the UN 2100 projection)
 	deathBase: 0.045,
 	deathIncomeDrop: 0.35, // share of deaths removed as income approaches incomeForLowDeath
 	incomeForLowDeath: 12000,
@@ -42,12 +43,13 @@ export const PARAMS = {
 	lifeExpBase: 25,
 	lifeExpSlope: 950,
 	// religion (one set of weights for every faith)
-	relRate: 0.01, // share of the gap to the pulled mix closed each year
+	relRate: 0.03, // share of the gap to the pulled mix closed each year
 	relNeighbour: 0.15,
 	relState: 0.08,
-	relSchool: 0.1,
-	schoolGrowth: 0.006,
-	stateSchoolGrowth: 0.008, // government schools, from income and stability
+	relSchool: 5,
+	schoolGrowth: 0.004,
+	missionPresence: 0.8, // where missionaries work, their schools grow as if this share already believed
+	stateSchoolGrowth: 0.003, // government schools, from income and stability
 	// polities and conflict (same for every polity)
 	warBase: 0.002,
 	warTension: 0.03,
@@ -60,7 +62,7 @@ export const PARAMS = {
 	secessionBase: 0.03,
 	unionBase: 0.004,
 	// technology
-	knowledgeRate: 0.006, // per year, × learning², × (0.3 + 2 × literacy)
+	knowledgeRate: 0.0066, // per year, × learning², × (0.3 + 2 × literacy)
 	knowledgePerTech: 0.05,
 	adoptBase: 0.004,
 	adoptLit: 0.08,
@@ -69,6 +71,6 @@ export const PARAMS = {
 	inventMargin: 1, // knowledge must exceed a tech's threshold by this much to invent it
 	inventChance: 0.2,
 	// literacy
-	learnRate: 0.03, // per year at full school coverage
+	learnRate: 0.015, // per year at full school coverage
 	litDecay: 0.002
 };

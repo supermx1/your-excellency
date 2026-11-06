@@ -14,7 +14,7 @@ import { PARAMS as P } from './params.js';
 import { populationAt } from './population.js';
 import { stepLivelihoods } from './rules/livelihoods.js';
 
-export const ENGINE_VERSION = 5;
+export const ENGINE_VERSION = 6;
 
 const RULES = [
 	stepEvents,
@@ -183,6 +183,15 @@ export function createWorld(inputs, data = defaultData) {
 			c.schools.mission = profile.primaryAttendance.value * missionShare;
 			c.schools.state = profile.primaryAttendance.value * (1 - missionShare);
 			c.developmentYear = observed.year;
+			const policy = inputs.switches?.freeSchoolingFromYear;
+			if (policy != null && inputs.startYear >= policy) {
+				// Observed attendance already includes free schooling: count it as built, not on top.
+				const built = Math.min(P.schoolPolicyCoverage, formal ? profile.primaryAttendance.value : 0);
+				const keep = profile.primaryAttendance.value ? 1 - built / profile.primaryAttendance.value : 1;
+				c.schools.mission *= keep;
+				c.schools.state *= keep;
+				c.schoolExpansion = built;
+			}
 		} else if (data.cells[index].electricityAccess == null && polity?.tech.includes('electricity'))
 			c.electricityAccess = c.infra;
 		c.powerService = c.electricityAccess * P.powerReliability;
@@ -199,6 +208,7 @@ export function createWorld(inputs, data = defaultData) {
 		history: [],
 		switches: inputs.switches ?? {},
 		flags: { ...start.flags, ...(data.startFlags ?? {}) },
+		missionCells: new Set(), // where missionaries work (from dated arrival events)
 		inputs,
 		data
 	};

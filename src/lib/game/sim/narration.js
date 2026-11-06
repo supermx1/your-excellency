@@ -52,7 +52,7 @@ export function chaptersFor(run) {
 
 const totalsAt = (run, year) => {
 	const t = (run.history.find((h) => h.year === year) ?? run.history.at(-1)).totals;
-	return { pop: t.pop, litAny: t.litAny, lifeExp: t.lifeExp };
+	return { pop: t.pop, litSchool: t.litSchool, lifeExp: t.lifeExp };
 };
 
 /** @param {import('./types.js').RunResult} run @param {{ from: number, to: number }} chapter */
@@ -108,7 +108,7 @@ const exactKeys = (o, keys) =>
 	!Array.isArray(o) &&
 	Object.keys(o).sort().join() === [...keys].sort().join();
 const isTotals = (t) =>
-	exactKeys(t, ['pop', 'litAny', 'lifeExp']) &&
+	exactKeys(t, ['pop', 'litSchool', 'lifeExp']) &&
 	Object.values(t).every((v) => typeof v === 'number' && Number.isFinite(v));
 
 /** @returns {{ ok: true, digest: object } | { ok: false, error: string }} */
@@ -157,7 +157,7 @@ const millions = (n) => `${(n / 1e6).toFixed(1)} million`;
 /** Built-in narration from the digest alone. */
 export function fallbackNarration(d) {
 	const top = d.events.slice(0, 3).map((e) => `${e.year}: ${e.title}.`);
-	const growth = `Over these years the population goes from ${millions(d.totals.start.pop)} to ${millions(d.totals.end.pop)}, and ${Math.round(d.totals.end.litAny * 100)}% can read.`;
+	const growth = `Over these years the population goes from ${millions(d.totals.start.pop)} to ${millions(d.totals.end.pop)}, and ${Math.round(d.totals.end.litSchool * 100)}% can read.`;
 	const quiet = top.length ? '' : `${d.from} to ${d.to} passes without major upheaval.`;
 	return {
 		text: [quiet, ...top, growth].filter(Boolean).join(' '),

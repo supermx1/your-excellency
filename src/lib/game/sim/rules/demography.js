@@ -7,8 +7,9 @@ const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, Number.isFinite(v) ? v : 
 /** @param {import('../types.js').World} world */
 export function stepDemography(world) {
 	for (const c of world.cells) {
-		// Fertility transition: once most children are in formal school, families have far fewer.
-		const transition = clamp((c.litSchool - P.transitionStart) / (1 - P.transitionStart), 0, 1);
+		// Fertility transition: as schooling and town life spread, families have far fewer children.
+		const modern = (1 - P.transitionUrbanWeight) * c.litAny + P.transitionUrbanWeight * c.urban;
+		const transition = clamp((modern - P.transitionStart) / (1 - P.transitionStart), 0, 1);
 		const birth = clamp(
 			P.birthBase - P.birthLitDrop * c.litAny - P.birthUrbanDrop * c.urban - P.transitionDrop * transition,
 			0.008,
@@ -28,8 +29,11 @@ export function stepDemography(world) {
 
 		const learn = P.learnRate * c.mods.learning;
 		const extra = c.schoolExpansion;
-		const anySchools = clamp(c.schools.quranic + c.schools.mission + c.schools.state + extra, 0, 1);
-		const latin = clamp(c.schools.mission + c.schools.state + extra, 0, 1);
+		// A child attends one kind of school: when places add up to more than all the children,
+		// each kind gets its proportional share. Same for every kind of school.
+		const places = c.schools.quranic + c.schools.mission + c.schools.state + extra;
+		const anySchools = clamp(places, 0, 1);
+		const latin = clamp((c.schools.mission + c.schools.state + extra) / Math.max(1, places), 0, 1);
 		c.litAny = clamp(c.litAny + learn * anySchools * (1 - c.litAny) - P.litDecay * c.litAny, 0, 1);
 		c.litSchool = clamp(
 			c.litSchool + learn * latin * (1 - c.litSchool) - P.litDecay * c.litSchool,

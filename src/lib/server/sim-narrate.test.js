@@ -8,7 +8,7 @@ const digest = {
 	scenario: 'Never colonized',
 	from: 1850,
 	to: 1875,
-	totals: { start: { pop: 13e6, litAny: 0.02, lifeExp: 25 }, end: { pop: 16e6, litAny: 0.05, lifeExp: 27 } },
+	totals: { start: { pop: 13e6, litSchool: 0.02, lifeExp: 25 }, end: { pop: 16e6, litSchool: 0.05, lifeExp: 27 } },
 	polities: ['Sokoto Caliphate', 'Kingdom of Benin'],
 	events: [{ year: 1861, kind: 'war', title: 'War between Ibadan and Egba and Ijebu' }],
 	ours: ['In our world: Britain annexes Lagos'],

@@ -13,9 +13,12 @@ const TOLERANCE = { low: 0.2, history: 0.5, high: 0.85 };
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, Number.isFinite(v) ? v : lo));
 const diff = (a, b) => FAITHS.reduce((s, f) => s + Math.abs(a[f] - b[f]), 0) / 2;
 
-/** May a faith's schools grow this year? Mission schools need missionaries to have arrived. */
-const schoolsAllowed = (world, faith) =>
-	faith !== 'christian' || (world.switches.christianMissions !== false && world.flags.missionsActive);
+/** May a faith's schools grow in this cell? Mission schools need missionaries to have arrived there. */
+const schoolsAllowed = (world, faith, cell) =>
+	faith !== 'christian' ||
+	(world.switches.christianMissions !== false &&
+		// Data without dated arrivals (tests, custom maps) falls back to the one 'missions active' flag.
+		(world.missionCells?.size ? world.missionCells.has(cell.id) : world.flags.missionsActive));
 
 /** @param {import('../types.js').World} world */
 export function stepReligion(world) {
@@ -55,7 +58,10 @@ export function stepReligion(world) {
 		const funding = 1 + c.incomePc / 3000;
 		for (const f of Object.keys(SCHOOL_OF)) {
 			const kind = SCHOOL_OF[f];
-			const grow = schoolsAllowed(world, f) ? P.schoolGrowth * c.religion[f] * funding : 0;
+			// Teachers are where believers live, or where missionaries from abroad have come to work.
+			const missionaries = f === 'christian' && world.missionCells?.has(c.id) ? P.missionPresence : 0;
+			const teachers = Math.max(c.religion[f], missionaries);
+			const grow = schoolsAllowed(world, f, c) ? P.schoolGrowth * teachers * funding : 0;
 			c.schools[kind] = clamp(c.schools[kind] + grow * (1 - c.schools[kind]) - 0.01 * c.warDamage, 0, 1);
 		}
 	});

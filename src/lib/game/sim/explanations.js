@@ -25,7 +25,7 @@ export function incomeDrivers(cell) {
 const POLITICS = new Set(['coup', 'government', 'secession', 'union', 'war', 'peace']);
 const TECH = new Set(['invention', 'adoption', 'spread']);
 const factorText = {
-	literacy: ['More people read here than in most states', 'Fewer people read here than in most states'],
+	literacy: ['More people have been to school here than in most states', 'Fewer people have been to school here than in most states'],
 	infrastructure: ['Better roads and markets than most states', 'Poorer roads and markets than most states'],
 	electricity: ['More reliable power than most states', 'Less reliable power than most states']
 };
