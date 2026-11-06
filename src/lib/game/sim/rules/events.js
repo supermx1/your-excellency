@@ -5,7 +5,7 @@
 // from independence, and they happen only if the state is unstable at that moment.
 import { PARAMS as P } from '../params.js';
 import { coup, secede } from './polities.js';
-import { startWar } from './conflict.js';
+import { startWar, transferCell } from './conflict.js';
 
 /** Is a history event allowed by its switch? Returns the year it should fire in, or null. */
 function scheduledYear(event, sw, flags = {}) {
@@ -67,13 +67,10 @@ function apply(world, event) {
 			const from = world.polities.find((p) => p.id === cell.polityId);
 			if (from === brit) continue;
 			if (from) {
-				from.cellIds = from.cellIds.filter((x) => x !== id);
-				if (from.capitalCell === id) from.capitalCell = from.cellIds[0] ?? null;
 				from.atWarWith = from.atWarWith.filter((x) => x !== brit.id);
 				brit.atWarWith = brit.atWarWith.filter((x) => x !== from.id);
 			}
-			brit.cellIds.push(id);
-			cell.polityId = brit.id;
+			transferCell(world, cell, brit);
 			cell.indirectRule = world.switches.indirectRule !== false;
 		}
 		brit.capitalCell ??= fx.conquer.cellIds[0];

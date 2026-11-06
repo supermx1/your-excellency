@@ -115,6 +115,17 @@ function endWar(world, war, winner, how) {
 /** Moves a cell to another polity, keeping cellIds consistent. */
 export function transferCell(world, cell, to) {
 	const from = world.polities.find((p) => p.id === cell.polityId);
+	// Power stations stand on the land: a place that changes hands takes its share of the grid,
+	// in proportion to the people connected there. Supply is neither made nor lost.
+	if (from?.powerSupply != null && from !== to) {
+		const demand = from.cellIds.reduce((s, id) => {
+			const c = world.cellById.get(id);
+			return s + c.pop * c.electricityAccess;
+		}, 0);
+		const moved = demand > 0 ? (from.powerSupply * cell.pop * cell.electricityAccess) / demand : 0;
+		from.powerSupply -= moved;
+		to.powerSupply = (to.powerSupply ?? 0) + moved;
+	}
 	if (from) {
 		from.cellIds = from.cellIds.filter((id) => id !== cell.id);
 		if (from.capitalCell === cell.id) from.capitalCell = from.cellIds[0] ?? null;
