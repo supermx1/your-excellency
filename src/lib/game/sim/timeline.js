@@ -1,11 +1,13 @@
 // @ts-nocheck
-// Playback time ↔ fractional year. Quiet years zip past; years with events slow down.
+// Playback time ↔ fractional year. Quiet years zip past; years with events slow down. The first
+// `intro` seconds are the globe opening, held on the start year.
+import { INTRO } from './intro.js';
 
 const EVENT_KINDS = new Set(['war', 'peace', 'secession', 'union', 'coup', 'invention', 'history']);
 const FAMILY_KINDS = new Set(['born', 'death', 'war-death', 'reads']);
 
 /** @param {import('./types.js').RunResult} run */
-export function buildTimeline(run, { quietSecondsPerYear = 0.35, eventSecondsPerYear = 2.5 } = {}) {
+export function buildTimeline(run, { quietSecondsPerYear = 0.35, eventSecondsPerYear = 2.5, intro = INTRO } = {}) {
 	const start = run.history[0].year;
 	const end = run.history.at(-1).year;
 	const busy = new Set(run.events.filter((e) => EVENT_KINDS.has(e.kind)).map((e) => e.year));
@@ -13,12 +15,12 @@ export function buildTimeline(run, { quietSecondsPerYear = 0.35, eventSecondsPer
 
 	const lengths = [];
 	for (let y = start; y < end; y++) lengths.push(busy.has(y) ? eventSecondsPerYear : quietSecondsPerYear);
-	const prefix = [0];
+	const prefix = [intro];
 	for (const l of lengths) prefix.push(prefix.at(-1) + l);
 	const duration = prefix.at(-1);
 
 	const yearAt = (t) => {
-		if (t <= 0) return start;
+		if (t <= intro) return start;
 		if (t >= duration) return end;
 		let lo = 0;
 		let hi = lengths.length - 1;

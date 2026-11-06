@@ -59,9 +59,9 @@ describe('hud data', () => {
 });
 
 describe('camera', () => {
-	it('starts on the wide shot', () => {
+	it('starts on the wide shot once the intro ends', () => {
 		const shots = shotsFor(baseline, buildTimeline(baseline));
-		expect(cameraAt(shots, 0)).toEqual(WIDE);
+		expect(cameraAt(shots, 6)).toEqual(WIDE);
 	});
 });
 

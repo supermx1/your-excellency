@@ -1,6 +1,7 @@
 // @ts-nocheck
 // Camera shots: a wide view of the whole map, cutting in on wars, secessions and inventions.
 import cells from './data/cells.json';
+import { INTRO, introCamera } from './intro.js';
 
 const centroid = new Map(cells.map((c) => [c.id, c.centroid]));
 const centre = cells.reduce((s, c) => [s[0] + c.centroid[0] / cells.length, s[1] + c.centroid[1] / cells.length], [0, 0]);
@@ -14,7 +15,7 @@ const EASE = 1.5;
  * @returns {{ t: number, target: number[], zoom: number }[]}
  */
 export function shotsFor(run, timeline) {
-	const shots = [{ t: 0, ...WIDE }];
+	const shots = [{ t: INTRO, ...WIDE }];
 	for (const e of run.events) {
 		if (!['war', 'secession', 'invention'].includes(e.kind)) continue;
 		const cellId =
@@ -31,8 +32,9 @@ export function shotsFor(run, timeline) {
 
 const smooth = (x) => x * x * (3 - 2 * x);
 
-/** Camera at playback time t, easing from the previous shot over EASE seconds. */
+/** Camera at playback time t: the globe intro first, then easing from the previous shot over EASE seconds. */
 export function cameraAt(shots, t) {
+	if (t < INTRO) return introCamera(t);
 	let i = 0;
 	while (i + 1 < shots.length && shots[i + 1].t <= t) i++;
 	const cur = shots[i];

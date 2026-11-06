@@ -10,7 +10,7 @@ const tl = buildTimeline(baseline);
 
 describe('timeline', () => {
 	it('timeAt inverts yearAt', () => {
-		for (const t of [0, 3.3, tl.duration / 2, tl.duration - 1]) expect(tl.timeAt(tl.yearAt(t))).toBeCloseTo(t, 6);
+		for (const t of [6, 9.3, tl.duration / 2, tl.duration - 1]) expect(tl.timeAt(tl.yearAt(t))).toBeCloseTo(t, 6);
 	});
 
 	it('event years take longer than quiet years', () => {
