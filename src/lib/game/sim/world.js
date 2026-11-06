@@ -92,6 +92,7 @@ function startingMap(inputs, data) {
 			britishRule: polities.some((p) => p.british),
 			nigeriaExists,
 			independent: nigeriaExists && year >= (sw.independenceYear ?? 1960),
+			independentYear: sw.independenceYear ?? 1960,
 			oilFound:
 				sw.oilInGround !== false && sw.oilDiscovery !== false && year >= (sw.oilYear ?? 1956)
 		},

@@ -1,17 +1,22 @@
 // @ts-nocheck
 // Real events. 'world' events always fire (nature and the outside world stay real);
 // 'history' events fire only when their switch allows it and every required flag holds.
+// Post-independence coups and the civil war follow causes, not the calendar: their dates count
+// from independence, and they happen only if the state is unstable at that moment.
+import { PARAMS as P } from '../params.js';
 import { coup, secede } from './polities.js';
 import { startWar } from './conflict.js';
 
 /** Is a history event allowed by its switch? Returns the year it should fire in, or null. */
-function scheduledYear(event, sw) {
+function scheduledYear(event, sw, flags = {}) {
 	if (event.id === 'oil-oloibiri') {
 		if (sw.oilInGround === false || sw.oilDiscovery === false) return null;
 		return sw.oilYear ?? event.year;
 	}
 	if (event.switch === 'independenceYear') return sw.independenceYear ?? event.year;
-	if (event.switch === 'coups') return (sw.coups ?? 'history') === 'off' ? null : event.year;
+	const late = (flags.independentYear ?? 1960) - 1960; // a later independence moves its crises with it
+	if (event.switch === 'coups') return (sw.coups ?? 'history') === 'off' ? null : event.year + late;
+	if (event.switch === 'civilWar') return sw.civilWar === false ? null : event.year + late;
 	if (event.switch && sw[event.switch] === false) return null;
 	return event.year;
 }
@@ -92,6 +97,7 @@ function apply(world, event) {
 	}
 
 	if (event.id === 'independence') {
+		world.flags.independentYear = world.year;
 		const ng = world.polities.find((p) => p.id === 'nigeria');
 		if (ng) {
 			ng.british = false;
@@ -134,6 +140,16 @@ function apply(world, event) {
 	}
 }
 
+/** Coups need a shaky state; civil war needs a coup in the last two years and a shaken state. */
+function causesHold(world, e) {
+	const fx = e.effects ?? {};
+	if (!fx.coup && !fx.war) return true;
+	const ng = world.polities.find((p) => p.id === 'nigeria');
+	if (!ng) return false;
+	if (fx.coup) return ng.stability < P.coupWindowStability + (world.switches.coups === 'likely' ? 0.1 : 0);
+	return (ng.lastCoupYear ?? -Infinity) >= world.year - 2 && ng.stability < P.civilWarStability;
+}
+
 /** @param {import('../types.js').World} world */
 export function stepEvents(world) {
 	const sw = world.switches;
@@ -153,7 +169,7 @@ export function stepEvents(world) {
 
 	world.fired ??= new Set();
 	for (const e of all) {
-		const year = e.kind === 'world' ? e.year : scheduledYear(e, sw);
+		const year = e.kind === 'world' ? e.year : scheduledYear(e, sw, world.flags);
 		if (year === null || world.fired.has(e.id)) continue;
 		// Year-switch events (independence, oil) wait until their requirements hold.
 		const waits = e.switch === 'independenceYear' || e.id === 'oil-oloibiri';
@@ -166,8 +182,11 @@ export function stepEvents(world) {
 			continue;
 		}
 		world.fired.add(e.id);
+		if (!causesHold(world, e)) continue; // the moment passes; a stable country rides it out
 		apply(world, e);
-		world.events.push({ year: world.year, kind: e.kind, id: e.id, title: e.title });
+		// A crisis moved by a later independence keeps its name but not our month.
+		const title = world.year === e.year ? e.title : e.title.replace(/ \([A-Z][a-z]+ \d{4}\)$/, '');
+		world.events.push({ year: world.year, kind: e.kind, id: e.id, title });
 	}
 
 	world.activeEffects = world.activeEffects.filter((fx) => fx.until > world.year);

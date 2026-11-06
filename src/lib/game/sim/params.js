@@ -51,6 +51,10 @@ export const PARAMS = {
 	warTension: 0.03,
 	warWeakness: 0.01,
 	coupBase: 0.02,
+	// Post-independence crises: our coup years are moments of high risk, counted from independence.
+	// A coup happens only if the state is shaky then; civil war needs a recent coup and a shaken state.
+	coupWindowStability: 0.64,
+	civilWarStability: 0.55,
 	secessionBase: 0.03,
 	unionBase: 0.004,
 	// technology
