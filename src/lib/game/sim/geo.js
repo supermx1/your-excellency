@@ -4,6 +4,7 @@ import region from './data/region.json';
 export const SVG_FIT = region.fit;
 export const NIGERIA_CENTRE = [8.1, 9.6];
 
+/** @param {number} lat */
 const mercator = (lat) => (180 / Math.PI) * Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360));
 
 /** @param {[number, number]} lonLat @returns {[number, number]} */

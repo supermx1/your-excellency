@@ -14,6 +14,7 @@
 	import { frameAt } from '$lib/game/sim/frame.js';
 	import { statsAt, captionsAt, familyCardsAt } from '$lib/game/sim/hud.js';
 	import { shotsFor, cameraAt, WIDE } from '$lib/game/sim/camera.js';
+	import { INTRO, OUTRO, introCamera, outroCamera } from '$lib/game/sim/intro.js';
 	import { defaultData } from '$lib/game/sim/data/index.js';
 
 	/** inputs: run these in the worker; recorded: play a saved recording instead; runId: the saved run, if any. */
@@ -39,7 +40,11 @@
 	const shots = $derived(run && timeline && shotsFor(run, timeline));
 	const year = $derived(timeline ? timeline.yearAt(t) : (inputs?.startYear ?? 1850));
 	const frame = $derived(run && frameAt(run, year));
-	const camera = $derived(follow && shots ? cameraAt(shots, t) : WIDE);
+	const camera = $derived.by(() => {
+		if (t < INTRO) return introCamera(t);
+		if (timeline && t > timeline.duration) return outroCamera(t - timeline.duration);
+		return follow && shots ? cameraAt(shots, t) : WIDE;
+	});
 	const stats = $derived(run ? statsAt(run, defaultData.national, year) : []);
 	const caption = $derived.by(() => {
 		if (!run) return null;
@@ -49,7 +54,8 @@
 		return own || ours ? { year: own?.year ?? year, title: own?.title, ours } : null;
 	});
 	const families = $derived(run ? familyCardsAt(run, year) : []);
-	const ended = $derived(timeline && t >= timeline.duration);
+	// The outro plays for OUTRO seconds after the last year; then the ending panel.
+	const ended = $derived(timeline && t >= timeline.duration + OUTRO);
 	const label = $derived(scenarioLabel(inputs));
 	const chapters = $derived(run ? chaptersFor(run) : []);
 	const chapter = $derived(chapters.findLast((c) => c.from <= Math.floor(year)) ?? chapters[0]);
@@ -98,7 +104,7 @@
 		const loop = (now) => {
 			clock.playing = playing && !showSplit && !autoSplit;
 			clock.speed = speed;
-			t = Math.min(clock.tick((now - last) / 1000), timeline.duration);
+			t = Math.min(clock.tick((now - last) / 1000), timeline.duration + OUTRO);
 			last = now;
 			raf = requestAnimationFrame(loop);
 		};
@@ -123,6 +129,11 @@
 	function runAgain() {
 		const seed = crypto.getRandomValues(new Uint32Array(1))[0];
 		location.href = `/sim/play?s=${encodeInputs({ ...inputs, seed })}`;
+	}
+
+	function skipIntro() {
+		clock.set(INTRO);
+		t = clock.t;
 	}
 
 	function seek(y) {
@@ -153,9 +164,18 @@
 	{:else if !run}
 		<p class="flex h-full items-center justify-center font-serif text-xl text-[#f2efe6]" aria-live="polite">Running history…</p>
 	{:else}
-		<div class="absolute inset-0 bottom-40 md:bottom-14">
-			<DioramaCanvas {frame} {camera} label="Map of Nigeria in {Math.floor(year)}" />
+		<div class="absolute inset-0 bottom-40 md:bottom-14" data-testid="view" data-camera={camera.mode ?? 'diorama'} data-dip={camera.dip ?? 0}>
+			<DioramaCanvas {frame} {camera} label={camera.mode === 'globe' ? 'The Earth, turning towards Nigeria' : `Map of Nigeria in ${Math.floor(year)}`} />
 		</div>
+		{#if camera.title > 0}
+			<div class="pointer-events-none absolute inset-0 bottom-40 flex flex-col items-center justify-center text-[#f2efe6] md:bottom-14" style:opacity={camera.title}>
+				<p class="font-serif text-7xl font-black md:text-9xl">{run.history[0].year}</p>
+				<p class="mt-2 text-sm font-black tracking-[0.3em] uppercase">{label}</p>
+			</div>
+		{/if}
+		{#if t < INTRO}
+			<button type="button" class="absolute right-3 bottom-44 z-20 border-2 border-black bg-white px-3 py-1 text-xs font-black uppercase shadow-[3px_3px_0_0_#000] md:right-8 md:bottom-20" onclick={skipIntro}>Skip intro</button>
+		{/if}
 		<Hud {year} {stats} {caption} {label} />
 		{#if narration}<Narration {narration} {chapter} />{/if}
 		{#if notice}

@@ -80,7 +80,10 @@ export function createGlobe({ lowDetail = false } = {}) {
 		/** @param {THREE.WebGLRenderer} renderer @param {{ lon: number, lat: number, distance: number, spin: number }} g */
 		draw(renderer, { lon, lat, distance, spin }) {
 			earth.rotation.y = spin * RAD;
-			camera.position.set(...lonLatToVec3(lon, lat, distance));
+			// Narrow screens back off, like the diorama's width fit, so Nigeria is the same share of the width
+			// when the globe hands over (1.436 is the aspect where the diorama's width fit starts to bite).
+			const back = Math.max(1, 1.436 / camera.aspect);
+			camera.position.set(...lonLatToVec3(lon, lat, 1 + (distance - 1) * back));
 			camera.lookAt(0, 0, 0);
 			renderer.render(scene, camera);
 		},

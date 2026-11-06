@@ -134,3 +134,36 @@ test('an end year before the start year is rejected', async ({ page }) => {
 	await page.getByRole('button', { name: /Run history/ }).click();
 	await expect(page.getByRole('alert')).toContainText(/end year/);
 });
+
+test.describe('globe opening and closing', () => {
+	test('a run opens on the globe with a Skip intro button, then the year counter starts', async ({ page }) => {
+		await page.goto(`/sim/play?s=${never()}`);
+		const skip = page.getByRole('button', { name: 'Skip intro' });
+		await expect(skip).toBeVisible({ timeout: 15000 });
+		await expect(page.getByTestId('view')).toHaveAttribute('data-camera', 'globe');
+		await expect(skip).toBeHidden({ timeout: 8000 });
+		await expect(async () => expect(Number(await page.getByTestId('year').textContent())).toBeGreaterThan(1850)).toPass({ timeout: 5000 });
+	});
+
+	test('Skip intro jumps straight to the start year on the diorama', async ({ page }) => {
+		await page.goto(`/sim/play?s=${never()}`);
+		await page.getByRole('button', { name: 'Skip intro' }).click({ timeout: 15000 });
+		await page.keyboard.press('Space');
+		const view = page.getByTestId('view');
+		await expect(view).toHaveAttribute('data-camera', 'diorama');
+		await expect(view).toHaveAttribute('data-dip', '0');
+		await expect(page.getByTestId('year')).toHaveText('1850');
+		await expect(page.getByRole('button', { name: 'Skip intro' })).toBeHidden();
+	});
+
+	test('a 2015–2025 run plays the outro before the ending table', async ({ page }) => {
+		const s = Buffer.from(JSON.stringify({ seed: 3, switches: {}, startYear: 2015, endYear: 2025 })).toString('base64url');
+		await page.goto(`/sim/play?s=${s}`);
+		await page.getByRole('button', { name: 'Skip intro' }).click({ timeout: 15000 });
+		await page.getByRole('button', { name: '×4' }).click();
+		await expect(page.getByTestId('year')).toHaveText('2025', { timeout: 60000 });
+		await expect(page.getByTestId('view')).toHaveAttribute('data-camera', 'globe', { timeout: 15000 });
+		await expect(page.getByRole('heading', { name: /Their Nigeria in 2025/ })).toHaveCount(0);
+		await expect(page.getByRole('heading', { name: /Their Nigeria in 2025/ })).toBeVisible({ timeout: 10000 });
+	});
+});

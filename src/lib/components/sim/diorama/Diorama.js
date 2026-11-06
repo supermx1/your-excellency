@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import { cellShapes, sharedEdges, toWorld } from './geometry.js';
 import { addNeighbours } from './neighbours.js';
+import { createGlobe } from './globe.js';
 import { polityColor } from '$lib/game/sim/colors.js';
 import cells from '$lib/game/sim/data/cells.json';
 
@@ -61,11 +62,37 @@ export class Diorama {
 		this.borders.position.y = DEPTH + 0.01;
 		this.scene.add(this.borders);
 		this.borderKey = '';
+
+		// A black quad over the whole picture for the dip between globe and diorama.
+		this.dipCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+		this.dipQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.MeshBasicMaterial({ color: '#000', transparent: true, depthTest: false }));
+		this.dipScene = new THREE.Scene();
+		this.dipScene.add(this.dipQuad);
 	}
 
-	/** @param {ReturnType<import('$lib/game/sim/frame.js').frameAt>} frame @param {{ target: number[], zoom: number }} camera */
+	/**
+	 * @param {ReturnType<import('$lib/game/sim/frame.js').frameAt>} frame
+	 * @param {{ mode?: 'globe' | 'diorama', globe?: object, target?: number[], zoom?: number, dip?: number }} camera
+	 */
 	draw(frame, camera) {
 		this.last = [frame, camera];
+		if (camera.mode === 'globe') {
+			// Created on first use: split-screen dioramas never show the globe.
+			if (!this.globe) {
+				this.globe = createGlobe({ lowDetail: this.lowDetail });
+				this.globe.resize(this.camera.aspect, 1);
+			}
+			this.globe.draw(this.renderer, camera.globe);
+		} else this.drawDiorama(frame, camera);
+		if (camera.dip > 0) {
+			this.dipQuad.material.opacity = Math.min(1, camera.dip);
+			this.renderer.autoClear = false;
+			this.renderer.render(this.dipScene, this.dipCamera);
+			this.renderer.autoClear = true;
+		}
+	}
+
+	drawDiorama(frame, camera) {
 		const pulse = 0.4 + 0.4 * Math.sin(2 * Math.PI * frame.t * 2);
 		for (const c of frame.cells) {
 			const view = this.cells.get(c.id);
@@ -111,12 +138,14 @@ export class Diorama {
 		this.renderer.setSize(width, height, false);
 		this.camera.aspect = width / height;
 		this.camera.updateProjectionMatrix();
+		this.globe?.resize(width, height);
 		// Resizing clears the canvas, so draw the last picture again.
 		if (this.last) this.draw(...this.last);
 	}
 
 	dispose() {
 		this.disposeNeighbours();
+		this.globe?.dispose();
 		this.scene.traverse((o) => {
 			o.geometry?.dispose();
 			o.material?.dispose();
