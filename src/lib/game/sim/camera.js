@@ -4,7 +4,10 @@ import cells from './data/cells.json';
 import { INTRO, introCamera } from './intro.js';
 
 const centroid = new Map(cells.map((c) => [c.id, c.centroid]));
-const centre = cells.reduce((s, c) => [s[0] + c.centroid[0] / cells.length, s[1] + c.centroid[1] / cells.length], [0, 0]);
+const centre = cells.reduce(
+	(s, c) => [s[0] + c.centroid[0] / cells.length, s[1] + c.centroid[1] / cells.length],
+	[0, 0]
+);
 export const WIDE = { target: centre, zoom: 1 };
 const HOLD = 4; // seconds a close shot is held
 const EASE = 1.5;
@@ -17,10 +20,11 @@ const EASE = 1.5;
 export function shotsFor(run, timeline) {
 	const shots = [{ t: INTRO, ...WIDE }];
 	for (const e of run.events) {
-		if (!['war', 'secession', 'invention'].includes(e.kind)) continue;
+		if (!['war', 'conquest', 'secession', 'invention'].includes(e.kind)) continue;
 		const cellId =
 			e.cellIds?.[0] ??
-			run.history.find((h) => h.year === e.year)?.polities.find((p) => p.id === e.polityIds?.[0])?.capitalCell;
+			run.history.find((h) => h.year === e.year)?.polities.find((p) => p.id === e.polityIds?.[0])
+				?.capitalCell;
 		const target = centroid.get(cellId);
 		if (!target) continue;
 		const t = timeline.timeAt(e.year);
@@ -42,7 +46,10 @@ export function cameraAt(shots, t) {
 	if (!prev) return { target: cur.target, zoom: cur.zoom };
 	const k = smooth(Math.min(1, (t - cur.t) / EASE));
 	return {
-		target: [prev.target[0] + (cur.target[0] - prev.target[0]) * k, prev.target[1] + (cur.target[1] - prev.target[1]) * k],
+		target: [
+			prev.target[0] + (cur.target[0] - prev.target[0]) * k,
+			prev.target[1] + (cur.target[1] - prev.target[1]) * k
+		],
 		zoom: prev.zoom + (cur.zoom - prev.zoom) * k
 	};
 }

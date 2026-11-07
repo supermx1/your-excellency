@@ -6,7 +6,17 @@ import { PRESETS } from './switches.js';
 import { defaultData } from './data/index.js';
 
 const MAX_CHAPTER = 25;
-const KIND_ORDER = ['war', 'secession', 'union', 'invention', 'history', 'coup', 'peace', 'world'];
+const KIND_ORDER = [
+	'war',
+	'conquest',
+	'secession',
+	'union',
+	'invention',
+	'history',
+	'coup',
+	'peace',
+	'world'
+];
 const FAMILY_KINDS = new Set([
 	'hardship',
 	'recovery',

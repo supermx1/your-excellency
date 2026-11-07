@@ -20,7 +20,9 @@ describe('technology and events', () => {
 	it('baseline conquest and amalgamation create Nigeria', () => {
 		const r = run(1);
 		expect(ids(r).has('amalgamation')).toBe(true);
-		expect(r.history.find((y) => y.year === 1920).polities.some((p) => p.id === 'nigeria')).toBe(true);
+		expect(r.history.find((y) => y.year === 1920).polities.some((p) => p.id === 'nigeria')).toBe(
+			true
+		);
 	});
 
 	it('civil war is skipped without error when Nigeria does not exist', () => {
@@ -30,11 +32,14 @@ describe('technology and events', () => {
 	});
 
 	it('world events such as the 1918 flu fire in every run', () => {
-		for (const sw of [{}, { britishConquest: false }, { learning: 3 }]) expect(ids(run(3, sw)).has('flu-1918')).toBe(true);
+		for (const sw of [{}, { britishConquest: false }, { learning: 3 }])
+			expect(ids(run(3, sw)).has('flu-1918')).toBe(true);
 	});
 
 	it('learning x3 invents something before its real world year in most of 20 seeds', () => {
-		const ahead = seeds.filter((s) => run(s, { learning: 3 }).events.some((e) => e.kind === 'invention' && e.aheadOfReal > 0));
+		const ahead = seeds.filter((s) =>
+			run(s, { learning: 3 }).events.some((e) => e.kind === 'invention' && e.aheadOfReal > 0)
+		);
 		expect(ahead.length).toBeGreaterThan(10);
 	});
 
@@ -46,9 +51,14 @@ describe('technology and events', () => {
 });
 
 describe('post-independence crises follow causes, not dates', () => {
-	const runs = (sw) =>
-		[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((seed) =>
-			runSimulation({ seed, startYear: 1850, endYear: 1995, switches: { ...defaultSwitches(), ...sw } })
+	const runs = (sw, n = 10) =>
+		Array.from({ length: n }, (_, i) => i + 1).map((seed) =>
+			runSimulation({
+				seed,
+				startYear: 1850,
+				endYear: 1995,
+				switches: { ...defaultSwitches(), ...sw }
+			})
 		);
 	const count = (rs, pred) => rs.filter((r) => r.events.some(pred)).length;
 
@@ -57,11 +67,21 @@ describe('post-independence crises follow causes, not dates', () => {
 	});
 	it('a later independence moves the crises with it', () => {
 		const late = runs({ independenceYear: 1975 });
-		for (const r of late) for (const e of r.events.filter((e) => e.id?.startsWith('coup-') || e.id === 'civil-war')) expect(e.year).toBeGreaterThanOrEqual(1981);
-		expect(late.flatMap((r) => r.events).some((e) => e.id === 'coup-1966-jan' && e.title === 'Military coup')).toBe(true);
+		for (const r of late)
+			for (const e of r.events.filter((e) => e.id?.startsWith('coup-') || e.id === 'civil-war'))
+				expect(e.year).toBeGreaterThanOrEqual(1981);
+		expect(
+			late
+				.flatMap((r) => r.events)
+				.some((e) => e.id === 'coup-1966-jan' && e.title === 'Military coup')
+		).toBe(true);
 	});
 	it('a steadier state rides out more of the coup moments', () => {
-		const coups = (rs) => rs.flatMap((r) => r.events).filter((e) => e.id?.startsWith('coup-')).length;
-		expect(coups(runs({ corruption: 'low' }))).toBeLessThan(coups(runs({ corruption: 'high' })));
+		const coups = (rs) =>
+			rs.flatMap((r) => r.events).filter((e) => e.id?.startsWith('coup-')).length;
+		// Most coup moments fire either way, so the gap is small: 30 seeds to see it past the dice.
+		expect(coups(runs({ corruption: 'low' }, 30))).toBeLessThan(
+			coups(runs({ corruption: 'high' }, 30))
+		);
 	});
 });

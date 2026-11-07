@@ -3,7 +3,16 @@
 // `intro` seconds are the globe opening, held on the start year.
 import { INTRO } from './intro.js';
 
-const EVENT_KINDS = new Set(['war', 'peace', 'secession', 'union', 'coup', 'invention', 'history']);
+const EVENT_KINDS = new Set([
+	'war',
+	'peace',
+	'conquest',
+	'secession',
+	'union',
+	'coup',
+	'invention',
+	'history'
+]);
 const FAMILY_KINDS = new Set([
 	'born',
 	'death',
@@ -56,6 +65,7 @@ export function buildTimeline(
 		if (
 			e.kind === 'secession' ||
 			e.kind === 'union' ||
+			(e.kind === 'conquest' && e.annexed) ||
 			(e.kind === 'invention' && (e.aheadOfReal > 10 || (e.worldFirst && e.aheadOfReal === 0)))
 		)
 			key.add(e.year);
