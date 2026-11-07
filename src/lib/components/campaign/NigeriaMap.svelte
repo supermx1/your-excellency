@@ -60,7 +60,7 @@
 						</span>
 					</div>
 					<p class="mt-2 text-xs font-bold uppercase">
-						⚠ {stateInfo.threatType.replace('_', '/')} · insecurity {stateInfo.insecurityIndex}/100
+						{stateInfo.threatType.replace('_', '/')} · insecurity {stateInfo.insecurityIndex}/100
 					</p>
 					<div class="mt-1 h-2 border-2 border-black bg-white">
 						<div class="h-full bg-black" style={`width: ${stateInfo.insecurityIndex}%`}></div>

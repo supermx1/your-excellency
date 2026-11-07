@@ -148,7 +148,7 @@
 					onclick={() => (viewMode = '3d')}
 					title="Switch to Full 3D View"
 				>
-					🌐 3D World
+					3D World
 				</button>
 				<button
 					class="border-l-2 border-black px-2.5 py-1 text-xs font-black uppercase transition {viewMode ===
@@ -158,7 +158,7 @@
 					onclick={() => (viewMode = '2d')}
 					title="Switch to 2D Isometric View"
 				>
-					📐 2D Classic
+					2D Classic
 				</button>
 			</div>
 
@@ -285,7 +285,7 @@
 				<div class="border-4 border-black bg-emerald-100 p-4 shadow-[5px_5px_0_0_#000]">
 					<div class="flex flex-wrap items-center justify-between gap-2">
 						<p class="font-black uppercase text-base">
-							🏗️ Build {buildingCatalog[selectedBuildingId].label} at ({pendingTile.x}, {pendingTile.y})
+							Build {buildingCatalog[selectedBuildingId].label} at ({pendingTile.x}, {pendingTile.y})
 						</p>
 						<span class="rounded border border-black bg-emerald-400 px-2 py-0.5 text-xs font-black">
 							Cost: {naira(pendingPreview.cost)}
@@ -306,7 +306,7 @@
 				</div>
 			{:else if pendingTile}
 				<div class="border-4 border-black bg-rose-300 p-4 shadow-[5px_5px_0_0_#000]">
-					<p class="font-black uppercase text-base">⚠️ Can't build there</p>
+					<p class="font-black uppercase text-base">Can't build there</p>
 					<p class="mt-1 text-sm font-medium">{pendingPreview?.reason}</p>
 					<button class="{btn} mt-3 bg-white px-4 py-2" onclick={cancelPending}>Dismiss</button>
 				</div>
@@ -314,7 +314,7 @@
 				<div
 					class="border-2 border-dashed border-zinc-400 bg-amber-50/70 p-3 text-sm font-medium text-zinc-700"
 				>
-					🎯 <span class="font-bold">{buildingCatalog[selectedBuildingId].label}</span> selected. Hover
+					<span class="font-bold">{buildingCatalog[selectedBuildingId].label}</span> selected. Hover
 					over tiles to see the 3D ghost preview, then tap any tile to confirm placement.
 				</div>
 			{/if}
@@ -328,7 +328,7 @@
 						class="{btn} bg-zinc-100 px-2 py-0.5 text-[11px]"
 						onclick={() => (infoTile = null)}
 					>
-						✕ Close
+						Close
 					</button>
 				</div>
 				<p class="mt-1 text-sm font-medium text-zinc-700">{terrain.description}</p>
@@ -340,12 +340,12 @@
 						</p>
 						{#if tile.turnsLeft > 0}
 							<p class="mt-1 text-xs font-black text-amber-700">
-								🚧 Under construction — {tile.turnsLeft} turn{tile.turnsLeft === 1 ? '' : 's'} left. Contributes
+								Under construction — {tile.turnsLeft} turn{tile.turnsLeft === 1 ? '' : 's'} left. Contributes
 								0 capacity until completed.
 							</p>
 						{:else}
 							<p class="mt-1 text-xs font-bold text-emerald-700">
-								✓ Operational: +{buildingCatalog[tile.buildingId].capacity} capacity · Upkeep {naira(
+								Operational: +{buildingCatalog[tile.buildingId].capacity} capacity · Upkeep {naira(
 									buildingCatalog[tile.buildingId].maintenance
 								)}/turn
 							</p>

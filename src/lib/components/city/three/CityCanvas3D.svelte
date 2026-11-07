@@ -173,11 +173,11 @@
 				title="Toggle Lighting (Day / Golden Hour / Night)"
 			>
 				{#if lightingMode === 'sun'}
-					☀️ Sun
+					Sun
 				{:else if lightingMode === 'golden'}
-					🌅 Sunset
+					Sunset
 				{:else}
-					🌙 Night
+					Night
 				{/if}
 			</button>
 
@@ -186,7 +186,7 @@
 				onclick={toggleTraffic}
 				title="Toggle Road Traffic"
 			>
-				🚗 {trafficEnabled ? 'Traffic' : 'No Cars'}
+				{trafficEnabled ? 'Traffic' : 'No Cars'}
 			</button>
 
 			<button
@@ -194,7 +194,7 @@
 				onclick={toggleTheater}
 				title="Toggle Expanded Theater Viewport"
 			>
-				⛶ {isTheaterMode ? 'Normal' : 'Expand'}
+				{isTheaterMode ? 'Normal' : 'Expand'}
 			</button>
 		</div>
 	</div>
@@ -203,6 +203,6 @@
 	<div
 		class="pointer-events-none absolute bottom-3 left-3 z-10 hidden rounded border border-black/60 bg-white/90 px-2 py-1 text-[11px] font-bold text-zinc-700 shadow sm:block"
 	>
-		🖱️ Drag to Orbit · Shift/Right-drag to Pan · Scroll to Zoom
+		Drag to Orbit · Shift/Right-drag to Pan · Scroll to Zoom
 	</div>
 </div>
