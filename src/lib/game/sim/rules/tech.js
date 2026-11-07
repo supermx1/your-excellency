@@ -22,7 +22,10 @@ export function stepTech(world) {
 			if (p.tech.includes(t.id) || !t.requires.every((r) => p.tech.includes(r))) continue;
 			// adoptable: false = a capability a country must build itself (spaceflight); never imported.
 			if (t.adoptable !== false && t.worldYear != null && t.worldYear <= world.year) {
-				const chance = P.adoptBase + P.adoptLit * lit + P.adoptTrade * (coast + urban) + (p.british ? P.adoptColonial : 0);
+				// From 1948 world health programmes (WHO, UNICEF, mass campaigns) carry medicine to every
+				// government's people, colonial or not: the outside world stays real in every run.
+				const campaigns = t.effects?.mortality && world.year >= P.worldHealthFrom ? P.worldHealthAdopt : 0;
+				const chance = P.adoptBase + P.adoptLit * lit + P.adoptTrade * (coast + urban) + (p.british ? P.adoptColonial : 0) + campaigns;
 				if (world.rand() < chance) adopt(world, p, t, 'adoption');
 			} else if (p.knowledge >= t.threshold + P.inventMargin && world.rand() < P.inventChance) {
 				adopt(world, p, t, 'invention');

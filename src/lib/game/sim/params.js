@@ -86,6 +86,8 @@ export const PARAMS = {
 	adoptLit: 0.08,
 	adoptTrade: 0.03,
 	adoptColonial: 0.05,
+	worldHealthFrom: 1948, // WHO founded
+	worldHealthAdopt: 0.06, // yearly extra chance a medicine reaches any government's people once campaigns run
 	inventMargin: 1, // knowledge must exceed a tech's threshold by this much to invent it
 	inventChance: 0.2,
 	// literacy

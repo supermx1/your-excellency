@@ -45,9 +45,9 @@ function britishPolity(world) {
 			army: 0.04,
 			stability: 0.6,
 			knowledge: 2.5,
-			tech: world.data.tech
-				.filter((t) => t.adoptable !== false && t.worldYear != null && t.worldYear <= world.year)
-				.map((t) => t.id),
+			// What reaches the people it governs is what their land already had, then what it imports with its
+			// colonial head start (adoptColonial), not everything Europe knew on the day it arrived.
+			tech: [],
 			atWarWith: [],
 			british: true
 		};
@@ -82,6 +82,7 @@ function apply(world, event) {
 			const from = world.polities.find((p) => p.id === cell.polityId);
 			if (from === brit) continue;
 			if (from) {
+				brit.tech = [...new Set([...brit.tech, ...from.tech])];
 				from.atWarWith = from.atWarWith.filter((x) => x !== brit.id);
 				brit.atWarWith = brit.atWarWith.filter((x) => x !== from.id);
 			}

@@ -253,9 +253,10 @@ describe('the seat of government', () => {
 		const run = (sw) => runSimulation({ seed: 2, switches: { ...defaultSwitches(), ...sw }, startYear: 1850, endYear: 1995 });
 		const history = run({});
 		const at = (r, year, id) => r.history.find((h) => h.year === year).cells.find((c) => c.id === id).incomeFactors.capital;
-		expect(at(history, 1985, 'lagos')).toBeCloseTo(1 + P.capitalPremium);
+		const seat = history.history.find((h) => h.year === 1985).polities.find((p) => p.id === 'nigeria').capitalCell;
+		expect(at(history, 1985, seat)).toBeCloseTo(1 + P.capitalPremium);
 		expect(at(history, 1995, 'fct')).toBeCloseTo(1 + P.capitalPremium);
-		expect(at(history, 1995, 'lagos')).toBe(1);
+		expect(at(history, 1995, seat)).toBe(1);
 		expect(run({ britishConquest: false }).events.some((e) => e.id === 'capital-abuja')).toBe(false);
 		expect(run({ capitalToAbuja: false }).events.some((e) => e.id === 'capital-abuja')).toBe(false);
 	});
@@ -279,5 +280,13 @@ describe('harbours and the colonial seat', () => {
 		);
 		for (const id of seats) expect(defaultData.cells.find((c) => c.id === id).harbour).toBe(true);
 		expect(seats.size).toBeGreaterThan(1);
+	});
+});
+
+describe('medicine and who governs', () => {
+	it('once world health campaigns run, a never-colonized land lives about as long as a colony did', () => {
+		const life = (sw) =>
+			[1, 2, 3].reduce((t, seed) => t + runSimulation({ seed, switches: { ...defaultSwitches(), ...sw }, startYear: 1850, endYear: 2000 }).history.at(-1).totals.lifeExp, 0) / 3;
+		expect(Math.abs(life({ britishConquest: false, amalgamation: false }) - life({}))).toBeLessThan(3);
 	});
 });
