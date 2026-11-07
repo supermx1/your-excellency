@@ -17,14 +17,15 @@ const GLOW = new THREE.Color('#ffffff');
 export const DEFAULT_TILT = TILT;
 
 export class Diorama {
-	/** @param {HTMLCanvasElement} canvas @param {{ lowDetail?: boolean }} [opts] */
-	constructor(canvas, { lowDetail = false } = {}) {
+	/** @param {HTMLCanvasElement} canvas @param {{ lowDetail?: boolean, pixelRatio?: number }} [opts] */
+	constructor(canvas, { lowDetail = false, pixelRatio } = {}) {
 		this.lowDetail = lowDetail;
 		/** Write each state's head count above its tower (switched on and off by the caller). */
 		this.popLabels = false;
 		// Keeping each frame for capture costs speed; phones never capture, so they skip it.
 		this.renderer = new THREE.WebGLRenderer({ canvas, antialias: !lowDetail, preserveDrawingBuffer: !lowDetail });
-		this.renderer.setPixelRatio(lowDetail ? 1 : Math.min(window.devicePixelRatio || 1, 2));
+		// Video export pins the ratio so every frame is the same size on any screen.
+		this.renderer.setPixelRatio(pixelRatio ?? (lowDetail ? 1 : Math.min(window.devicePixelRatio || 1, 2)));
 		this.renderer.shadowMap.enabled = !lowDetail;
 		this.scene = new THREE.Scene();
 		this.scene.background = new THREE.Color('#0e1116');
