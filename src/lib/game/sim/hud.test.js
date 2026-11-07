@@ -106,6 +106,11 @@ describe('ending', () => {
 		expect(new Set(f.cells.map((c) => c.polityId))).toEqual(new Set(['nigeria']));
 		expect(f.cells).toHaveLength(37);
 	});
+
+	it('realFrame gives each of the 37 areas its own colour inside Nigeria', () => {
+		const cells = realFrame(2020).cells;
+		expect(new Set(cells.map((c) => c.color)).size).toBe(37);
+	});
 });
 
 import { placeAt } from './hud.js';

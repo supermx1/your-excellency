@@ -1,5 +1,6 @@
 // @ts-nocheck
 // What the HUD shows at a given year: stats beside the real values, captions, family cards, real borders.
+import { stateColor } from './colors.js';
 import { defaultData } from './data/index.js';
 import { frameAt } from './frame.js';
 import { populationAt } from './population.js';
@@ -140,6 +141,8 @@ export function realFrame(year) {
 		cells: defaultData.cells.map((c) => ({
 			id: c.id,
 			polityId: owner.get(c.id),
+			// Inside Nigeria, paint today's 36 states and the FCT each their own colour, lines between them.
+			color: owner.get(c.id) === 'nigeria' ? stateColor(c.id) : undefined,
 			nextPolityId: owner.get(c.id),
 			pop: populations[c.id],
 			urban,

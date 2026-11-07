@@ -100,8 +100,8 @@ export class Diorama {
 		for (const c of frame.cells) {
 			const view = this.cells.get(c.id);
 			if (!view) continue;
-			const from = new THREE.Color(polityColor(c.polityId));
-			view.color.copy(from).lerp(new THREE.Color(polityColor(c.nextPolityId)), c.nextPolityId === c.polityId ? 0 : frame.t);
+			const from = new THREE.Color(c.color ?? polityColor(c.polityId));
+			view.color.copy(from).lerp(new THREE.Color(c.color ?? polityColor(c.nextPolityId)), c.color || c.nextPolityId === c.polityId ? 0 : frame.t);
 			if (c.epidemic) view.color.lerp(SICK, 0.55 * (1 - frame.t));
 			const mat = view.mesh.material;
 			mat.color.copy(view.color);
@@ -155,8 +155,8 @@ export class Diorama {
 	}
 
 	updateBorders(frame) {
-		const owner = new Map(frame.cells.map((c) => [c.id, c.polityId]));
-		const key = frame.cells.map((c) => c.polityId).join(',');
+		const owner = new Map(frame.cells.map((c) => [c.id, c.color ?? c.polityId]));
+		const key = frame.cells.map((c) => c.color ?? c.polityId).join(',');
 		if (key === this.borderKey) return;
 		this.borderKey = key;
 		const pos = [];

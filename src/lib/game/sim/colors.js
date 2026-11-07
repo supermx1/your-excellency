@@ -41,3 +41,19 @@ export function polityColor(id) {
 	const light = 0.45 + ((Number(year ?? hashString(id)) % 3) * 0.06);
 	return hsl(hue, 0.55, light);
 }
+
+// Today's 37 areas: each takes, from 37 evenly spread hues, the one farthest from its already-coloured neighbours.
+const STATE = new Map();
+{
+	const free = cells.map((_, i) => i * (360 / 37));
+	const gap = (a, b) => Math.min(Math.abs(a - b), 360 - Math.abs(a - b));
+	for (const c of cells) {
+		const near = c.neighbours.map((n) => STATE.get(n)?.hue).filter((h) => h !== undefined);
+		const best = free.reduce((x, h) => (Math.min(360, ...near.map((n) => gap(h, n))) > Math.min(360, ...near.map((n) => gap(x, n))) ? h : x));
+		free.splice(free.indexOf(best), 1);
+		STATE.set(c.id, { hue: best, color: hsl(best, 0.55, 0.42 + (STATE.size % 3) * 0.07) });
+	}
+}
+
+/** The colour of one of today's states (or the FCT) on the our-world map. */
+export const stateColor = (id) => STATE.get(id).color;
