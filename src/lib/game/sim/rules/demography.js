@@ -3,6 +3,15 @@ import { PARAMS as P } from '../params.js';
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, Number.isFinite(v) ? v : lo));
 
+/** Life expectancy from the yearly death rate, by straight lines between real pairs (PARAMS.lifeExpAt). */
+export function lifeExpectancy(death) {
+	const pts = P.lifeExpAt;
+	const at = pts.findIndex(([d]) => d <= death);
+	const i = at === -1 ? pts.length - 1 : Math.max(1, at); // beyond either end: extend the nearest line
+	const [[d0, e0], [d1, e1]] = [pts[i - 1], pts[i]];
+	return e0 + ((death - d0) * (e1 - e0)) / (d1 - d0);
+}
+
 /** Births, deaths, life expectancy and literacy per cell. Same rules for every cell. */
 /** @param {import('../types.js').World} world */
 export function stepDemography(world) {
@@ -12,8 +21,11 @@ export function stepDemography(world) {
 		// Fertility transition: as schooling and town life spread, families have far fewer children.
 		const modern = (1 - P.transitionUrbanWeight) * c.litAny + P.transitionUrbanWeight * c.urban;
 		const transition = clamp((modern - P.transitionStart) / (1 - P.transitionStart), 0, 1);
+		// Healthier mothers have more live births (fewer miscarriages, less disease-caused infertility):
+		// births rise a little as medicine cuts disease, before schooling and towns bring them down.
+		const healthier = 1 + P.healthFertility * (1 - c.mods.mortality);
 		const birth = clamp(
-			P.birthBase - P.birthLitDrop * c.litAny - P.birthUrbanDrop * c.urban - P.transitionDrop * transition,
+			P.birthBase * healthier - P.birthLitDrop * c.litAny - P.birthUrbanDrop * c.urban - P.transitionDrop * transition,
 			0.008,
 			0.06
 		);
@@ -27,7 +39,7 @@ export function stepDemography(world) {
 		c.birthRate = birth;
 		c.deathRate = death;
 		c.pop = clamp(c.pop * (1 + birth - death), 0, 1e10);
-		c.lifeExp = clamp(P.lifeExpBase + (0.045 - death) * P.lifeExpSlope, 20, 95);
+		c.lifeExp = clamp(lifeExpectancy(death), 20, 95);
 
 		const learn = P.learnRate * c.mods.learning;
 		const extra = c.schoolExpansion;

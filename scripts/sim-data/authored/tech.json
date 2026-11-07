@@ -28,6 +28,7 @@
 		{ "id": "green-revolution", "name": "High-yield crops", "worldYear": 1965, "nigeriaYear": 1980, "threshold": 3.4, "requires": ["fertiliser"], "effects": { "productivity": 1.1 } },
 		{ "id": "satellite", "name": "Satellites and spaceflight", "worldYear": 1957, "nigeriaYear": 2003, "threshold": 4.2, "requires": ["computer"], "effects": { "productivity": 1.01 } },
 		{ "id": "oral-rehydration", "name": "Oral rehydration therapy", "worldYear": 1968, "nigeriaYear": 1985, "threshold": 3, "requires": ["germ-theory"], "effects": { "mortality": 0.92 } },
+		{ "id": "malaria-control", "name": "Bed nets and artemisinin malaria drugs", "worldYear": 2000, "nigeriaYear": 2009, "threshold": 3.6, "requires": ["insecticides"], "effects": { "mortality": 0.85 } },
 		{ "id": "mobile-phone", "name": "Mobile phones", "worldYear": 1983, "nigeriaYear": 2001, "threshold": 4, "requires": ["computer", "telephone"], "effects": { "productivity": 1.06 } },
 		{ "id": "internet", "name": "The internet", "worldYear": 1983, "nigeriaYear": 1996, "threshold": 4.2, "requires": ["computer"], "effects": { "productivity": 1.05, "literacy": 1.04 } },
 		{ "id": "solar-power", "name": "Cheap solar power", "worldYear": 2010, "nigeriaYear": 2015, "threshold": 4.4, "requires": ["electricity"], "effects": { "productivity": 1.04, "infra": 0.03 } },

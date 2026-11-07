@@ -34,6 +34,7 @@ describe('baseline calibration (mean of 30 seeds)', () => {
 	});
 	it('school literacy 2018 within ±10 points', () => expect(Math.abs(sim('litSchool', 2018) - real('litSchool', 2018))).toBeLessThan(0.1));
 	it('life expectancy 2020 within ±5 years', () => expect(Math.abs(sim('lifeExp', 2020) - real('lifeExp', 2020))).toBeLessThan(5));
+	it.each([1950, 2000])('life expectancy %i within ±3 years (UN WPP)', (y) => expect(Math.abs(sim('lifeExp', y) - real('lifeExp', y))).toBeLessThan(3));
 	it('urban share 2020 within ±10 points', () => expect(Math.abs(sim('urban', 2020) - real('urban', 2020))).toBeLessThan(0.1));
 	it('Nigeria forms in at least 90% of seeds', () => expect(nigeriaFormed).toBeGreaterThanOrEqual(0.9));
 	it('population 2100 stays near the UN projection (WPP 2024 medium ≈477M)', () => {

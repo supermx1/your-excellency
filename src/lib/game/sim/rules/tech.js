@@ -35,7 +35,12 @@ export function stepTech(world) {
 		for (const id of p.tech) {
 			const fx = byId.get(id)?.effects ?? {};
 			for (const c of cells) {
-				if (fx.mortality) c.mods.mortality *= fx.mortality;
+				// A medicine helps only the people it reaches: some through campaigns, the rest as towns
+				// (clinics) and reading (instructions) spread. Same for every government.
+				if (fx.mortality) {
+					const reach = Math.min(1, P.healthReachBase + P.healthReachAccess * (c.urban + c.litAny) / 2);
+					c.mods.mortality *= 1 - (1 - fx.mortality) * reach;
+				}
 				if (fx.productivity) c.mods.productivity *= fx.productivity;
 				if (fx.literacy) c.mods.learning *= fx.literacy;
 			}
