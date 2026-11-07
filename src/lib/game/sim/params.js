@@ -50,7 +50,7 @@ export const PARAMS = {
 	healthFertility: 0.12, // share births rise as medicine removes disease (pre-transition fertility rise)
 	birthUrbanDrop: 0.002,
 	transitionUrbanWeight: 0.5, // births fall with literacy (any script) and town life equally
-	transitionStart: 0.70, // that blend, where birth rates start falling fast (assumption, see docs/timeline-data.md)
+	transitionStart: 0.7, // that blend, where birth rates start falling fast (assumption, see docs/timeline-data.md)
 	transitionDrop: 0.05, // births per person per year removed at full transition (fitted to 2025, 2050 and the UN 2100 projection)
 	deathBase: 0.041,
 	deathIncomeDrop: 0.35, // share of deaths removed as income approaches incomeForLowDeath
@@ -83,6 +83,7 @@ export const PARAMS = {
 	warBase: 0.002,
 	warTension: 0.03,
 	warWeakness: 0.01,
+	warAmbition: 0.015, // × ambition (0–1): a stronger, settled, crowded neighbour attacks for land
 	coupBase: 0.02,
 	// Post-independence crises: our coup years are moments of high risk, counted from independence.
 	// A coup happens only if the state is shaky then; civil war needs a recent coup and a shaken state.

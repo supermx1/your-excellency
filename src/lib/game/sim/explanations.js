@@ -7,52 +7,82 @@ import { powerText } from './format.js';
  * @type {Record<string, [string, [number, string][]]>}
  */
 const FACTORS = {
-	literacy: ['Reading', [
-		[1.5, 'Most people can read, so many can do better-paid work.'],
-		[1.1, 'Some people can read, which opens up better-paid work.'],
-		[0, 'Few people can read, so most work pays little more than farming.']
-	]],
-	infrastructure: ['Roads and markets', [
-		[2.5, 'Roads, transport and markets are well built, so goods sell easily.'],
-		[1.5, 'Some roads and markets, but trade is still hard in places.'],
-		[0, 'Few roads or markets, so goods are hard to sell.']
-	]],
-	electricity: ['Electricity', [
-		[1.1, 'Power is reliable enough to run machines and shops.'],
-		[1.02, 'Some power, but cuts hold businesses back.'],
-		[0, 'Almost no usable power: few connections, or cuts most of the time.']
-	]],
-	conflict: ['War', [
-		[0.995, 'No war damage.'],
-		[0, 'War damage is holding work back.']
-	]],
-	government: ['Government', [
-		[0.9, 'A steady government lets people plan, trade and invest.'],
-		[0.8, 'An unsteady government makes trade and investment risky.'],
-		[0, 'Coups, war or chaos make it hard to plan, trade or invest.']
-	]],
-	trade: ['Sea trade', [
-		[1.3, 'A busy harbour: the trade of a large land behind it passes through here.'],
-		[1.01, 'A harbour handling the trade of the land behind it.'],
-		[0, 'No harbour.']
-	]],
-	city: ['Big city', [
-		[1.1, 'A big city: many trades, firms and buyers close together.'],
-		[1.01, 'Growing towns add some business.'],
-		[0, 'Towns too small to add much.']
-	]],
-	capital: ['Seat of government', [
-		[1.01, 'The capital: public salaries and contracts bring money here.'],
-		[0, 'Not the seat of government.']
-	]],
-	colonial: ['Colonial rule', [
-		[0.995, 'No foreign ruler takes a share of what is made here.'],
-		[0, 'Part of what is made here goes abroad, as company profits and taxes.']
-	]],
-	food: ['Food', [
-		[0.995, 'There was enough food last year.'],
-		[0, 'Food ran short last year, leaving people less able to work.']
-	]]
+	literacy: [
+		'Reading',
+		[
+			[1.5, 'Most people can read, so many can do better-paid work.'],
+			[1.1, 'Some people can read, which opens up better-paid work.'],
+			[0, 'Few people can read, so most work pays little more than farming.']
+		]
+	],
+	infrastructure: [
+		'Roads and markets',
+		[
+			[2.5, 'Roads, transport and markets are well built, so goods sell easily.'],
+			[1.5, 'Some roads and markets, but trade is still hard in places.'],
+			[0, 'Few roads or markets, so goods are hard to sell.']
+		]
+	],
+	electricity: [
+		'Electricity',
+		[
+			[1.1, 'Power is reliable enough to run machines and shops.'],
+			[1.02, 'Some power, but cuts hold businesses back.'],
+			[0, 'Almost no usable power: few connections, or cuts most of the time.']
+		]
+	],
+	conflict: [
+		'War',
+		[
+			[0.995, 'No war damage.'],
+			[0, 'War damage is holding work back.']
+		]
+	],
+	government: [
+		'Government',
+		[
+			[0.9, 'A steady government lets people plan, trade and invest.'],
+			[0.8, 'An unsteady government makes trade and investment risky.'],
+			[0, 'Coups, war or chaos make it hard to plan, trade or invest.']
+		]
+	],
+	trade: [
+		'Sea trade',
+		[
+			[1.3, 'A busy harbour: the trade of a large land behind it passes through here.'],
+			[1.01, 'A harbour handling the trade of the land behind it.'],
+			[0, 'No harbour.']
+		]
+	],
+	city: [
+		'Big city',
+		[
+			[1.1, 'A big city: many trades, firms and buyers close together.'],
+			[1.01, 'Growing towns add some business.'],
+			[0, 'Towns too small to add much.']
+		]
+	],
+	capital: [
+		'Seat of government',
+		[
+			[1.01, 'The capital: public salaries and contracts bring money here.'],
+			[0, 'Not the seat of government.']
+		]
+	],
+	colonial: [
+		'Colonial rule',
+		[
+			[0.995, 'No foreign ruler takes a share of what is made here.'],
+			[0, 'Part of what is made here goes abroad, as company profits and taxes.']
+		]
+	],
+	food: [
+		'Food',
+		[
+			[0.995, 'There was enough food last year.'],
+			[0, 'Food ran short last year, leaving people less able to work.']
+		]
+	]
 };
 
 /** "+91%", "−20%" or "no effect": how much a factor raises or lowers income. */
@@ -67,17 +97,24 @@ export function incomeDrivers(cell) {
 		const f = FACTORS[key];
 		if (!f || !Number.isFinite(multiplier)) return [];
 		const text = (f[1].find(([min]) => multiplier >= min) ?? f[1][f[1].length - 1])[1];
-		const power = key === 'electricity' ? powerText(cell.electricityAccess, cell.powerService) : null;
+		const power =
+			key === 'electricity' ? powerText(cell.electricityAccess, cell.powerService) : null;
 		const description = power ? `${power}. ${text}` : text;
 		return [{ key, label: f[0], description, multiplier, effect: effectText(multiplier) }];
 	});
 }
 
-const POLITICS = new Set(['coup', 'government', 'secession', 'union', 'war', 'peace']);
+const POLITICS = new Set(['coup', 'government', 'secession', 'union', 'war', 'conquest', 'peace']);
 const TECH = new Set(['invention', 'adoption', 'spread']);
 const factorText = {
-	literacy: ['More people have been to school here than in most states', 'Fewer people have been to school here than in most states'],
-	infrastructure: ['Better roads and markets than most states', 'Poorer roads and markets than most states'],
+	literacy: [
+		'More people have been to school here than in most states',
+		'Fewer people have been to school here than in most states'
+	],
+	infrastructure: [
+		'Better roads and markets than most states',
+		'Poorer roads and markets than most states'
+	],
 	electricity: ['More reliable power than most states', 'Less reliable power than most states']
 };
 
@@ -99,7 +136,10 @@ export function whyHere(run, frame, cellId) {
 	if (hungry(cell))
 		lines.push({
 			kind: 'hardship',
-			text: (cell.incomeFactors?.conflict ?? 1) < 0.85 ? 'Fighting is disrupting food supplies' : 'Food is short after a poor harvest'
+			text:
+				(cell.incomeFactors?.conflict ?? 1) < 0.85
+					? 'Fighting is disrupting food supplies'
+					: 'Food is short after a poor harvest'
 		});
 	else if ([1, 2, 3, 4, 5].some((b) => hungry(was(b))))
 		lines.push({ kind: 'recovery', text: 'Recovering from a food crisis' });
@@ -121,20 +161,41 @@ export function whyHere(run, frame, cellId) {
 	const cells = run.history[i].cells;
 	const total = cells.reduce((/** @type {number} */ n, /** @type {any} */ c) => n + c.pop, 0) || 1;
 	const national = (/** @type {string} */ k) =>
-		cells.reduce((/** @type {number} */ n, /** @type {any} */ c) => n + (c.incomeFactors?.[k] ?? 1) * c.pop, 0) / total;
-	const [key, ratio] = Object.keys(factorText)
-		.map((k) => /** @type {[string, number]} */ ([k, (cell.incomeFactors?.[k] ?? 1) / national(k)]))
-		.filter(([, r]) => Number.isFinite(r))
-		.sort((x, y) => Math.abs(Math.log(y[1])) - Math.abs(Math.log(x[1])))[0] ?? [];
+		cells.reduce(
+			(/** @type {number} */ n, /** @type {any} */ c) => n + (c.incomeFactors?.[k] ?? 1) * c.pop,
+			0
+		) / total;
+	const [key, ratio] =
+		Object.keys(factorText)
+			.map(
+				(k) => /** @type {[string, number]} */ ([k, (cell.incomeFactors?.[k] ?? 1) / national(k)])
+			)
+			.filter(([, r]) => Number.isFinite(r))
+			.sort((x, y) => Math.abs(Math.log(y[1])) - Math.abs(Math.log(x[1])))[0] ?? [];
 	if (key && Math.abs(Math.log(ratio)) >= 0.08)
-		lines.push({ kind: 'income', text: factorText[/** @type {keyof typeof factorText} */ (key)][ratio >= 1 ? 0 : 1] });
+		lines.push({
+			kind: 'income',
+			text: factorText[/** @type {keyof typeof factorText} */ (key)][ratio >= 1 ? 0 : 1]
+		});
 
 	const school = run.inputs?.switches?.freeSchoolingFromYear;
-	if (school != null && frame.yearInt >= school && (cell.schoolExpansion ?? 1) < P.schoolPolicyCoverage - 0.01 && (cell.electricityAccess ?? 1) < 0.9)
-		lines.push({ kind: 'budget', text: 'Free schools are taking money that would extend the power grid' });
+	if (
+		school != null &&
+		frame.yearInt >= school &&
+		(cell.schoolExpansion ?? 1) < P.schoolPolicyCoverage - 0.01 &&
+		(cell.electricityAccess ?? 1) < 0.9
+	)
+		lines.push({
+			kind: 'budget',
+			text: 'Free schools are taking money that would extend the power grid'
+		});
 
 	const share = (cell.netMigration ?? 0) / (cell.pop || 1);
-	if (share < -0.003) lines.push({ kind: 'migration', text: 'People are leaving for better-paid states' });
-	else if (share > 0.003) lines.push({ kind: 'migration', text: 'Drawing migrants from poorer states' });
-	return lines.length ? lines.slice(0, 3) : [{ kind: 'calm', text: 'Much like the rest of the country right now' }];
+	if (share < -0.003)
+		lines.push({ kind: 'migration', text: 'People are leaving for better-paid states' });
+	else if (share > 0.003)
+		lines.push({ kind: 'migration', text: 'Drawing migrants from poorer states' });
+	return lines.length
+		? lines.slice(0, 3)
+		: [{ kind: 'calm', text: 'Much like the rest of the country right now' }];
 }

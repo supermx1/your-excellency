@@ -14,7 +14,7 @@ import { PARAMS as P } from './params.js';
 import { populationAt } from './population.js';
 import { stepLivelihoods } from './rules/livelihoods.js';
 
-export const ENGINE_VERSION = 17;
+export const ENGINE_VERSION = 18;
 
 const RULES = [
 	stepEvents,
@@ -51,7 +51,9 @@ function startingMap(inputs, data) {
 	const year = inputs.startYear;
 	const sw = inputs.switches ?? {};
 	// A run starting mid-war (Biafra, 1967–70) begins from the last peacetime borders.
-	const snap = (data.realBorders ?? []).filter((s) => s.year > 1850 && s.year <= year && !s.atWar).at(-1);
+	const snap = (data.realBorders ?? [])
+		.filter((s) => s.year > 1850 && s.year <= year && !s.atWar)
+		.at(-1);
 	if (!snap) return { polities: data.polities ?? [], flags: {}, cellDefaults: {} };
 
 	const at = (key) => data.national[key]?.[data.national.years.indexOf(year)] ?? null;
@@ -188,8 +190,13 @@ export function createWorld(inputs, data = defaultData) {
 			const policy = inputs.switches?.freeSchoolingFromYear;
 			if (policy != null && inputs.startYear >= policy) {
 				// Observed attendance already includes free schooling: count it as built, not on top.
-				const built = Math.min(P.schoolPolicyCoverage, formal ? profile.primaryAttendance.value : 0);
-				const keep = profile.primaryAttendance.value ? 1 - built / profile.primaryAttendance.value : 1;
+				const built = Math.min(
+					P.schoolPolicyCoverage,
+					formal ? profile.primaryAttendance.value : 0
+				);
+				const keep = profile.primaryAttendance.value
+					? 1 - built / profile.primaryAttendance.value
+					: 1;
 				c.schools.mission *= keep;
 				c.schools.state *= keep;
 				c.schoolExpansion = built;
