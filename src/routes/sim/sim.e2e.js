@@ -13,7 +13,7 @@ test('hub shows The Timeline card linking to /sim', async ({ page }) => {
 test('choosing Never colonized and Run reaches /sim/play', async ({ page }) => {
 	await page.goto('/sim');
 	await page.getByRole('button', { name: /Never colonized/ }).click();
-	await page.getByRole('button', { name: /Run history/ }).click();
+	await page.getByRole('button', { name: /Run simulation/ }).click();
 	await expect(page).toHaveURL(/\/sim\/play\?s=/);
 });
 
@@ -147,7 +147,7 @@ test('the end year is typed in and carried into the run', async ({ page }) => {
 	await page.getByRole('button', { name: /Start from scratch/ }).click();
 	await page.getByLabel('Start year').fill('2020');
 	await page.getByLabel('End year').fill('2060');
-	await page.getByRole('button', { name: /Run history/ }).click();
+	await page.getByRole('button', { name: /Run simulation/ }).click();
 	await expect(page).toHaveURL(/\/sim\/play\?s=/);
 	const s = new URL(page.url()).searchParams.get('s') ?? '';
 	expect(JSON.parse(Buffer.from(s, 'base64url').toString()).endYear).toBe(2060);
@@ -157,7 +157,7 @@ test('an end year before the start year is rejected', async ({ page }) => {
 	await page.goto('/sim');
 	await page.getByLabel('Start year').fill('1900');
 	await page.getByLabel('End year').fill('1890');
-	await page.getByRole('button', { name: /Run history/ }).click();
+	await page.getByRole('button', { name: /Run simulation/ }).click();
 	await expect(page.getByRole('alert')).toContainText(/end year/);
 });
 

@@ -152,7 +152,7 @@
 				</p>
 			</div>
 			<button type="button" class="{btn} ml-auto bg-emerald-400 px-6 py-3 text-lg" onclick={run}
-				>Run history →</button
+				>Run simulation →</button
 			>
 			{#if error}<p class="w-full font-bold text-red-700" role="alert">{error}</p>{/if}
 		</div>
