@@ -247,3 +247,15 @@ describe('who takes what is made', () => {
 		expect(factor(run({ britishConquest: false }), 1930)).toBe(1);
 	});
 });
+
+describe('the seat of government', () => {
+	it('earns more, and moves to Abuja in 1991 only where Nigeria exists', () => {
+		const run = (sw) => runSimulation({ seed: 2, switches: { ...defaultSwitches(), ...sw }, startYear: 1850, endYear: 1995 });
+		const history = run({});
+		const at = (r, year, id) => r.history.find((h) => h.year === year).cells.find((c) => c.id === id).incomeFactors.capital;
+		expect(at(history, 1985, 'lagos')).toBeCloseTo(1 + P.capitalPremium);
+		expect(at(history, 1995, 'fct')).toBeCloseTo(1 + P.capitalPremium);
+		expect(at(history, 1995, 'lagos')).toBe(1);
+		expect(run({ britishConquest: false }).events.some((e) => e.id === 'capital-abuja')).toBe(false);
+	});
+});

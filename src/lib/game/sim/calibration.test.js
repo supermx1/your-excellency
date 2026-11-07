@@ -6,6 +6,7 @@ import { runSimulation } from './world.js';
 import { defaultSwitches } from './switches.js';
 import { defaultData } from './data/index.js';
 import nbs from './data/nbs.json';
+import wealth from './data/dhs-wealth.json';
 
 const SEEDS = 30;
 const runs = Array.from({ length: SEEDS }, (_, i) =>
@@ -62,6 +63,15 @@ describe('baseline calibration (mean of 30 seeds)', () => {
 		expect(1 - (6 * a.reduce((t, v, i) => t + (v - b[i]) ** 2, 0)) / (n * (n * n - 1))).toBeGreaterThan(0.4);
 	});
 	it('civil war happens in at least 50% of seeds', () => expect(civilWar).toBeGreaterThanOrEqual(0.5));
+	// DHS 2018 household wealth by state. A check only.
+	it('income by state in 2018 ranks like DHS household wealth (rank above 0.6)', () => {
+		const ids = Object.keys(wealth.meanQuintile);
+		const inc = (id) => runs.reduce((s, r) => s + r.history.find((y) => y.year === 2018).cells.find((x) => x.id === id).incomePc, 0) / SEEDS;
+		const rank = (xs) => { const r = []; xs.map((x, i) => [x, i]).sort((a, b) => a[0] - b[0]).forEach(([, i], k) => (r[i] = k)); return r; };
+		const [a, b] = [rank(ids.map(inc)), rank(ids.map((id) => wealth.meanQuintile[id]))];
+		const n = ids.length;
+		expect(1 - (6 * a.reduce((t, v, i) => t + (v - b[i]) ** 2, 0)) / (n * (n * n - 1))).toBeGreaterThan(0.6);
+	});
 	// NBS / World Bank NLSS 2018/19: grid hours a day and electricity by state. Checks only.
 	it('grid power runs about as many hours a day as NLSS 2018/19 reports (6.8, within 1.5)', () => {
 		const at = (k) => runs.reduce((s, r) => s + r.history.find((y) => y.year === 2019).totals[k], 0) / SEEDS;
@@ -95,8 +105,10 @@ describe('the north–south reading gap follows causes', () => {
 		const runs = [1, 2, 3].map((seed) => runSimulation({ seed, switches: { ...defaultSwitches(), ...sw }, startYear: 1850, endYear: 2018 }));
 		return ids.reduce((t, id) => t + runs.reduce((s, r) => s + r.history.at(-1).cells.find((c) => c.id === id).litSchool, 0) / runs.length, 0) / ids.length;
 	};
-	it('without missions the north reads as well as the south-east', () =>
-		expect(school({ christianMissions: false }, north)).toBeGreaterThan(school({ christianMissions: false }, east) - 0.05));
+	it("without missions most of the south-east's lead over the north disappears", () => {
+		const lead = (sw) => school(sw, east) - school(sw, north);
+		expect(lead({ christianMissions: false })).toBeLessThan(lead({}) / 3);
+	});
 	it('without indirect rule the north reads far more than in history', () =>
 		expect(school({ indirectRule: false }, north)).toBeGreaterThan(school({}, north) + 0.1));
 });

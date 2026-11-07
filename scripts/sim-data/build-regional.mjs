@@ -107,6 +107,7 @@ const manifest = readJson(new URL('manifest.json', CACHE));
 const sources = [
 	...historical.sources,
 	...readJson(new URL('development.json', OUT)).sources,
+	...readJson(new URL('dhs-wealth.json', OUT)).sources,
 	...Object.entries(manifest).map(([file, m]) => ({
 		name: m.name,
 		url: m.url,
