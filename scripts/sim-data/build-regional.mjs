@@ -98,6 +98,7 @@ write('polities-1850.json', p1850.polities);
 const events = readJson(new URL('events.json', AUTH));
 write('events.json', { flags: events.flags, groups: events.groups, events: events.events });
 write('tech.json', readJson(new URL('tech.json', AUTH)).tech);
+write('nbs.json', { literacy2010: readJson(new URL('nbs.json', AUTH)).literacy2010 });
 const names = readJson(new URL('names.json', AUTH));
 write('names.json', { languages: names.languages, cellLanguage: names.cellLanguage });
 
@@ -112,7 +113,7 @@ const sources = [
 		licence: m.licence,
 		files: [file]
 	})),
-	...['polities-1850', 'real-borders', 'events', 'tech', 'names', 'religion'].flatMap((f) =>
+	...['polities-1850', 'real-borders', 'events', 'tech', 'names', 'religion', 'nbs'].flatMap((f) =>
 		readJson(new URL(`${f}.json`, AUTH)).sources.map((s) => ({ ...s, files: [`${f}.json`] }))
 	)
 ];

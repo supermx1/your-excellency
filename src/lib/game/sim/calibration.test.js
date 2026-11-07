@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { runSimulation } from './world.js';
 import { defaultSwitches } from './switches.js';
 import { defaultData } from './data/index.js';
+import nbs from './data/nbs.json';
 
 const SEEDS = 30;
 const runs = Array.from({ length: SEEDS }, (_, i) =>
@@ -61,6 +62,16 @@ describe('baseline calibration (mean of 30 seeds)', () => {
 		expect(1 - (6 * a.reduce((t, v, i) => t + (v - b[i]) ** 2, 0)) / (n * (n * n - 1))).toBeGreaterThan(0.4);
 	});
 	it('civil war happens in at least 50% of seeds', () => expect(civilWar).toBeGreaterThanOrEqual(0.5));
+	// NBS National Literacy Survey 2010, adults by state. A check only: nothing pulls the model toward it.
+	it('school reading by state in 2010 tracks NBS English literacy (rank above 0.8, mean error under 12 points)', () => {
+		const ids = Object.keys(nbs.literacy2010);
+		const lit = (id) => runs.reduce((s, r) => s + r.history.find((y) => y.year === 2010).cells.find((x) => x.id === id).litSchool, 0) / SEEDS;
+		const rank = (xs) => { const r = []; xs.map((x, i) => [x, i]).sort((a, b) => a[0] - b[0]).forEach(([, i], k) => (r[i] = k)); return r; };
+		const [a, b] = [rank(ids.map(lit)), rank(ids.map((id) => nbs.literacy2010[id].english))];
+		const n = ids.length;
+		expect(1 - (6 * a.reduce((t, v, i) => t + (v - b[i]) ** 2, 0)) / (n * (n * n - 1))).toBeGreaterThan(0.8);
+		expect(ids.reduce((t, id) => t + Math.abs(lit(id) - nbs.literacy2010[id].english), 0) / n).toBeLessThan(0.12);
+	});
 });
 
 // The gap is not written in: it comes from where missionaries can work. Change the cause, the map changes.
