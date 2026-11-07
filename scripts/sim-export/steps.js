@@ -50,20 +50,25 @@ export async function loadRun(row, { engineVersion, runSimulation, unpackOutput 
 	);
 }
 
-/** The site's narration for a chapter (owner edits and the AI cache come first there); built-in text if that fails. */
-export async function narrationFor(chapter, digest, { runId, site, fetch, fallbackNarration }) {
-	try {
-		const res = await fetch(`${site}/api/sim/narrate`, {
-			method: 'POST',
-			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ runId, chapterIndex: chapter.index, digest })
-		});
-		if (res.ok) {
-			const text = (await res.json())?.narration?.text;
-			if (text) return text;
+/**
+ * The site's narration for a chapter (owner edits and the AI cache come first there). The AI sometimes
+ * times out, so it is asked up to `tries` times; then the built-in text. Returns { text, ai }.
+ */
+export async function narrationFor(chapter, digest, { runId, site, fetch, fallbackNarration, tries = 3 }) {
+	for (let i = 0; i < tries; i++) {
+		try {
+			const res = await fetch(`${site}/api/sim/narrate`, {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ runId, chapterIndex: chapter.index, digest })
+			});
+			if (res.ok) {
+				const text = (await res.json())?.narration?.text;
+				if (text) return { text, ai: true };
+			}
+		} catch {
+			// offline or the site is down: try again, then fall through
 		}
-	} catch {
-		// offline or the site is down: fall through
 	}
-	return fallbackNarration(digest).text;
+	return { text: fallbackNarration(digest).text, ai: false };
 }
