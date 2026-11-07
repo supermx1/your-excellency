@@ -1,24 +1,52 @@
-# Voices lines in the owner's cloned voice with Chatterbox Multilingual, on device. Used by sim:short.
-# usage: python clone.py <lines.json> <reference.wav>
+# /// script
+# requires-python = "==3.13.*"
+# dependencies = ["mlx-audio==0.5.8"]
+# ///
+# Voices lines in the owner's cloned voice with Qwen3-TTS, on device. Used by sim:short.
+# usage: uv run --script clone.py <lines.json> <reference.wav> <transcript>
 #   lines.json: [{"text": "...", "out": "/abs/path/line-xxxx.wav"}]; a line whose file exists is kept.
 # Prints one JSON object on its last line: {out: seconds} for every line.
-import json, os, sys
+import json
+import sys
+import wave
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
-import torch
-import torchaudio
+lines_file, reference, transcript = sys.argv[1:]
+lines = {Path(line["out"]): line["text"] for line in json.loads(Path(lines_file).read_text())}
+todo = [out for out in lines if not out.exists()]
 
-lines, ref = json.load(open(sys.argv[1])), sys.argv[2]
-todo = [l for l in lines if not os.path.exists(l["out"])]
 if todo:
-    _load = torch.load
-    # The weights were saved on an Nvidia GPU; load them on the CPU, then move them to this Mac's GPU.
-    torch.load = lambda *a, **k: _load(*a, **{**k, "map_location": torch.device("cpu")})
-    from chatterbox.mtl_tts import ChatterboxMultilingualTTS
+    import mlx.core as mx
+    from mlx_audio.audio_io import write
+    from mlx_audio.tts.utils import load_model
+    from mlx_audio.utils import load_audio
 
-    model = ChatterboxMultilingualTTS.from_pretrained(device=torch.device("mps" if torch.backends.mps.is_available() else "cpu"))
-    for i, l in enumerate(todo, 1):
-        torch.manual_seed(7)
-        wav = model.generate(l["text"], language_id="en", audio_prompt_path=ref, exaggeration=0.5, cfg_weight=0.5).cpu()
-        torchaudio.save(l["out"], wav, model.sr)
+    model = load_model(
+        "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-bf16",
+        revision="a6eb4f68e4b056f1215157bb696209bc82a6db48",
+    )
+    ref_audio = load_audio(reference, sample_rate=model.sample_rate)
+    for i, out in enumerate(todo, 1):
+        mx.random.seed(7)
+        chunks = model.generate(
+            lines[out],
+            lang_code="english",
+            ref_audio=ref_audio,
+            ref_text=transcript or None,
+            temperature=0.7,
+            top_k=50,
+            top_p=0.9,
+        )
+        audio = mx.concatenate([chunk.audio for chunk in chunks])
+        with TemporaryDirectory(dir=out.parent) as staging:
+            wav = Path(staging) / out.name
+            write(wav, audio, model.sample_rate)
+            wav.replace(out)
         print(f"  voiced {i}/{len(todo)}", file=sys.stderr, flush=True)
-print(json.dumps({l["out"]: torchaudio.info(l["out"]).num_frames / torchaudio.info(l["out"]).sample_rate for l in lines}))
+
+seconds = {}
+for out in lines:
+    with wave.open(str(out), "rb") as wav:
+        seconds[str(out)] = wav.getnframes() / wav.getframerate()
+print(json.dumps(seconds))
