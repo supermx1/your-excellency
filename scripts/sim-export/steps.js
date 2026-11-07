@@ -13,6 +13,8 @@ export function parseArgs(argv) {
 		if (a === '--4k') Object.assign(out, { width: 3840, height: 2160 });
 		else if (a === '--render') out.render = true;
 		else if (a === '--local') out.local = true; // read the dev server's database, for testing
+		else if (a === '--fresh-script') out.freshScript = true; // sim:short: redraft the script from the run
+		else if (a === '--voice-ref') out.voiceRef = rest.shift(); // sim:short: a clip of the owner's voice
 		else if (a === '--from' || a === '--to') out[a.slice(2)] = Number(rest.shift());
 		else if (a === '--splits') out.splits = rest.shift().split(',').filter(Boolean).map(Number);
 		else if (a === '--voice') out.voice = rest.shift();

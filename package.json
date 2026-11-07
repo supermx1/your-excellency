@@ -18,7 +18,8 @@
 		"format": "prettier --write .",
 		"sim:data": "node scripts/sim-data/fetch.mjs && node scripts/sim-data/build-cells.mjs && node scripts/sim-data/build-national.mjs && node scripts/sim-data/build-development.mjs && node scripts/sim-data/build-wealth.mjs && node scripts/sim-data/build-regional.mjs && node scripts/sim-data/build-world.mjs",
 		"sim:calibrate": "vitest run src/lib/game/sim/calibration.test.js",
-		"sim:export": "node scripts/sim-export/export.mjs"
+		"sim:export": "node scripts/sim-export/export.mjs",
+		"sim:short": "node scripts/sim-export/short.mjs"
 	},
 	"devDependencies": {
 		"@playwright/test": "^1.60.0",
