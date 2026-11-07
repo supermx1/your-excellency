@@ -37,7 +37,7 @@ describe('switches and presets', () => {
 	it('switch keys are exactly the agreed list (none targets a faith or group)', () => {
 		expect(Object.keys(SWITCHES).sort()).toEqual(
 			[
-				'britishConquest', 'indirectRule', 'amalgamation', 'independenceYear', 'civilWar', 'coups', 'oilDiscovery', 'oilYear',
+				'britishConquest', 'indirectRule', 'capitalToAbuja', 'amalgamation', 'independenceYear', 'civilWar', 'coups', 'oilDiscovery', 'oilYear',
 				'learning', 'health', 'trust', 'oilInGround', 'malaria', 'drought', 'power24hFromYear',
 				'freeSchoolingFromYear', 'corruption', 'religiousTolerance', 'christianMissions', 'stateReligion', 'sharia'
 			].sort()

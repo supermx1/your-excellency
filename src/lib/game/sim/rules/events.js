@@ -6,6 +6,7 @@
 import { PARAMS as P } from '../params.js';
 import { coup, secede } from './polities.js';
 import { startWar, transferCell } from './conflict.js';
+import { harbourTrade } from './economy.js';
 
 /** Is a history event allowed by its switch? Returns the year it should fire in, or null. */
 function scheduledYear(event, sw, flags = {}) {
@@ -55,6 +56,20 @@ function britishPolity(world) {
 	return p;
 }
 
+/**
+ * A power that arrives by sea governs from a harbour. It chooses one when it first holds a harbour,
+ * and again when it merges its administrations (`reconsider`). The choice is a chance weighted by the
+ * trade behind each harbour; the sitting seat counts double, since moving a government is costly.
+ */
+function seatBySea(world, p, reconsider = false) {
+	const trade = harbourTrade(world, p);
+	if (!trade.size) return;
+	if (world.cellById.get(p.capitalCell)?.harbour && !reconsider) return;
+	const weights = [...trade].map(([id, people]) => [id, people * (id === p.capitalCell ? 2 : 1)]);
+	let r = world.rand() * weights.reduce((s, [, w]) => s + w, 0);
+	for (const [id, w] of weights) if ((r -= w) <= 0) return void (p.capitalCell = id);
+}
+
 function apply(world, event) {
 	const fx = event.effects ?? {};
 	for (const [flag, value] of Object.entries(fx.flags ?? {})) world.flags[flag] = value;
@@ -74,6 +89,7 @@ function apply(world, event) {
 			cell.indirectRule = world.switches.indirectRule !== false;
 		}
 		brit.capitalCell ??= fx.conquer.cellIds[0];
+		seatBySea(world, brit);
 		world.flags.britishRule = true;
 		world.polities = world.polities.filter((p) => p.cellIds.length);
 	}
@@ -91,7 +107,7 @@ function apply(world, event) {
 			brit.id = fx.merge.id;
 			brit.name = fx.merge.name;
 			for (const c of world.cells) if (brit.cellIds.includes(c.id)) c.polityId = brit.id;
-			if (brit.cellIds.includes('fct')) brit.capitalCell = 'lagos';
+			seatBySea(world, brit, true);
 		}
 	}
 

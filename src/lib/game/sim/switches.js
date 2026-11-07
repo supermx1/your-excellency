@@ -11,6 +11,7 @@ export const SWITCHES = {
 	britishConquest: bool('History', 'British conquest', 'Britain takes Lagos (1861) and conquers the rest by 1903.'),
 	indirectRule: bool('History', 'Indirect rule', 'Britain rules through local rulers, who keep missionaries out where most people follow a faith with its own schools.'),
 	amalgamation: bool('History', 'Amalgamation', 'North and South are joined into one Nigeria in 1914.'),
+	capitalToAbuja: bool('History', 'Capital moves to Abuja', 'In 1991 Nigeria moves its capital to Abuja, in the middle of the country, if it exists and holds the FCT.'),
 	independenceYear: year('History', 'Independence year', 'The year Nigeria becomes independent, if it exists.', 1960),
 	civilWar: bool('History', 'Civil war', 'The 1967–70 war, if there is a Nigeria for it to happen in and a coup has just shaken it.'),
 	coups: pickOne('History', 'Military coups', 'Off, as in history, or more likely.', ['off', 'history', 'likely']),

@@ -32,6 +32,9 @@ export const PARAMS = {
 	foodRecovery: 0.06,
 	foodDepletion: 0.1,
 	foodIncomeLoss: 0.1,
+	portPremium: 0.6, // most extra income a harbour can earn from the trade passing through it (assumption)
+	portScale: 20e6, // people behind a harbour at which it earns half that
+	cityReturn: 0.15, // extra income per tenfold more town-dwellers above a million (assumption)
 	capitalPremium: 0.5, // extra income in a government's seat: public salaries and contracts (assumption)
 	governanceLoss: 0.4, // share of income lost under a completely unsteady government (assumption)
 	colonialDrain: 0.3, // share of what a colony makes that goes abroad (assumption)
