@@ -35,7 +35,7 @@ const row = d1[0]?.results?.[0];
 // The engine imports JSON the way Vite does, so load it through Vite.
 const vite = await createServer({ configFile: false, server: { middlewareMode: true }, appType: 'custom', logLevel: 'warn', resolve: { alias: { $lib: join(ROOT, 'src/lib') } } });
 const load = (p) => vite.ssrLoadModule(join(ROOT, 'src/lib/game/sim', p));
-const [{ ENGINE_VERSION, runSimulation }, { unpackOutput }, narration, { speakable }, { planExport }] = await Promise.all(
+const [{ ENGINE_VERSION, runSimulation }, { unpackOutput }, narration, { speakable }, { planExport, scenarioCard }] = await Promise.all(
 	['world.js', 'recording.js', 'narration.js', 'kitten.js', 'export.js'].map(load)
 );
 let run;
@@ -48,29 +48,41 @@ const inputs = JSON.parse(row.inputs);
 const options = { from: args.from, to: args.to, splits: args.splits };
 const range = planExport(run, options); // also checks the years
 
-const audio = {};
-for (const chapter of narration.chaptersFor(run).filter((c) => c.to > range.from && c.from < range.to)) {
-	step(`Chapter ${chapter.index + 1} (${chapter.title}): narration and voice`);
-	const digest = narration.digestChapter(run, chapter);
-	const text = await narrationFor(chapter, digest, { runId: args.runId, site: args.site, fetch, fallbackNarration: narration.fallbackNarration });
-	const txt = join(out, 'audio', `chapter-${chapter.index}.txt`);
+const card = scenarioCard(inputs);
+const summary = row.summary ? JSON.parse(row.summary) : null;
+
+/** Voices `text` on device into audio/<name>.wav; returns its length in seconds. */
+function voice(name, text) {
+	const txt = join(out, 'audio', `${name}.txt`);
 	writeFileSync(txt, speakable(text));
 	const said = JSON.parse(
-		sh('npx', ['-y', 'hyperframes', 'tts', txt, '--voice', args.voice, '-o', join(out, 'audio', `chapter-${chapter.index}.wav`), '--json'], {
+		sh('npx', ['-y', 'hyperframes', 'tts', txt, '--voice', args.voice, '-o', join(out, 'audio', `${name}.wav`), '--json'], {
 			env: { ...process.env, HYPERFRAMES_PYTHON: python }
 		})
 	);
-	if (!said.ok) throw new Error(`Voice failed for chapter ${chapter.index}: ${said.error?.message}`);
-	audio[chapter.index] = said.durationSeconds;
+	if (!said.ok) throw new Error(`Voice failed for ${name}: ${said.error?.message}`);
+	return said.durationSeconds;
+}
+
+step(`Opening card: ${card.label}, ${card.from}–${card.to}`);
+const audio = { title: voice('chapter-title', card.spoken) };
+const texts = {};
+for (const chapter of narration.chaptersFor(run).filter((c) => c.to > range.from && c.from < range.to)) {
+	step(`Chapter ${chapter.index + 1} (${chapter.title}): narration and voice`);
+	const digest = narration.digestChapter(run, chapter);
+	const said = await narrationFor(chapter, digest, { runId: args.runId, site: args.site, fetch, fallbackNarration: narration.fallbackNarration });
+	if (!said.ai) console.log('  The AI narration did not come; using the built-in text.');
+	texts[chapter.index] = said.text;
+	audio[chapter.index] = voice(`chapter-${chapter.index}`, texts[chapter.index]);
 }
 
 step('Building the page');
 const dataFile = join(out, 'data.json');
-writeFileSync(dataFile, JSON.stringify({ run, options, audio, label: narration.scenarioLabel(inputs) }));
+writeFileSync(dataFile, JSON.stringify({ run, options, audio, texts, summary, card }));
 await build(exportConfig({ dataFile, outDir: out }));
-const plan = planExport(run, { ...options, audio });
+const plan = planExport(run, { ...options, audio, texts, summary });
 writeFileSync(join(out, 'index.html'), compositionHtml({ width: args.width, height: args.height, duration: plan.duration, cues: plan.cues }));
-console.log(`  ${plan.duration.toFixed(1)} s of video, ${plan.cues.length} narrated chapters`);
+console.log(`  ${plan.duration.toFixed(1)} s of video, ${plan.cues.length - 1} narrated chapters`);
 
 step('Checking the composition');
 for (const cmd of ['lint', 'check']) {

@@ -10,8 +10,8 @@ import { defaultData } from '$lib/game/sim/data/index.js';
 import Overlay from './Overlay.svelte';
 import './page.css';
 
-const { run, options, audio, label } = data;
-const plan = planExport(run, { ...options, audio });
+const { run, options, audio, texts, summary, card } = data;
+const plan = planExport(run, { ...options, audio, texts, summary });
 const shots = shotsFor(run, plan.timeline);
 const root = document.getElementById('root');
 const W = Number(root.dataset.width);
@@ -22,7 +22,7 @@ const map = new Diorama(mapCanvas, { pixelRatio: 1 });
 const real = new Diorama(realCanvas, { pixelRatio: 1 });
 real.popLabels = true;
 
-const props = $state({ scene: null, label, startYear: plan.from, endYear: plan.to });
+const props = $state({ scene: null, card, label: card.label, startYear: plan.from, endYear: plan.to });
 mount(Overlay, { target: document.getElementById('hf-hud'), props });
 
 let split = null;

@@ -50,11 +50,18 @@ describe('narrationFor', () => {
 	const base = { runId: ID, site: 'https://x', fallbackNarration: () => ({ text: 'built-in' }) };
 	const reply = (status, body) => async () => ({ ok: status === 200, json: async () => body });
 	it('uses the site text', async () => {
-		expect(await narrationFor({ index: 0 }, {}, { ...base, fetch: reply(200, { narration: { text: 'ai' } }) })).toBe('ai');
+		expect(await narrationFor({ index: 0 }, {}, { ...base, fetch: reply(200, { narration: { text: 'ai' } }) })).toEqual({ text: 'ai', ai: true });
+	});
+	it('asks again when the AI times out', async () => {
+		let calls = 0;
+		const fetch = async () => ({ ok: true, json: async () => ({ narration: ++calls < 3 ? null : { text: 'ai' } }) });
+		expect(await narrationFor({ index: 0 }, {}, { ...base, fetch })).toEqual({ text: 'ai', ai: true });
+		expect(calls).toBe(3);
 	});
 	it('falls back on null, an error status or no network', async () => {
-		expect(await narrationFor({ index: 0 }, {}, { ...base, fetch: reply(200, { narration: null }) })).toBe('built-in');
-		expect(await narrationFor({ index: 0 }, {}, { ...base, fetch: reply(500, {}) })).toBe('built-in');
-		expect(await narrationFor({ index: 0 }, {}, { ...base, fetch: async () => { throw new Error('offline'); } })).toBe('built-in');
+		const built = { text: 'built-in', ai: false };
+		expect(await narrationFor({ index: 0 }, {}, { ...base, fetch: reply(200, { narration: null }) })).toEqual(built);
+		expect(await narrationFor({ index: 0 }, {}, { ...base, fetch: reply(500, {}) })).toEqual(built);
+		expect(await narrationFor({ index: 0 }, {}, { ...base, fetch: async () => { throw new Error('offline'); } })).toEqual(built);
 	});
 });
