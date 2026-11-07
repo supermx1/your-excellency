@@ -31,6 +31,7 @@ export const PARAMS = {
 	foodRecovery: 0.06,
 	foodDepletion: 0.1,
 	foodIncomeLoss: 0.1,
+	capitalPremium: 0.5, // extra income in a government's seat: public salaries and contracts (assumption)
 	governanceLoss: 0.4, // share of income lost under a completely unsteady government (assumption)
 	colonialDrain: 0.3, // share of what a colony makes that goes abroad (assumption)
 	schoolBudgetShare: 0.35, // share of grid-building money free schooling takes while it expands (assumption)

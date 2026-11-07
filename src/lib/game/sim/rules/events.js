@@ -95,6 +95,12 @@ function apply(world, event) {
 		}
 	}
 
+	if (fx.capital) {
+		// A government moves its seat only within its own land.
+		const ng = world.polities.find((p) => p.id === 'nigeria' && p.cellIds.includes(fx.capital));
+		if (ng) ng.capitalCell = fx.capital;
+	}
+
 	if (event.id === 'independence') {
 		world.flags.independentYear = world.year;
 		const ng = world.polities.find((p) => p.id === 'nigeria');

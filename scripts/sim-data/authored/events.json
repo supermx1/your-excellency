@@ -683,6 +683,14 @@
 					"years": 1
 				}
 			}
+		},
+		{
+			"id": "capital-abuja",
+			"year": 1991,
+			"kind": "history",
+			"title": "The capital moves from Lagos to Abuja",
+			"requires": ["nigeriaExists"],
+			"effects": { "capital": "fct" }
 		}
 	]
 }

@@ -96,6 +96,8 @@ export function stepEconomy(world) {
 		}
 		c.incomeFactors = {
 			literacy: 1 + P.litReturn * c.litAny, // any script: no faith's schools count for more
+			// The seat of government draws public salaries and contracts, whoever governs.
+			capital: polity?.capitalCell === c.id ? 1 + P.capitalPremium : 1,
 			infrastructure: 1 + P.infraReturn * c.infra,
 			electricity: 1 + P.powerIncomeReturn * c.powerService,
 			conflict: 1 - 0.5 * c.warDamage,
