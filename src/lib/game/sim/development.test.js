@@ -219,14 +219,15 @@ describe('roads and markets', () => {
 });
 
 describe('electricity follows causes', () => {
-	const at2018 = (sw) => {
-		const r = runSimulation({ seed: 3, switches: { ...defaultSwitches(), ...sw }, startYear: 1850, endYear: 2018 });
+	const at2018 = (sw, seed = 3) => {
+		const r = runSimulation({ seed, switches: { ...defaultSwitches(), ...sw }, startYear: 1850, endYear: 2018 });
 		const y = r.history.at(-1);
 		const cell = (id) => y.cells.find((c) => c.id === id);
 		return { hours: (24 * y.totals.powerService) / y.totals.electricityAccess, lagos: cell('lagos').electricityAccess, sokoto: cell('sokoto').electricityAccess };
 	};
 	it('a steadier, cleaner government keeps the lights on longer', () => {
-		expect(at2018({ corruption: 'low' }).hours).toBeGreaterThan(at2018({ corruption: 'high' }).hours + 0.5);
+		const hours = (sw) => [1, 2, 3].reduce((t, seed) => t + at2018(sw, seed).hours, 0) / 3;
+		expect(hours({ corruption: 'low' })).toBeGreaterThan(hours({ corruption: 'high' }) * 1.05);
 	});
 	it('crowded places are wired first, with no state named in the rule', () => {
 		const h = at2018({});

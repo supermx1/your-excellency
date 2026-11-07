@@ -62,6 +62,19 @@ describe('baseline calibration (mean of 30 seeds)', () => {
 		expect(1 - (6 * a.reduce((t, v, i) => t + (v - b[i]) ** 2, 0)) / (n * (n * n - 1))).toBeGreaterThan(0.4);
 	});
 	it('civil war happens in at least 50% of seeds', () => expect(civilWar).toBeGreaterThanOrEqual(0.5));
+	// NBS / World Bank NLSS 2018/19: grid hours a day and electricity by state. Checks only.
+	it('grid power runs about as many hours a day as NLSS 2018/19 reports (6.8, within 1.5)', () => {
+		const at = (k) => runs.reduce((s, r) => s + r.history.find((y) => y.year === 2019).totals[k], 0) / SEEDS;
+		expect(Math.abs((24 * at('powerService')) / at('electricityAccess') - nbs.nlss2019.nationalGridHours)).toBeLessThan(1.5);
+	});
+	it('grid connections by state rank roughly like NLSS 2018/19 (rank above 0.35)', () => {
+		const ids = Object.keys(nbs.nlss2019.states);
+		const acc = (id) => runs.reduce((s, r) => s + r.history.find((y) => y.year === 2019).cells.find((x) => x.id === id).electricityAccess, 0) / SEEDS;
+		const rank = (xs) => { const r = []; xs.map((x, i) => [x, i]).sort((a, b) => a[0] - b[0]).forEach(([, i], k) => (r[i] = k)); return r; };
+		const [a, b] = [rank(ids.map(acc)), rank(ids.map((id) => nbs.nlss2019.states[id].access * nbs.nlss2019.states[id].gridShare))];
+		const n = ids.length;
+		expect(1 - (6 * a.reduce((t, v, i) => t + (v - b[i]) ** 2, 0)) / (n * (n * n - 1))).toBeGreaterThan(0.35);
+	});
 	// NBS National Literacy Survey 2010, adults by state. A check only: nothing pulls the model toward it.
 	it('school reading by state in 2010 tracks NBS English literacy (rank above 0.8, mean error under 12 points)', () => {
 		const ids = Object.keys(nbs.literacy2010);

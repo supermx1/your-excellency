@@ -16,11 +16,11 @@ export const PARAMS = {
 	infraAdjust: 0.03, // share of the gap to the affordable level closed each year
 	// Gameplay assumptions, not fitted causal estimates from DHS (see docs/timeline-data.md).
 	powerReliability: 0.5, // starting share of the day a grid supplies, before it builds or wears
-	powerBuild: 0.03, // people a year a grid can power all day, per person × stability × income/gridIncomeUnit
+	powerBuild: 0.02, // people a year a grid can power all day, per person × stability × income/gridIncomeUnit
 	powerWear: 0.04, // share of power-station capacity lost each year without replacement (about 25-year life)
 	ruralGridReach: 0.6, // share of the rest of the land the grid can reach at full roads
-	gridDenseBase: 0.45, // share wired first in a place as crowded as the national average
-	gridDenseSlope: 0.45, // more for each tenfold more crowded (cheaper per home), less for sparser
+	gridDenseBase: 0.4, // share wired first in a place as crowded as the national average
+	gridDenseSlope: 0.7, // more for each tenfold more crowded (cheaper per home), less for sparser
 	powerIncomeReturn: 0.15, // full effective service adds at most 15% to non-oil potential income
 	connectionGrowth: 0.07, // annual share of the affordable connection gap closed, at gridIncomeUnit and full stability
 	gridIncomeUnit: 4000, // $ a head at which grid building and wiring run at their base rates (no cap above)
