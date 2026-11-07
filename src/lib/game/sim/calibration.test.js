@@ -64,13 +64,13 @@ describe('baseline calibration (mean of 30 seeds)', () => {
 	});
 	it('civil war happens in at least 50% of seeds', () => expect(civilWar).toBeGreaterThanOrEqual(0.5));
 	// DHS 2018 household wealth by state. A check only.
-	it('income by state in 2018 ranks like DHS household wealth (rank above 0.6)', () => {
+	it('income by state in 2018 ranks like DHS household wealth (rank above 0.8)', () => {
 		const ids = Object.keys(wealth.meanQuintile);
 		const inc = (id) => runs.reduce((s, r) => s + r.history.find((y) => y.year === 2018).cells.find((x) => x.id === id).incomePc, 0) / SEEDS;
 		const rank = (xs) => { const r = []; xs.map((x, i) => [x, i]).sort((a, b) => a[0] - b[0]).forEach(([, i], k) => (r[i] = k)); return r; };
 		const [a, b] = [rank(ids.map(inc)), rank(ids.map((id) => wealth.meanQuintile[id]))];
 		const n = ids.length;
-		expect(1 - (6 * a.reduce((t, v, i) => t + (v - b[i]) ** 2, 0)) / (n * (n * n - 1))).toBeGreaterThan(0.6);
+		expect(1 - (6 * a.reduce((t, v, i) => t + (v - b[i]) ** 2, 0)) / (n * (n * n - 1))).toBeGreaterThan(0.8);
 	});
 	// NBS / World Bank NLSS 2018/19: grid hours a day and electricity by state. Checks only.
 	it('grid power runs about as many hours a day as NLSS 2018/19 reports (6.8, within 1.5)', () => {

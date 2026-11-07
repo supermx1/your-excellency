@@ -4,7 +4,8 @@ export const PARAMS = {
 	// economy
 	baseIncome: 650, // $ per head with no schooling, infrastructure or tech
 	incomeAdjust: 0.08, // share of the gap to potential income closed each year
-	litReturn: 1.5, // income boost per unit of literacy in any script
+	litReturn: 2, // income boost per unit of school literacy
+	otherScriptReturn: 0.3, // share of that boost from reading in another script (owner's decision)
 	infraReturn: 2,
 	oilIncome: 900, // $ per head added in oil cells at oil price multiplier 1
 	urbanFloor: 0.03,
