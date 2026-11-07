@@ -31,3 +31,5 @@ scripts/sim-data/.cache/
 scripts/sim-data/__pycache__/
 .impeccable/hook.cache.json
 /exports
+/my voice*.m4a
+/voice/

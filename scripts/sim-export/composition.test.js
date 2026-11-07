@@ -23,6 +23,11 @@ describe('compositionHtml', () => {
 			expect(html).toContain(`<audio id="narr-${c.chapter}" class="clip" src="audio/chapter-${c.chapter}.wav" data-start="${c.start.toFixed(3)}" data-duration="${c.seconds.toFixed(3)}"`);
 	});
 
+	it('takes the clip files of a Short', () => {
+		const short = compositionHtml({ width: 1080, height: 1350, duration: 10, cues: [{ id: 'line-0', file: 'audio/line-ab12.wav', start: 0, seconds: 3 }] });
+		expect(short).toContain('<audio id="narr-line-0" class="clip" src="audio/line-ab12.wav" data-start="0.000" data-duration="3.000"');
+	});
+
 	it('takes 4K sizes', () => {
 		expect(compositionHtml({ width: 3840, height: 2160, duration: 10, cues: [] })).toMatch(/data-width="3840" data-height="2160"/);
 	});

@@ -2,12 +2,12 @@
 // The HyperFrames root document for an exported run: two map canvases, the overlay, one voice clip per chapter.
 // data-no-timeline: there is no GSAP timeline; page.js draws every frame from the hf-seek time.
 
-/** @param {{ width: number, height: number, duration: number, cues: { chapter: number, start: number, seconds: number }[] }} o */
+/** @param {{ width: number, height: number, duration: number, cues: { chapter?: number | string, id?: string, file?: string, start: number, seconds: number }[] }} o */
 export function compositionHtml({ width, height, duration, cues }) {
 	const audio = cues
 		.map(
 			(c, i) =>
-				`\t\t<audio id="narr-${c.chapter}" class="clip" src="audio/chapter-${c.chapter}.wav" data-start="${c.start.toFixed(3)}" data-duration="${c.seconds.toFixed(3)}" data-track-index="${10 + i}" data-volume="1"></audio>`
+				`\t\t<audio id="narr-${c.id ?? c.chapter}" class="clip" src="${c.file ?? `audio/chapter-${c.chapter}.wav`}" data-start="${c.start.toFixed(3)}" data-duration="${c.seconds.toFixed(3)}" data-track-index="${10 + i}" data-volume="1"></audio>`
 		)
 		.join('\n');
 	return `<!doctype html>

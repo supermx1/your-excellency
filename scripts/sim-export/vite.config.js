@@ -6,8 +6,8 @@ import tailwindcss from '@tailwindcss/vite';
 
 const here = (p) => fileURLToPath(new URL(p, import.meta.url));
 
-/** @param {{ dataFile: string, outDir: string }} opts */
-export const exportConfig = ({ dataFile, outDir }) => ({
+/** @param {{ dataFile: string, outDir: string, entry?: 'main' | 'short' }} opts */
+export const exportConfig = ({ dataFile, outDir, entry = 'main' }) => ({
 	configFile: false,
 	root: here('./page'),
 	logLevel: 'warn',
@@ -19,6 +19,6 @@ export const exportConfig = ({ dataFile, outDir }) => ({
 		assetsDir: '.',
 		cssCodeSplit: false,
 		modulePreload: false,
-		lib: { entry: here('./page/main.svelte.js'), formats: ['es'], fileName: () => 'page.js', cssFileName: 'page' }
+		lib: { entry: here(`./page/${entry}.svelte.js`), formats: ['es'], fileName: () => 'page.js', cssFileName: 'page' }
 	}
 });
