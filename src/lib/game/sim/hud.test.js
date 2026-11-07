@@ -68,6 +68,16 @@ describe('hud data', () => {
 	});
 
 	it('realBordersAt 1920 is one Nigeria', () => expect(realBordersAt(1920).map((p) => p.id)).toEqual(['nigeria']));
+	it('our world shows Biafra from 1967 until 1970', () => {
+		expect(realBordersAt(1968).map((p) => p.name)).toContain('Republic of Biafra');
+		expect(realBordersAt(1970).map((p) => p.id)).toEqual(['nigeria']);
+	});
+	it('a run starting mid-war begins from peacetime borders', async () => {
+		const { createWorld } = await import('./world.js');
+		const { defaultSwitches } = await import('./switches.js');
+		const w = createWorld({ seed: 1, switches: defaultSwitches(), startYear: 1968, endYear: 1970 });
+		expect(w.polities.map((p) => p.id)).toEqual(['nigeria']);
+	});
 });
 
 describe('camera', () => {

@@ -89,7 +89,7 @@ for (const snap of borders.snapshots) {
 		...kept.map((p) => ({ ...p, cellIds: p.cellIds.filter((c) => !taken.has(c)) })),
 		...incoming
 	].filter((p) => p.cellIds.length);
-	snapshots.push({ year: snap.year, polities: structuredClone(current) });
+	snapshots.push({ year: snap.year, ...(snap.atWar && { atWar: true }), polities: structuredClone(current) });
 }
 write('real-borders.json', snapshots);
 

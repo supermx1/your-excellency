@@ -20,6 +20,8 @@
 			{ "id": "northern-nigeria", "name": "Protectorate of Northern Nigeria", "cellIds": ["kogi", "kwara", "niger", "fct", "nassarawa", "benue", "plateau", "sokoto", "zamfara", "kebbi", "katsina", "kano", "jigawa", "kaduna", "bauchi", "gombe", "adamawa", "taraba", "borno", "yobe"], "british": true }
 		] },
 		{ "year": 1914, "polities": [{ "id": "nigeria", "name": "Colony and Protectorate of Nigeria", "cellIds": "all", "british": true }] },
-		{ "year": 1960, "polities": [{ "id": "nigeria", "name": "Federation of Nigeria", "cellIds": "all", "british": false }] }
+		{ "year": 1960, "polities": [{ "id": "nigeria", "name": "Federation of Nigeria", "cellIds": "all", "british": false }] },
+		{ "year": 1967, "atWar": true, "replace": [{ "id": "anambra-1967", "name": "Republic of Biafra", "cellIds": ["anambra", "enugu", "imo", "abia", "ebonyi", "rivers", "bayelsa", "cross-river", "akwa-ibom"], "british": false }] },
+		{ "year": 1970, "polities": [{ "id": "nigeria", "name": "Federal Republic of Nigeria", "cellIds": "all", "british": false }] }
 	]
 }

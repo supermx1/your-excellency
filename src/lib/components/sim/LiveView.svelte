@@ -119,14 +119,16 @@
 		return () => cancelAnimationFrame(raf);
 	});
 
-	// At each key year reached during playback, pause for a Two Nigerias split screen (4 s, or until Continue).
-	// Scrubbing or jumping while paused never triggers it.
+	// When a key year has played out, pause for a Two Nigerias split screen of how it ended (4 s, or until
+	// Continue). Scrubbing or jumping while paused never triggers it.
 	let splitTimer;
+	let splitYear = $state(0);
 	$effect(() => {
 		if (!timeline || ended || !playing) return;
-		const y = Math.floor(year);
+		const y = Math.floor(year) - 1;
 		if (y === timeline.keyYears[0] || shownKeys.has(y) || !timeline.keyYears.includes(y)) return;
 		shownKeys.add(y);
+		splitYear = y;
 		autoSplit = true;
 		clearTimeout(splitTimer);
 		splitTimer = setTimeout(() => (autoSplit = false), 4000);
@@ -256,7 +258,12 @@
 		/>
 
 		{#if (showSplit || autoSplit) && !ended}
-			<TwoNigerias {run} {year} onContinue={() => (showSplit = autoSplit = false)} />
+			<TwoNigerias
+				{run}
+				year={autoSplit ? splitYear : year}
+				endOfYear={autoSplit}
+				onContinue={() => (showSplit = autoSplit = false)}
+			/>
 		{/if}
 		{#if ended}
 			<div class="absolute inset-0 z-10"><TwoNigerias {run} year={run.history.at(-1).year} /></div>

@@ -87,8 +87,8 @@
 			<p>
 				People here earn about <b class="tabular-nums">${Math.round(cell.incomePc).toLocaleString()}</b> a
 				person a year. With nothing below helping, farming alone would bring about
-				${BASE.toLocaleString()}, just under the World Bank's old $1.90-a-day poverty line; these raise or
-				lower it.
+				${BASE.toLocaleString()} a person a year, about ${(BASE / 365).toFixed(2)} a day: extreme poverty, just
+				under the World Bank's old $1.90-a-day line. These raise or lower it.
 			</p>
 			<ul class="divide-y divide-black/15 border-y-2 border-black">
 				{#each drivers as driver (driver.key)}
@@ -106,8 +106,9 @@
 			</ul>
 			<p class="text-sm text-black/60">
 				The effects multiply rather than add up. Oil, new technology and world events also count, and
-				income moves toward its new level over a few years. Dollars are 2011 dollars adjusted for local
-				prices, as in the Maddison Project figures the real line comes from.
+				income moves toward its new level over a few years. All amounts are per person per year, in 2011
+				dollars adjusted for what money buys locally (the Maddison Project's unit); multiply by about 1.5
+				for today's US prices.
 			</p>
 		{:else}
 			<p class="text-sm">This recording does not include detailed income factors.</p>
