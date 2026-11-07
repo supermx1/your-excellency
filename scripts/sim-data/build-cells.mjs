@@ -8,6 +8,8 @@ const OUT = new URL('../../src/lib/game/sim/data/cells.json', import.meta.url);
 // ponytail: the SVG has no sea polygon, so coast is hand-listed.
 const COASTAL = new Set(['lagos', 'ogun', 'ondo', 'delta', 'bayelsa', 'rivers', 'akwa-ibom', 'cross-river']);
 // ponytail: states the Niger or Benue runs through, from the Natural Earth river lines (geo.test.js checks it).
+// Natural harbours: the Lagos lagoon, Bonny, the Calabar estuary and Warri. Geography, the same in every run.
+const HARBOUR = new Set(['lagos', 'rivers', 'cross-river', 'delta']);
 const RIVER = new Set(['kebbi', 'niger', 'kogi', 'anambra', 'delta', 'rivers', 'bayelsa', 'adamawa', 'taraba', 'nassarawa', 'benue']);
 const TOUCH = 1.5; // viewBox units; vertices closer than this count as a shared border
 
@@ -43,6 +45,7 @@ const cells = shapes.map((s) => ({
 	area: Math.round(s.area),
 	coastal: COASTAL.has(s.id),
 	river: RIVER.has(s.id),
+	harbour: HARBOUR.has(s.id),
 	neighbours: shapes.filter((o) => o !== s && touches(s, o)).map((o) => o.id)
 }));
 

@@ -34,6 +34,25 @@ function gridReliability(world, squeezeOf) {
 	return out;
 }
 
+/**
+ * Where a government's sea trade goes out: each of its places sends its trade through the nearest
+ * harbour it holds. Returns harbour id → people whose trade passes through it.
+ */
+export function harbourTrade(world, polity) {
+	const harbours = polity.cellIds.map((id) => world.cellById.get(id)).filter((c) => c?.harbour);
+	const out = new Map(harbours.map((h) => [h.id, 0]));
+	if (!harbours.length) return out;
+	const d2 = (a, b) => (a.centroid[0] - b.centroid[0]) ** 2 + (a.centroid[1] - b.centroid[1]) ** 2;
+	for (const id of polity.cellIds) {
+		const c = world.cellById.get(id);
+		if (!c) continue;
+		const port = harbours.reduce((a, b) => (d2(c, b) < d2(c, a) ? b : a));
+		out.set(port.id, out.get(port.id) + c.pop);
+	}
+	return out;
+}
+
+
 /** Income, urbanisation and infrastructure per cell. Same rules for every cell. */
 /** @param {import('../types.js').World} world */
 export function stepEconomy(world) {
@@ -53,6 +72,7 @@ export function stepEconomy(world) {
 			? P.schoolBudgetShare * (oilRich.has(c.polityId) ? 0.5 : 1)
 			: 0;
 	const reliability = gridReliability(world, squeezeOf);
+	const through = new Map(world.polities.flatMap((p) => [...harbourTrade(world, p)]));
 	const meanDensity =
 		world.cells.reduce((s, c) => s + c.pop, 0) / (world.cells.reduce((s, c) => s + c.area, 0) || 1);
 	for (const c of world.cells) {
@@ -99,6 +119,10 @@ export function stepEconomy(world) {
 			// languages: school reading pays fully, other reading (Quranic, Ajami) partly. Script, not faith:
 			// a school of any faith teaching the school curriculum counts fully. Owner's decision, 2026-11-07.
 			literacy: 1 + P.litReturn * (c.litSchool + P.otherScriptReturn * (c.litAny - c.litSchool)),
+			// A harbour earns from the trade of everyone behind it: more people, more trade, more income.
+			trade: c.harbour ? 1 + P.portPremium * ((n) => n / (n + P.portScale))(through.get(c.id) ?? 0) : 1,
+			// Big cities are more productive: more trades, firms and buyers close together.
+			city: 1 + P.cityReturn * Math.max(0, Math.log10((c.urban * c.pop) / 1e6)),
 			// The seat of government draws public salaries and contracts, whoever governs.
 			capital: polity?.capitalCell === c.id ? 1 + P.capitalPremium : 1,
 			infrastructure: 1 + P.infraReturn * c.infra,

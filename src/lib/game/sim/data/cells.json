@@ -9,6 +9,7 @@
 		"area": 1472,
 		"coastal": false,
 		"river": false,
+		"harbour": false,
 		"neighbours": [
 			"akwa-ibom",
 			"anambra",
@@ -29,6 +30,7 @@
 		"area": 10867,
 		"coastal": false,
 		"river": true,
+		"harbour": false,
 		"neighbours": [
 			"borno",
 			"gombe",
@@ -45,6 +47,7 @@
 		"area": 2098,
 		"coastal": true,
 		"river": false,
+		"harbour": false,
 		"neighbours": [
 			"abia",
 			"cross-river",
@@ -61,6 +64,7 @@
 		"area": 1442,
 		"coastal": false,
 		"river": true,
+		"harbour": false,
 		"neighbours": [
 			"abia",
 			"delta",
@@ -81,6 +85,7 @@
 		"area": 15720,
 		"coastal": false,
 		"river": false,
+		"harbour": false,
 		"neighbours": [
 			"gombe",
 			"jigawa",
@@ -101,6 +106,7 @@
 		"area": 9847,
 		"coastal": false,
 		"river": true,
+		"harbour": false,
 		"neighbours": [
 			"cross-river",
 			"ebonyi",
@@ -120,6 +126,7 @@
 		"area": 21355,
 		"coastal": false,
 		"river": false,
+		"harbour": false,
 		"neighbours": [
 			"adamawa",
 			"gombe",
@@ -136,6 +143,7 @@
 		"area": 3117,
 		"coastal": true,
 		"river": true,
+		"harbour": false,
 		"neighbours": [
 			"delta",
 			"rivers"
@@ -151,6 +159,7 @@
 		"area": 6639,
 		"coastal": true,
 		"river": false,
+		"harbour": true,
 		"neighbours": [
 			"abia",
 			"akwa-ibom",
@@ -168,6 +177,7 @@
 		"area": 5222,
 		"coastal": true,
 		"river": true,
+		"harbour": true,
 		"neighbours": [
 			"anambra",
 			"bayelsa",
@@ -187,6 +197,7 @@
 		"area": 1935,
 		"coastal": false,
 		"river": false,
+		"harbour": false,
 		"neighbours": [
 			"abia",
 			"benue",
@@ -204,6 +215,7 @@
 		"area": 6138,
 		"coastal": false,
 		"river": false,
+		"harbour": false,
 		"neighbours": [
 			"anambra",
 			"delta",
@@ -221,6 +233,7 @@
 		"area": 1646,
 		"coastal": false,
 		"river": false,
+		"harbour": false,
 		"neighbours": [
 			"kogi",
 			"kwara",
@@ -238,6 +251,7 @@
 		"area": 2413,
 		"coastal": false,
 		"river": false,
+		"harbour": false,
 		"neighbours": [
 			"abia",
 			"anambra",
@@ -256,6 +270,7 @@
 		"area": 2334,
 		"coastal": false,
 		"river": false,
+		"harbour": false,
 		"neighbours": [
 			"kaduna",
 			"kogi",
@@ -273,6 +288,7 @@
 		"area": 5812,
 		"coastal": false,
 		"river": false,
+		"harbour": false,
 		"neighbours": [
 			"adamawa",
 			"bauchi",
@@ -291,6 +307,7 @@
 		"area": 1652,
 		"coastal": false,
 		"river": false,
+		"harbour": false,
 		"neighbours": [
 			"abia",
 			"anambra",
@@ -307,6 +324,7 @@
 		"area": 7770,
 		"coastal": false,
 		"river": false,
+		"harbour": false,
 		"neighbours": [
 			"bauchi",
 			"kano",
@@ -324,6 +342,7 @@
 		"area": 14162,
 		"coastal": false,
 		"river": false,
+		"harbour": false,
 		"neighbours": [
 			"bauchi",
 			"fct",
@@ -345,6 +364,7 @@
 		"area": 11601,
 		"coastal": false,
 		"river": true,
+		"harbour": false,
 		"neighbours": [
 			"niger",
 			"sokoto",
@@ -361,6 +381,7 @@
 		"area": 6483,
 		"coastal": false,
 		"river": false,
+		"harbour": false,
 		"neighbours": [
 			"bauchi",
 			"jigawa",
@@ -378,6 +399,7 @@
 		"area": 9112,
 		"coastal": false,
 		"river": true,
+		"harbour": false,
 		"neighbours": [
 			"anambra",
 			"benue",
@@ -402,6 +424,7 @@
 		"area": 7687,
 		"coastal": false,
 		"river": false,
+		"harbour": false,
 		"neighbours": [
 			"jigawa",
 			"kaduna",
@@ -419,6 +442,7 @@
 		"area": 11229,
 		"coastal": false,
 		"river": false,
+		"harbour": false,
 		"neighbours": [
 			"ekiti",
 			"kogi",
@@ -437,6 +461,7 @@
 		"area": 1184,
 		"coastal": true,
 		"river": false,
+		"harbour": true,
 		"neighbours": [
 			"ogun"
 		]
@@ -451,6 +476,7 @@
 		"area": 8318,
 		"coastal": false,
 		"river": true,
+		"harbour": false,
 		"neighbours": [
 			"benue",
 			"fct",
@@ -470,6 +496,7 @@
 		"area": 22619,
 		"coastal": false,
 		"river": true,
+		"harbour": false,
 		"neighbours": [
 			"fct",
 			"kaduna",
@@ -489,6 +516,7 @@
 		"area": 5049,
 		"coastal": true,
 		"river": false,
+		"harbour": false,
 		"neighbours": [
 			"lagos",
 			"ondo",
@@ -506,6 +534,7 @@
 		"area": 4558,
 		"coastal": true,
 		"river": false,
+		"harbour": false,
 		"neighbours": [
 			"delta",
 			"edo",
@@ -525,6 +554,7 @@
 		"area": 2890,
 		"coastal": false,
 		"river": false,
+		"harbour": false,
 		"neighbours": [
 			"ekiti",
 			"kwara",
@@ -543,6 +573,7 @@
 		"area": 8651,
 		"coastal": false,
 		"river": false,
+		"harbour": false,
 		"neighbours": [
 			"kwara",
 			"ogun",
@@ -559,6 +590,7 @@
 		"area": 8751,
 		"coastal": false,
 		"river": false,
+		"harbour": false,
 		"neighbours": [
 			"bauchi",
 			"kaduna",
@@ -576,6 +608,7 @@
 		"area": 2580,
 		"coastal": true,
 		"river": true,
+		"harbour": true,
 		"neighbours": [
 			"abia",
 			"akwa-ibom",
@@ -595,6 +628,7 @@
 		"area": 10332,
 		"coastal": false,
 		"river": false,
+		"harbour": false,
 		"neighbours": [
 			"kebbi",
 			"zamfara"
@@ -610,6 +644,7 @@
 		"area": 18963,
 		"coastal": false,
 		"river": true,
+		"harbour": false,
 		"neighbours": [
 			"adamawa",
 			"bauchi",
@@ -629,6 +664,7 @@
 		"area": 14758,
 		"coastal": false,
 		"river": false,
+		"harbour": false,
 		"neighbours": [
 			"bauchi",
 			"borno",
@@ -646,6 +682,7 @@
 		"area": 11164,
 		"coastal": false,
 		"river": false,
+		"harbour": false,
 		"neighbours": [
 			"kaduna",
 			"kebbi",

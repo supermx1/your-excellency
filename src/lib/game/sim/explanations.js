@@ -31,6 +31,16 @@ const FACTORS = {
 		[0.8, 'An unsteady government makes trade and investment risky.'],
 		[0, 'Coups, war or chaos make it hard to plan, trade or invest.']
 	]],
+	trade: ['Sea trade', [
+		[1.3, 'A busy harbour: the trade of a large land behind it passes through here.'],
+		[1.01, 'A harbour handling the trade of the land behind it.'],
+		[0, 'No harbour.']
+	]],
+	city: ['Big city', [
+		[1.1, 'A big city: many trades, firms and buyers close together.'],
+		[1.01, 'Growing towns add some business.'],
+		[0, 'Towns too small to add much.']
+	]],
 	capital: ['Seat of government', [
 		[1.01, 'The capital: public salaries and contracts bring money here.'],
 		[0, 'Not the seat of government.']

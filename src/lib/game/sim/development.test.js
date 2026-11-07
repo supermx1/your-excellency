@@ -4,7 +4,7 @@ import { createWorld, runSimulation, stepWorld } from './world.js';
 import { defaultData } from './data/index.js';
 import { defaultSwitches } from './switches.js';
 import { PARAMS as P } from './params.js';
-import { stepEconomy, roadsFor } from './rules/economy.js';
+import { stepEconomy, roadsFor, harbourTrade } from './rules/economy.js';
 import { stepDemography } from './rules/demography.js';
 import { stepFamilies } from './rules/families.js';
 import { statsAt } from './hud.js';
@@ -257,5 +257,27 @@ describe('the seat of government', () => {
 		expect(at(history, 1995, 'fct')).toBeCloseTo(1 + P.capitalPremium);
 		expect(at(history, 1995, 'lagos')).toBe(1);
 		expect(run({ britishConquest: false }).events.some((e) => e.id === 'capital-abuja')).toBe(false);
+		expect(run({ capitalToAbuja: false }).events.some((e) => e.id === 'capital-abuja')).toBe(false);
+	});
+});
+
+describe('harbours and the colonial seat', () => {
+	it('every place trades through exactly one harbour its government holds', () => {
+		const w = createWorld({ seed: 1, switches: defaultSwitches(), startYear: 1990, endYear: 1991 });
+		const ng = w.polities.find((p) => p.id === 'nigeria');
+		const trade = harbourTrade(w, ng);
+		expect([...trade.keys()].sort()).toEqual(['cross-river', 'delta', 'lagos', 'rivers']);
+		const people = ng.cellIds.reduce((s, id) => s + w.cellById.get(id).pop, 0);
+		expect([...trade.values()].reduce((a, b) => a + b, 0)).toBeCloseTo(people, 0);
+	});
+	it('a power arriving by sea seats itself at a harbour, and which one is a matter of chance', () => {
+		const seats = new Set(
+			[1, 2, 3, 4, 5, 6, 7, 8].map((seed) => {
+				const r = runSimulation({ seed, switches: defaultSwitches(), startYear: 1850, endYear: 1960 });
+				return r.history.at(-1).polities.find((p) => p.id === 'nigeria').capitalCell;
+			})
+		);
+		for (const id of seats) expect(defaultData.cells.find((c) => c.id === id).harbour).toBe(true);
+		expect(seats.size).toBeGreaterThan(1);
 	});
 });
