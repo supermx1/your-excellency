@@ -1,0 +1,28 @@
+@import 'tailwindcss';
+@source '../../../src/lib/components/sim';
+@source '.';
+
+/* Fonts HyperFrames bundles, so frames look the same on every machine. */
+@theme {
+	--font-sans: Inter, sans-serif;
+	--font-serif: 'EB Garamond', serif;
+	--font-mono: 'JetBrains Mono', monospace;
+}
+
+html,
+body {
+	margin: 0;
+	background: #0e1116;
+	font-family: var(--font-sans);
+}
+
+#root {
+	position: relative;
+	overflow: hidden;
+}
+
+#root canvas {
+	position: absolute;
+	top: 0;
+	height: 100%;
+}
