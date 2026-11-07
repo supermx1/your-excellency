@@ -23,7 +23,7 @@
 
 	/** Creates the renderer on the canvas and keeps it sized to its container. */
 	function mount(canvas) {
-		const d = new Diorama(canvas, { lowDetail: window.matchMedia('(max-width: 767px)').matches, popLabels });
+		const d = new Diorama(canvas, { lowDetail: window.matchMedia('(max-width: 767px)').matches });
 		const observer = new ResizeObserver(([entry]) => {
 			const { width, height } = entry.contentRect;
 			if (width && height) d.resize(width, height);
@@ -38,7 +38,9 @@
 	}
 
 	$effect(() => {
-		if (diorama && frame && camera) diorama.draw(frame, camera, highlight);
+		if (!diorama || !frame || !camera) return;
+		diorama.popLabels = popLabels;
+		diorama.draw(frame, camera, highlight);
 	});
 
 	// --- map controls -------------------------------------------------------------

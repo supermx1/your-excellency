@@ -18,9 +18,10 @@ export const DEFAULT_TILT = TILT;
 
 export class Diorama {
 	/** @param {HTMLCanvasElement} canvas @param {{ lowDetail?: boolean }} [opts] */
-	constructor(canvas, { lowDetail = false, popLabels = false } = {}) {
+	constructor(canvas, { lowDetail = false } = {}) {
 		this.lowDetail = lowDetail;
-		this.popLabels = popLabels;
+		/** Write each state's head count above its tower (switched on and off by the caller). */
+		this.popLabels = false;
 		// Keeping each frame for capture costs speed; phones never capture, so they skip it.
 		this.renderer = new THREE.WebGLRenderer({ canvas, antialias: !lowDetail, preserveDrawingBuffer: !lowDetail });
 		this.renderer.setPixelRatio(lowDetail ? 1 : Math.min(window.devicePixelRatio || 1, 2));
@@ -57,13 +58,11 @@ export class Diorama {
 			tower.position.set(x, DEPTH, z);
 			tower.castShadow = !lowDetail;
 			this.scene.add(tower);
-			let label = null;
-			if (popLabels) {
-				label = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthTest: false }));
-				label.position.set(x, DEPTH, z);
-				label.renderOrder = 1;
-				this.scene.add(label);
-			}
+			const label = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthTest: false }));
+			label.position.set(x, DEPTH, z);
+			label.renderOrder = 1;
+			label.visible = false;
+			this.scene.add(label);
 			this.cells.set(c.id, { mesh, tower, label, text: '', color: new THREE.Color() });
 		}
 
@@ -120,7 +119,8 @@ export class Diorama {
 			const h = 0.2 + (4 * c.urban * c.pop) / 20e6;
 			view.tower.scale.y = h;
 			view.tower.position.y = DEPTH + h / 2;
-			if (view.label) this.setLabel(view, shortPeople(c.pop), DEPTH + h + 0.35);
+			view.label.visible = this.popLabels;
+			if (this.popLabels) this.setLabel(view, shortPeople(c.pop), DEPTH + h + 0.35);
 		}
 		this.updateBorders(frame);
 		this.surroundings.setYear(frame.yearInt);

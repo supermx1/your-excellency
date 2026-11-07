@@ -36,6 +36,7 @@
 	let hover = $state(null); // { cellId, x, y } under the mouse
 	let pinned = $state(null); // cellId clicked or tapped
 	let showSplit = $state(false);
+	let popLabels = $state(false);
 	let showFamilies = $state(false);
 	let autoSplit = $state(false);
 	const shownKeys = new Set();
@@ -177,6 +178,7 @@
 			<DioramaCanvas
 				{frame}
 				{camera}
+				{popLabels}
 				interactive
 				highlight={(place ?? hovered)?.cellIds ?? null}
 				label={camera.mode === 'globe' ? 'The Earth, turning towards Nigeria' : `Map of Nigeria in ${Math.floor(year)}`}
@@ -255,6 +257,8 @@
 				if (follow) userView = null;
 			}}
 			onSplit={() => (showSplit = !showSplit)}
+			{popLabels}
+			onPopLabels={() => (popLabels = !popLabels)}
 		/>
 
 		{#if (showSplit || autoSplit) && !ended}

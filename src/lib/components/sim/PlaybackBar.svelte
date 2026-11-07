@@ -12,7 +12,9 @@
 		onSpeed,
 		onSeek,
 		onFollow,
-		onSplit
+		onSplit,
+		popLabels = false,
+		onPopLabels
 	} = $props();
 
 	const SPEEDS = [0.5, 1, 2, 4];
@@ -61,5 +63,6 @@
 		/>
 	</label>
 	<button type="button" class={toggle(follow)} aria-pressed={follow} onclick={onFollow}>Follow events</button>
+	<button type="button" class={toggle(popLabels)} aria-pressed={popLabels} onclick={onPopLabels}>Population</button>
 	<button type="button" class={btn} onclick={onSplit}>Two Nigerias</button>
 </div>
