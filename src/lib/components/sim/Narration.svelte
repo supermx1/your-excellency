@@ -54,7 +54,7 @@
 		<button type="button" aria-expanded={open} onclick={() => (open = !open)}>{open ? 'Less' : 'More'}</button>
 		{#if canSpeak}
 			<button type="button" aria-pressed={reading} data-voice={reading ? voice : ''} onclick={toggle}>
-				{!reading ? '▶ Listen' : voice === 'loading' ? 'Loading voice…' : '■ Stop reading'}
+				{!reading ? 'Listen' : voice === 'loading' ? 'Loading voice…' : 'Stop reading'}
 			</button>
 		{/if}
 	</div>

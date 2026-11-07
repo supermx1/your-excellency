@@ -149,14 +149,14 @@
 							onclick={confirmNewWard}
 							title="Generate a brand new procedural ward"
 						>
-							🎲 New Ward Map
+							New Ward Map
 						</button>
 						<button
 							class="{btn} {isTheaterMode ? 'bg-yellow-300' : 'bg-white'} px-3 py-1.5 text-xs"
 							onclick={() => (isTheaterMode = !isTheaterMode)}
 							title="Toggle Full Playable Window"
 						>
-							⛶ {isTheaterMode ? 'Exit Theater' : 'Maximize Window'}
+							{isTheaterMode ? 'Exit Theater' : 'Maximize Window'}
 						</button>
 					{/if}
 					<a class="{btn} bg-white px-3 py-1.5 text-xs" href="/">← All games</a>
@@ -235,7 +235,7 @@
 								placeholder="Random seed..."
 							/>
 							<button class="{btn} bg-white px-3 py-1.5 text-xs" onclick={rerollSeed} type="button">
-								🎲 Reroll Seed
+								Reroll Seed
 							</button>
 						</div>
 					</div>

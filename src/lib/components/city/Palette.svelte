@@ -63,7 +63,6 @@
 			onclick={() => (collapsed = false)}
 			title="Expand Building Palette"
 		>
-			<span class="block text-base">🏗️</span>
 			<span class="mt-1 block text-[10px] [writing-mode:vertical-lr]">PALETTE →</span>
 		</button>
 		{#if selectedBuildingId}
@@ -101,7 +100,7 @@
 					onclick={() => (collapsed = true)}
 					title="Collapse palette to widen map"
 				>
-					Hide ◀
+					Hide
 				</button>
 			</div>
 		</div>

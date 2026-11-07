@@ -41,14 +41,14 @@
 
 		{#if !data.configured}
 			<div class="border-4 border-black bg-yellow-300 p-4 font-bold shadow-[6px_6px_0_0_#000]">
-				⚠ No <code>ADMIN_PASSWORD</code> secret is set — the default dev password is accepted. Run
+				No <code>ADMIN_PASSWORD</code> secret is set — the default dev password is accepted. Run
 				<code>wrangler secret put ADMIN_PASSWORD</code> before relying on this in production.
 			</div>
 		{/if}
 
 		{#if form?.success}
 			<div class="border-4 border-black bg-lime-300 p-4 font-black shadow-[6px_6px_0_0_#000]">
-				✓ Saved {form.count} provisions. New runs will use them right away.
+				Saved {form.count} provisions. New runs will use them right away.
 			</div>
 		{:else if form?.error}
 			<div class="border-4 border-black bg-rose-400 p-4 font-black shadow-[6px_6px_0_0_#000]">
