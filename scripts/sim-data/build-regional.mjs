@@ -98,7 +98,7 @@ write('polities-1850.json', p1850.polities);
 const events = readJson(new URL('events.json', AUTH));
 write('events.json', { flags: events.flags, groups: events.groups, events: events.events });
 write('tech.json', readJson(new URL('tech.json', AUTH)).tech);
-write('nbs.json', { literacy2010: readJson(new URL('nbs.json', AUTH)).literacy2010 });
+write('nbs.json', (({ literacy2010, nlss2019 }) => ({ literacy2010, nlss2019 }))(readJson(new URL('nbs.json', AUTH))));
 const names = readJson(new URL('names.json', AUTH));
 write('names.json', { languages: names.languages, cellLanguage: names.cellLanguage });
 

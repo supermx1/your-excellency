@@ -1,10 +1,15 @@
 {
-	"note": "Adult (15+) literacy, both sexes, by state. National Bureau of Statistics, National Literacy Survey 2010, Tables A2.1–A2.6 (report pages 30–32), transcribed by hand. english = reads and writes English; any = in any language, including Ajami and Arabic. National: 57.9% English, 71.6% any language.",
+	"note": "Adult (15+) literacy, both sexes, by state. National Bureau of Statistics, National Literacy Survey 2010, Tables A2.1–A2.6 (report pages 30–32), transcribed by hand. english = reads and writes English; any = in any language, including Ajami and Arabic. National: 57.9% English, 71.6% any language. NLSS 2018/19 (NBS with the World Bank), Table 7.10: households with electricity from any source, and the share of those whose main source is the national grid; Table 7.12: average hours of grid electricity a day in the past 7 days. Borno was not surveyed. National: 63.7% with electricity, 82.2% of them on the grid, 6.8 grid hours a day.",
 	"sources": [
 		{
 			"name": "National Bureau of Statistics — National Literacy Survey 2010 (adult literacy by state, Tables A2.1–A2.6)",
 			"url": "https://www.nigerianstat.gov.ng/pdfuploads/National%20Literacy%20Survey,%202010.pdf",
 			"licence": "NBS terms of use"
+		},
+		{
+			"name": "National Bureau of Statistics / World Bank — Nigeria Living Standards Survey 2018/19, Report (Tables 7.10 and 7.12)",
+			"url": "https://microdata.worldbank.org/index.php/catalog/3827/related-materials",
+			"licence": "NBS / World Bank terms of use"
 		}
 	],
 	"literacy2010": {
@@ -155,6 +160,191 @@
 		"zamfara": {
 			"english": 0.262,
 			"any": 0.825
+		}
+	},
+	"nlss2019": {
+		"nationalGridHours": 6.8,
+		"states": {
+			"abia": {
+				"access": 0.91,
+				"gridShare": 0.861,
+				"gridHours": 3.6
+			},
+			"adamawa": {
+				"access": 0.315,
+				"gridShare": 0.778,
+				"gridHours": 14.7
+			},
+			"akwa-ibom": {
+				"access": 0.702,
+				"gridShare": 0.607,
+				"gridHours": 3.1
+			},
+			"anambra": {
+				"access": 0.909,
+				"gridShare": 0.922,
+				"gridHours": 4.4
+			},
+			"bauchi": {
+				"access": 0.258,
+				"gridShare": 0.889,
+				"gridHours": 2.7
+			},
+			"benue": {
+				"access": 0.403,
+				"gridShare": 0.746,
+				"gridHours": 8.8
+			},
+			"bayelsa": {
+				"access": 0.738,
+				"gridShare": 0.462,
+				"gridHours": 3.5
+			},
+			"cross-river": {
+				"access": 0.509,
+				"gridShare": 0.488,
+				"gridHours": 4.8
+			},
+			"delta": {
+				"access": 0.771,
+				"gridShare": 0.57,
+				"gridHours": 9.1
+			},
+			"ebonyi": {
+				"access": 0.384,
+				"gridShare": 0.553,
+				"gridHours": 2.9
+			},
+			"edo": {
+				"access": 0.801,
+				"gridShare": 0.707,
+				"gridHours": 5.7
+			},
+			"ekiti": {
+				"access": 0.753,
+				"gridShare": 0.908,
+				"gridHours": 4.6
+			},
+			"enugu": {
+				"access": 0.74,
+				"gridShare": 0.87,
+				"gridHours": 9.9
+			},
+			"fct": {
+				"access": 0.695,
+				"gridShare": 0.85,
+				"gridHours": 5.7
+			},
+			"gombe": {
+				"access": 0.382,
+				"gridShare": 0.96,
+				"gridHours": 7.5
+			},
+			"imo": {
+				"access": 0.696,
+				"gridShare": 0.553,
+				"gridHours": 2.9
+			},
+			"jigawa": {
+				"access": 0.249,
+				"gridShare": 0.82,
+				"gridHours": 5.2
+			},
+			"kaduna": {
+				"access": 0.533,
+				"gridShare": 0.935,
+				"gridHours": 7.9
+			},
+			"kebbi": {
+				"access": 0.337,
+				"gridShare": 0.904,
+				"gridHours": 15.1
+			},
+			"kano": {
+				"access": 0.497,
+				"gridShare": 0.994,
+				"gridHours": 6.8
+			},
+			"kogi": {
+				"access": 0.721,
+				"gridShare": 0.826,
+				"gridHours": 6.8
+			},
+			"katsina": {
+				"access": 0.317,
+				"gridShare": 0.898,
+				"gridHours": 8.3
+			},
+			"kwara": {
+				"access": 0.782,
+				"gridShare": 0.931,
+				"gridHours": 4.2
+			},
+			"lagos": {
+				"access": 0.987,
+				"gridShare": 0.986,
+				"gridHours": 7.4
+			},
+			"nassarawa": {
+				"access": 0.435,
+				"gridShare": 0.836,
+				"gridHours": 11.7
+			},
+			"niger": {
+				"access": 0.532,
+				"gridShare": 0.962,
+				"gridHours": 8.4
+			},
+			"ogun": {
+				"access": 0.83,
+				"gridShare": 0.809,
+				"gridHours": 5.2
+			},
+			"ondo": {
+				"access": 0.658,
+				"gridShare": 0.693,
+				"gridHours": 8
+			},
+			"osun": {
+				"access": 0.7,
+				"gridShare": 0.944,
+				"gridHours": 10
+			},
+			"oyo": {
+				"access": 0.741,
+				"gridShare": 0.89,
+				"gridHours": 7.7
+			},
+			"plateau": {
+				"access": 0.39,
+				"gridShare": 0.715,
+				"gridHours": 5.5
+			},
+			"rivers": {
+				"access": 0.879,
+				"gridShare": 0.683,
+				"gridHours": 5.9
+			},
+			"sokoto": {
+				"access": 0.401,
+				"gridShare": 0.946,
+				"gridHours": 3.7
+			},
+			"taraba": {
+				"access": 0.192,
+				"gridShare": 0.57,
+				"gridHours": 13.5
+			},
+			"yobe": {
+				"access": 0.225,
+				"gridShare": 0.982,
+				"gridHours": 17.3
+			},
+			"zamfara": {
+				"access": 0.193,
+				"gridShare": 0.918,
+				"gridHours": 13.2
+			}
 		}
 	}
 }
