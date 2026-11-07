@@ -10,6 +10,13 @@ export function powerText(access, service) {
 	return `${Math.round(access * 100)}% connected · about ${Math.round((24 * service) / access)} hours a day`;
 }
 
+/** A head count, short enough to sit on the map: 23M, 4.5M, 450k. @param {number} v */
+export function shortPeople(v) {
+	if (v >= 1e7) return `${Math.round(v / 1e6)}M`;
+	if (v >= 1e6) return `${(v / 1e6).toFixed(1)}M`;
+	return `${Math.round(v / 1e3)}k`;
+}
+
 /** @param {string} key @param {number | null | undefined} v */
 export function formatStat(key, v) {
 	if (v == null || Number.isNaN(v)) return '—';
