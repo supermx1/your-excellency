@@ -5,8 +5,7 @@
 // changed lines are voiced again.
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { homedir } from 'node:os';
-import { basename, join, resolve } from 'node:path';
+import { basename, join, parse, resolve } from 'node:path';
 import { build } from 'vite';
 import { parseArgs } from './steps.js';
 import { compositionHtml } from './composition.js';
@@ -16,11 +15,17 @@ import { ROOT, sh, step, loadSaved } from './load.mjs';
 const W = 1080;
 const H = 1350;
 const args = parseArgs(process.argv.slice(2));
-const python = process.env.CHATTERBOX_PYTHON ?? join(homedir(), '.cache/chatterbox-venv/bin/python');
+const clone = join(ROOT, 'scripts/sim-export/clone.py');
 const ref = resolve(ROOT, args.voiceRef ?? 'voice/reference.wav');
-if (!existsSync(python))
-	throw new Error(`The cloned voice needs Chatterbox. Run: uv venv --python 3.11 ~/.cache/chatterbox-venv && uv pip install --python ~/.cache/chatterbox-venv/bin/python chatterbox-tts "setuptools<81"`);
 if (!existsSync(ref)) throw new Error(`No voice reference at ${ref}: give a 10–15 s clip of your natural speech with --voice-ref.`);
+try {
+	sh('uv', ['--version']);
+} catch {
+	throw new Error('The Qwen3-TTS voice needs uv. Run: brew install uv');
+}
+const { dir, name } = parse(ref);
+const transcript = join(dir, `${name}.txt`);
+const refText = existsSync(transcript) ? readFileSync(transcript, 'utf8').trim() : '';
 
 const out = join(ROOT, 'exports', `${args.runId}-short`);
 mkdirSync(join(out, 'audio'), { recursive: true });
@@ -34,15 +39,16 @@ if (args.freshScript || !existsSync(scriptFile)) {
 }
 const { beats } = JSON.parse(readFileSync(scriptFile, 'utf8'));
 
-step(`Voicing ${beats.length} lines in your voice (about a minute a line; unchanged lines are kept)`);
-const refHash = createHash('sha1').update(readFileSync(ref)).digest('hex');
+step(`Voicing ${beats.length} lines with Qwen3-TTS (unchanged lines are kept)`);
+// The model, reference audio and transcript all affect the generated lines.
+const refHash = createHash('sha256').update(readFileSync(clone)).update(readFileSync(ref)).update(refText).digest('hex');
 const lines = beats.map((b) => {
 	const text = speakable(b.say);
 	return { text, out: join(out, 'audio', `line-${createHash('sha1').update(refHash + text).digest('hex').slice(0, 12)}.wav`) };
 });
 const linesFile = join(out, 'lines.json');
 writeFileSync(linesFile, JSON.stringify(lines));
-const printed = sh(python, [join(ROOT, 'scripts/sim-export/clone.py'), linesFile, ref], { stdio: ['ignore', 'pipe', 'inherit'] });
+const printed = sh('uv', ['run', '--script', clone, linesFile, ref, refText], { stdio: ['ignore', 'pipe', 'inherit'] });
 const seconds = JSON.parse(printed.trim().split('\n').at(-1));
 const voices = lines.map((l) => ({ file: `audio/${basename(l.out)}`, seconds: seconds[l.out] }));
 
