@@ -45,18 +45,29 @@ export const PARAMS = {
 	pressureMigration: 0.01,
 	maxMigration: 0.02,
 	// demography
-	birthBase: 0.05,
-	birthLitDrop: 0.007,
-	birthUrbanDrop: 0.008,
+	birthBase: 0.0475,
+	birthLitDrop: 0.002,
+	healthFertility: 0.12, // share births rise as medicine removes disease (pre-transition fertility rise)
+	birthUrbanDrop: 0.002,
 	transitionUrbanWeight: 0.5, // births fall with literacy (any script) and town life equally
-	transitionStart: 0.75, // that blend, where birth rates start falling fast (assumption, see docs/timeline-data.md)
-	transitionDrop: 0.03, // births per person per year removed at full transition (fitted to 2025, 2050 and the UN 2100 projection)
-	deathBase: 0.045,
+	transitionStart: 0.70, // that blend, where birth rates start falling fast (assumption, see docs/timeline-data.md)
+	transitionDrop: 0.05, // births per person per year removed at full transition (fitted to 2025, 2050 and the UN 2100 projection)
+	deathBase: 0.041,
 	deathIncomeDrop: 0.35, // share of deaths removed as income approaches incomeForLowDeath
 	incomeForLowDeath: 12000,
 	warDeath: 0.05, // extra death rate at full war damage
-	lifeExpBase: 25,
-	lifeExpSlope: 950,
+	// Yearly death rate → life expectancy, read off real pairs (the model has no age structure): a barely
+	// growing pre-modern population (1/rate), UN WPP Nigeria 1950, 2000 and 2020, and a young, long-lived
+	// population with few deaths. Straight lines between them.
+	lifeExpAt: [
+		[0.045, 22],
+		[0.0275, 35.5],
+		[0.0174, 47.1],
+		[0.0126, 53.1],
+		[0.006, 75]
+	],
+	healthReachBase: 0.3, // share of people a new medicine reaches with no towns or schooling (campaigns, travelling teams)
+	healthReachAccess: 0.7, // the rest arrives as towns and reading spread (clinics, instructions)
 	// religion (one set of weights for every faith)
 	relRate: 0.03, // share of the gap to the pulled mix closed each year
 	relNeighbour: 0.15,

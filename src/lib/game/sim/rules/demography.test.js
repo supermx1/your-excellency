@@ -68,3 +68,14 @@ describe('demography and economy', () => {
 		expect(w.cells[0].urban).toBeGreaterThan(w.cells[1].urban);
 	});
 });
+
+describe('life expectancy from the death rate', () => {
+	it('passes through the real pairs and extends beyond them', async () => {
+		const { lifeExpectancy } = await import('./demography.js');
+		expect(lifeExpectancy(0.0275)).toBeCloseTo(35.5, 5);
+		expect(lifeExpectancy(0.0174)).toBeCloseTo(47.1, 5);
+		expect(lifeExpectancy(0.0126)).toBeCloseTo(53.1, 5);
+		expect(lifeExpectancy(0.05)).toBeLessThan(22);
+		expect(lifeExpectancy(0.004)).toBeGreaterThan(75);
+	});
+});
