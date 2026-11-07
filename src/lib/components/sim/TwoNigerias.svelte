@@ -24,7 +24,7 @@
 	{#each [['OUR WORLD', ours, 'ours', ourCaption], ['THEIR WORLD', theirs, 'value', theirCaption]] as [title, frame, key, caption], i (title)}
 		<div class="relative flex flex-col border-white/20 {i === 0 ? 'border-b md:border-r md:border-b-0' : ''}">
 			<p class="pt-3 text-center text-xs font-black tracking-[0.2em] {i ? 'text-amber-400' : 'opacity-70'}">{title}</p>
-			<div class="min-h-0 flex-1"><DioramaCanvas {frame} camera={WIDE} label="{title} map in {yearInt}" /></div>
+			<div class="min-h-0 flex-1"><DioramaCanvas {frame} camera={WIDE} popLabels label="{title} map in {yearInt}" /></div>
 			<div class="grid grid-cols-4 gap-2 px-4 pb-2 text-center">
 				{#each stats as s (s.key)}
 					<div>
@@ -41,7 +41,7 @@
 		{endOfYear ? `End of ${yearInt}` : yearInt}
 	</div>
 	<p class="pointer-events-none absolute top-8 left-1/2 hidden -translate-x-1/2 text-[11px] opacity-60 md:block">
-		Each tower is a state's towns: taller means more people live in towns there.
+		Each figure is the number of people in that state; each tower is its towns: taller means more people live in towns there.
 	</p>
 	{#if onContinue}
 		<button

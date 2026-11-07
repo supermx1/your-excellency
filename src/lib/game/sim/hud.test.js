@@ -148,3 +148,11 @@ describe('placeAt (hover and click on the map)', () => {
 
 	it('returns null for an unknown cell', () => expect(placeAt(never, frameAt(never, 1900), 'atlantis')).toBeNull());
 });
+
+import { shortPeople } from './format.js';
+
+describe('shortPeople', () => {
+	it('writes head counts short enough for the map', () => {
+		expect([23.4e6, 4.46e6, 451_000].map(shortPeople)).toEqual(['23M', '4.5M', '451k']);
+	});
+});

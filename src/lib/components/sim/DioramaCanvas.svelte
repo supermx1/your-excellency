@@ -13,6 +13,7 @@
 		highlight = null,
 		label = 'Map of Nigeria',
 		interactive = false,
+		popLabels = false,
 		onView,
 		onHover,
 		onPick
@@ -22,7 +23,7 @@
 
 	/** Creates the renderer on the canvas and keeps it sized to its container. */
 	function mount(canvas) {
-		const d = new Diorama(canvas, { lowDetail: window.matchMedia('(max-width: 767px)').matches });
+		const d = new Diorama(canvas, { lowDetail: window.matchMedia('(max-width: 767px)').matches, popLabels });
 		const observer = new ResizeObserver(([entry]) => {
 			const { width, height } = entry.contentRect;
 			if (width && height) d.resize(width, height);

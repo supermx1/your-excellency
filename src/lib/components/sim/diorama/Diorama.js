@@ -3,7 +3,8 @@
 // clock — so live mode and video export produce the same image for the same time.
 import * as THREE from 'three';
 import { cellShapes, sharedEdges, toWorld, fromWorld } from './geometry.js';
-import { addNeighbours } from './neighbours.js';
+import { addNeighbours, labelTexture } from './neighbours.js';
+import { shortPeople } from '$lib/game/sim/format.js';
 import { createGlobe } from './globe.js';
 import { polityColor } from '$lib/game/sim/colors.js';
 import cells from '$lib/game/sim/data/cells.json';
@@ -17,8 +18,9 @@ export const DEFAULT_TILT = TILT;
 
 export class Diorama {
 	/** @param {HTMLCanvasElement} canvas @param {{ lowDetail?: boolean }} [opts] */
-	constructor(canvas, { lowDetail = false } = {}) {
+	constructor(canvas, { lowDetail = false, popLabels = false } = {}) {
 		this.lowDetail = lowDetail;
+		this.popLabels = popLabels;
 		// Keeping each frame for capture costs speed; phones never capture, so they skip it.
 		this.renderer = new THREE.WebGLRenderer({ canvas, antialias: !lowDetail, preserveDrawingBuffer: !lowDetail });
 		this.renderer.setPixelRatio(lowDetail ? 1 : Math.min(window.devicePixelRatio || 1, 2));
@@ -55,7 +57,14 @@ export class Diorama {
 			tower.position.set(x, DEPTH, z);
 			tower.castShadow = !lowDetail;
 			this.scene.add(tower);
-			this.cells.set(c.id, { mesh, tower, color: new THREE.Color() });
+			let label = null;
+			if (popLabels) {
+				label = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthTest: false }));
+				label.position.set(x, DEPTH, z);
+				label.renderOrder = 1;
+				this.scene.add(label);
+			}
+			this.cells.set(c.id, { mesh, tower, label, text: '', color: new THREE.Color() });
 		}
 
 		this.borders = new THREE.LineSegments(
@@ -111,6 +120,7 @@ export class Diorama {
 			const h = 0.2 + (4 * c.urban * c.pop) / 20e6;
 			view.tower.scale.y = h;
 			view.tower.position.y = DEPTH + h / 2;
+			if (view.label) this.setLabel(view, shortPeople(c.pop), DEPTH + h + 0.35);
 		}
 		this.updateBorders(frame);
 		this.surroundings.setYear(frame.yearInt);
@@ -169,6 +179,19 @@ export class Diorama {
 		this.borders.geometry.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
 	}
 
+	/** Writes a state's head count above its tower (redraws the text only when it changes). */
+	setLabel(view, text, y) {
+		view.label.position.y = y;
+		if (text === view.text) return;
+		view.text = text;
+		view.label.material.map?.dispose();
+		const map = labelTexture(text, '#ffffff');
+		view.label.material.map = map;
+		view.label.material.needsUpdate = true;
+		const h = 0.55;
+		view.label.scale.set((h * map.image.width) / map.image.height, h, 1);
+	}
+
 	resize(width, height) {
 		this.renderer.setSize(width, height, false);
 		this.camera.aspect = width / height;
@@ -182,6 +205,7 @@ export class Diorama {
 		this.surroundings.dispose();
 		this.globe?.dispose();
 		this.scene.traverse((o) => {
+			o.material?.map?.dispose();
 			o.geometry?.dispose();
 			o.material?.dispose();
 		});

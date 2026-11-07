@@ -55,7 +55,7 @@ function ribbon(line) {
 	return g;
 }
 
-function labelTexture(text) {
+export function labelTexture(text, color = 'rgba(255,255,255,0.5)') {
 	const canvas = document.createElement('canvas');
 	const ctx = canvas.getContext('2d');
 	const font = '600 44px system-ui, sans-serif';
@@ -63,8 +63,14 @@ function labelTexture(text) {
 	canvas.width = Math.ceil(ctx.measureText(text).width) + 16;
 	canvas.height = 64;
 	ctx.font = font;
-	ctx.fillStyle = 'rgba(255,255,255,0.5)';
 	ctx.textBaseline = 'middle';
+	if (color !== 'rgba(255,255,255,0.5)') {
+		// Map figures sit over bright colours, so they get a dark outline.
+		ctx.lineWidth = 8;
+		ctx.strokeStyle = 'rgba(0,0,0,0.75)';
+		ctx.strokeText(text, 8, 32);
+	}
+	ctx.fillStyle = color;
 	ctx.fillText(text, 8, 32);
 	return new THREE.CanvasTexture(canvas);
 }
