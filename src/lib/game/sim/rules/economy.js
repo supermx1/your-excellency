@@ -95,7 +95,10 @@ export function stepEconomy(world) {
 			);
 		}
 		c.incomeFactors = {
-			literacy: 1 + P.litReturn * c.litAny, // any script: no faith's schools count for more
+			// The outside world stays real in every run, and its trade, books and machines run in Roman-script
+			// languages: school reading pays fully, other reading (Quranic, Ajami) partly. Script, not faith:
+			// a school of any faith teaching the school curriculum counts fully. Owner's decision, 2026-11-07.
+			literacy: 1 + P.litReturn * (c.litSchool + P.otherScriptReturn * (c.litAny - c.litSchool)),
 			// The seat of government draws public salaries and contracts, whoever governs.
 			capital: polity?.capitalCell === c.id ? 1 + P.capitalPremium : 1,
 			infrastructure: 1 + P.infraReturn * c.infra,

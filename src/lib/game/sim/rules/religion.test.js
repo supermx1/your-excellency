@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { describe, expect, it } from 'vitest';
 import { runSimulation } from '../world.js';
+import { PARAMS } from '../params.js';
 
 const ISLAM = { islam: 0.9, christian: 0, traditional: 0.1 };
 const CHRISTIAN = { islam: 0, christian: 0.9, traditional: 0.1 };
@@ -51,9 +52,14 @@ describe('religion', () => {
 		);
 	});
 
+	// The one asymmetry is by script, not faith: income counts reading in another script than the
+	// outside world's at 30%. With that set to 1, every rule must mirror exactly.
 	it('mirror: swapping which faith is where gives the same tension and literacy', () => {
+		const saved = PARAMS.otherScriptReturn;
+		PARAMS.otherScriptReturn = 1;
 		const one = run(data([ISLAM, ISLAM, CHRISTIAN, CHRISTIAN], ['islam', 'christian']));
 		const two = run(data([CHRISTIAN, CHRISTIAN, ISLAM, ISLAM], ['christian', 'islam']));
+		PARAMS.otherScriptReturn = saved;
 		expect(series(two, 'tension')).toEqual(series(one, 'tension'));
 		expect(series(two, 'litAny')).toEqual(series(one, 'litAny'));
 		expect(series(two, 'pop')).toEqual(series(one, 'pop'));
