@@ -7,12 +7,14 @@
 	import { defaultData } from '$lib/game/sim/data/index.js';
 	import { formatStat } from '$lib/game/sim/format.js';
 
-	let { run, year, onContinue = null } = $props();
+	/** endOfYear: draw the map and numbers as the year ends, after its events (key-year pauses). */
+	let { run, year, endOfYear = false, onContinue = null } = $props();
 
 	const yearInt = $derived(Math.floor(year));
-	const theirs = $derived(frameAt(run, yearInt));
-	const ours = $derived(realFrame(yearInt));
-	const stats = $derived(statsAt(run, defaultData.national, yearInt));
+	const at = $derived(endOfYear ? yearInt + 1 : yearInt);
+	const theirs = $derived(frameAt(run, at));
+	const ours = $derived(realFrame(at));
+	const stats = $derived(statsAt(run, defaultData.national, at));
 	const caps = $derived(captionsAt(run, yearInt + 0.99, 1));
 	const theirCaption = $derived(caps.find((c) => c.title)?.title ?? 'No major events this year.');
 	const ourCaption = $derived(caps.find((c) => c.ours)?.ours.replace('In our world: ', '') ?? null);
@@ -36,8 +38,11 @@
 	{/each}
 
 	<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border border-white/40 bg-[#0e1116] px-3 py-1 font-serif text-3xl font-bold">
-		{yearInt}
+		{endOfYear ? `End of ${yearInt}` : yearInt}
 	</div>
+	<p class="pointer-events-none absolute top-8 left-1/2 hidden -translate-x-1/2 text-[11px] opacity-60 md:block">
+		Each tower is a state's towns: taller means more people live in towns there.
+	</p>
 	{#if onContinue}
 		<button
 			type="button"

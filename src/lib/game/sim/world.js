@@ -50,7 +50,8 @@ function startingCell(id, year, data, populations) {
 function startingMap(inputs, data) {
 	const year = inputs.startYear;
 	const sw = inputs.switches ?? {};
-	const snap = (data.realBorders ?? []).filter((s) => s.year > 1850 && s.year <= year).at(-1);
+	// A run starting mid-war (Biafra, 1967–70) begins from the last peacetime borders.
+	const snap = (data.realBorders ?? []).filter((s) => s.year > 1850 && s.year <= year && !s.atWar).at(-1);
 	if (!snap) return { polities: data.polities ?? [], flags: {}, cellDefaults: {} };
 
 	const at = (key) => data.national[key]?.[data.national.years.indexOf(year)] ?? null;
