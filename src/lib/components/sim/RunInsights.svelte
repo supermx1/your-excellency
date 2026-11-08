@@ -85,10 +85,13 @@
 		{#if drivers.length}
 			<h3 class="text-lg font-black">What sets income in {name} in {last.year}</h3>
 			<p>
-				People here earn about <b class="tabular-nums">${Math.round(cell.incomePc).toLocaleString()}</b> a
-				person a year. With nothing below helping, farming alone would bring about
-				${BASE.toLocaleString()} a person a year, about ${(BASE / 365).toFixed(2)} a day: extreme poverty, just
-				under the World Bank's old $1.90-a-day line. These raise or lower it.
+				People in {name} earn about <b class="tabular-nums">${Math.round(cell.incomePc).toLocaleString()}</b> a
+				year (about ${Math.round(cell.incomePc / 365).toLocaleString()} a day).
+			</p>
+			<p class="text-sm text-black/70">
+				Without the things listed below, farming alone would bring in only about
+				${BASE.toLocaleString()} a year (${(BASE / 365).toFixed(2)} a day), which is extreme poverty. Each item
+				below raises or lowers income from that starting point.
 			</p>
 			<ul class="divide-y divide-black/15 border-y-2 border-black">
 				{#each drivers as driver (driver.key)}
