@@ -161,13 +161,13 @@ This runs `vite build && wrangler deploy`. Make sure you've:
 
 ### Try the experimental town cutaway
 
-Run `pnpm sim:short <runId> --town`. If the run records a railway arrival, the draft includes an illustrated town cutaway on that beat. It also cuts away to up to three of the run's world firsts, best first and one per scene: people on Mars, a Moon base, the first crewed launch, a booster landing, a space station, a probe to the stars, asteroid mining, then fusion power, talking AI, a vaccine clinic, high-yield fields and phone masts. Each line says how many years that came before our world, or that nobody in our world has done it yet. Towns show what their state had built by then: power or telegraph lines, cars, TV aerials and solar roofs. The experiment has its own folder, `exports/<runId>-town-short/`. Edit its `script.json` and rerun the same command to preview changes. Add `--render` to create the MP4 there.
+Run `pnpm sim:short <runId> --town`. The draft illustrates the first railway arrival if one is recorded, plus up to three other events. It gives a slot to a major world first and a slot to a family story when both are available, then varies the other shots by run. A school day, a household gaining electricity, or a business opening comes from the saved family history. Internet and broadcast scenes can also appear when a state adopts the technology. The experiment writes to `exports/<runId>-town-short/`. Edit its `script.json` and rerun the same command to preview changes. Add `--render` to create the MP4 there.
 
-Keep the generated `town.event` value to tie the shot to its simulation event. The optional settings below reuse the same town artwork and character animations. You can remove `town` from the beat to use the map for the whole line.
+Keep the generated `town.event` or `town.familyEvent` value to tie the shot to its saved event. The optional settings below reuse the same town artwork and character animations. You can remove `town` from the beat to use the map for the whole line.
 
 | Setting | Values |
 |---------|--------|
-| `preset` | `station`, `market`, `launch`, `landing`, `orbit`, `moon`, `mars`, `asteroid`, `stars`, `clinic`, `fields`, `fusion` or `signal` |
+| `preset` | `station`, `market`, `launch`, `landing`, `orbit`, `moon`, `mars`, `asteroid`, `stars`, `clinic`, `fields`, `fusion`, `signal`, `school`, `internet`, `broadcast`, `home-power` or `workshop` |
 | `start`, `end` | Fractions of the narration beat, from `0` to `1` |
 | `crowd` | Number of background characters, from `0` to `24` |
 | `zoom` | Camera zoom at the end of the shot, from `1` to `1.4` |

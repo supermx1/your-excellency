@@ -45,7 +45,7 @@ export const shortLabel = (inputs) =>
 
 /**
  * The draft script: one line per beat, each playing a stretch of years. Saved as JSON for the owner to edit.
- * With `town`, pixel-art cutaways join the map: the first railway, and the run's biggest world firsts.
+ * With `town`, pixel-art cutaways illustrate milestones and events in the run's family records.
  * @returns {{ say: string, from: number, to: number, split?: boolean, card?: boolean, town?: object }[]}
  */
 export function shortScript(run, inputs, summary = null, { town = false } = {}) {
@@ -119,15 +119,12 @@ export function shortScript(run, inputs, summary = null, { town = false } = {}) 
 		to: end,
 		card: true
 	});
-	if (town) {
-		addRailwayBeat(run, beats, start, end);
-		addInventionBeats(run, beats);
-	}
+	if (town) addCutaways(run, beats, start, end);
 	return beats;
 }
 
 // One line per technology: what the state does, and the cutaway that shows it. The order is the pick
-// order, best first: a Short shows at most INVENTION_SHOTS world firsts, one per scene.
+// order, best first. At least one is picked when the run has a qualifying world first.
 const INVENTIONS = {
 	'mars-landing': ['land people on Mars', 'mars'],
 	'moon-base': ['build a base on the Moon', 'moon'],
@@ -143,15 +140,17 @@ const INVENTIONS = {
 	'malaria-control': ['beat malaria with bed nets and new drugs', 'clinic'],
 	'green-revolution': ['grow the first high-yield crops', 'fields'],
 	'mobile-phone': ['make the first mobile phone call', 'signal'],
-	internet: ['switch on the first internet', 'signal'],
+	internet: ['switch on the first internet', 'internet'],
 	antibiotics: ['make the first antibiotics', 'clinic'],
 	fertiliser: ['make the first synthetic fertiliser', 'fields'],
 	'solar-power': ['make solar power cheap', 'market'],
-	television: ['broadcast the first television', 'signal'],
-	radio: ['broadcast the first radio', 'signal'],
+	television: ['broadcast the first television', 'broadcast'],
+	radio: ['broadcast the first radio', 'broadcast'],
 	'motor-car': ['build the first motor car', 'market']
 };
-const INVENTION_SHOTS = 3;
+const STORY_SHOTS = 3;
+const FAMILY_SCENES = { school: 'school', electricity: 'home-power', business: 'workshop' };
+const COMMUNICATION_SCENES = { internet: 'internet', radio: 'broadcast', television: 'broadcast' };
 /** The cutaway scenes the Short page can draw. */
 export const CUTAWAYS = [
 	'station',
@@ -166,7 +165,12 @@ export const CUTAWAYS = [
 	'clinic',
 	'fields',
 	'fusion',
-	'signal'
+	'signal',
+	'school',
+	'internet',
+	'broadcast',
+	'home-power',
+	'workshop'
 ];
 
 /** "Kingdom of Lagos sends the first people into space" (its verb agrees with plural names too). */
@@ -183,52 +187,94 @@ const sinceOurs = (worldYear, year) =>
 			? ` That's ${worldYear - year} years before anyone in our world did it.`
 			: '';
 
-function addInventionBeats(run, beats) {
-	const order = Object.keys(INVENTIONS);
-	const picked = [];
-	for (const techId of order) {
-		const index = run.events.findIndex(
-			(e) => e.kind === 'invention' && e.worldFirst && e.techId === techId
+function inventionCutaways(run, inRange) {
+	return Object.entries(INVENTIONS).flatMap(([techId, [phrase, preset]]) => {
+		const event = run.events.findIndex(
+			(e) => e.kind === 'invention' && e.worldFirst && e.techId === techId && inRange(e.year)
 		);
-		const scene = INVENTIONS[techId][1];
-		if (index >= 0 && !picked.some((p) => p.scene === scene)) picked.push({ index, scene, techId });
-		if (picked.length === INVENTION_SHOTS) break;
-	}
-	for (const { index, scene, techId } of picked.sort(
-		(a, b) => run.events[a.index].year - run.events[b.index].year
-	)) {
-		const e = run.events[index];
+		if (event < 0) return [];
+		const e = run.events[event];
+		const polity = e.polityIds[0];
 		const name =
-			run.history.find((h) => h.year === e.year)?.polities.find((p) => p.id === e.polityIds[0])
-				?.name ?? e.polityIds[0];
+			run.history.find((h) => h.year === e.year)?.polities.find((p) => p.id === polity)?.name ??
+			polity;
 		const worldYear = defaultData.tech.find((t) => t.id === techId)?.worldYear;
-		addCutaway(
-			run,
-			beats,
-			index,
-			`${e.year}: ${does(name, INVENTIONS[techId][0])}.${sinceOurs(worldYear, e.year)}`,
-			scene
-		);
+		return [
+			{
+				year: e.year,
+				say: `${e.year}: ${does(name, phrase)}.${sinceOurs(worldYear, e.year)}`,
+				town: { event, preset }
+			}
+		];
+	});
+}
+
+function familyCutaways(run, inRange) {
+	const first = new Map();
+	for (const [f, family] of (run.families ?? []).entries()) {
+		for (const [m, member] of family.members.entries()) {
+			for (const [i, e] of member.lifeEvents.entries()) {
+				const preset = FAMILY_SCENES[e.kind];
+				if (!preset || !inRange(e.year) || (first.get(preset)?.year ?? Infinity) <= e.year)
+					continue;
+				const name = `${member.name} ${family.surname}`;
+				first.set(preset, {
+					year: e.year,
+					say: `${e.year}: ${name} ${e.text}.`,
+					town: { familyEvent: [f, m, i], preset }
+				});
+			}
+		}
 	}
+	return Object.values(FAMILY_SCENES)
+		.map((preset) => first.get(preset))
+		.filter(Boolean);
+}
+
+function addCutaways(run, beats, start, end) {
+	const inRange = (year) => year > start && year <= end;
+	const railway = railwayCutaway(run, inRange);
+	const firsts = inventionCutaways(run, inRange);
+	const family = familyCutaways(run, inRange);
+	const communications = Object.entries(COMMUNICATION_SCENES).flatMap(([techId, preset]) => {
+		const event = run.events.findIndex(
+			(e) => e.techId === techId && ['adoption', 'invention'].includes(e.kind) && inRange(e.year)
+		);
+		if (event < 0) return [];
+		const { year, title } = run.events[event];
+		return [{ year, say: `${year}: ${title}.`, town: { event, preset } }];
+	});
+	const lead = firsts.find((shot) => shot.year !== railway?.year);
+	const personal = family.find((shot) => shot.year !== railway?.year && shot.year !== lead?.year);
+	// After the lead stories, rotate the remaining choices by the saved run's seed.
+	const everyday = [...communications, ...family.filter((shot) => shot !== personal)];
+	const offset = (run.inputs.seed >>> 0) % (everyday.length || 1);
+	const varied = [...everyday.slice(offset), ...everyday.slice(0, offset)];
+	const picked = railway ? [railway] : [];
+	const limit = picked.length + STORY_SHOTS;
+	for (const shot of [lead, personal, ...varied, ...firsts]) {
+		if (picked.length === limit) break;
+		if (!shot || picked.some((p) => p.year === shot.year || p.town.preset === shot.town.preset))
+			continue;
+		picked.push(shot);
+	}
+	for (const shot of picked.sort((a, b) => a.year - b.year)) addCutaway(run, beats, shot);
 }
 
 /** Splits the map beat that holds the event: a cutaway line up to its year, the map after it. */
-function addCutaway(run, beats, event, say, preset) {
-	const year = run.events[event].year;
-	const index = beats.findIndex((beat) => beat.from < year && year <= beat.to);
+function addCutaway(run, beats, { year, say, town }) {
+	const index = beats.findIndex((beat) => !beat.town && beat.from < year && year <= beat.to);
 	if (index === -1) return;
 	const beat = beats[index];
 	const oldLead = standout(run, beat.from, beat.to);
 	const laterLead = standout(run, year, beat.to);
-	beats.splice(index, 0, { say, from: beat.from, to: year, town: { event, preset } });
+	beats.splice(index, 0, { say, from: beat.from, to: year, town });
 	beat.from = year;
 	beat.say = `${laterLead}${beat.say.slice(oldLead.length)}`;
 }
 
-function addRailwayBeat(run, beats, start, end) {
-	const event = run.events.findIndex(
-		(e) => e.techId === 'railway' && e.year > start && e.year <= end
-	);
+function railwayCutaway(run, inRange) {
+	const event = run.events.findIndex((e) => e.techId === 'railway' && inRange(e.year));
 	if (event === -1) return;
 	const rail = run.events[event];
 	const ours = defaultData.tech.find((t) => t.id === 'railway')?.nigeriaYear;
@@ -240,7 +286,7 @@ function addRailwayBeat(run, beats, start, end) {
 				? ` That's ${-gap} years after Nigeria's first railway in our world.`
 				: '';
 	const say = `${rail.year}: ${rail.title}.${early} Picture a trader carrying a sack from the market as the train pulls in.`;
-	addCutaway(run, beats, event, say, 'station');
+	return { year: rail.year, say, town: { event, preset: 'station' } };
 }
 
 /**
@@ -262,20 +308,27 @@ function formedLine({ runs, nigeriaFormed: n, withCivilWar = 0, withWar = 0 }) {
 }
 const ease = (k) => k * k * (3 - 2 * k);
 
+function cutawaySource(run, { event, familyEvent }) {
+	if (Number.isInteger(event)) return run.events[event];
+	if (
+		!Array.isArray(familyEvent) ||
+		familyEvent.length !== 3 ||
+		!familyEvent.every(Number.isInteger)
+	)
+		return null;
+	const [f, m, i] = familyEvent;
+	const family = run.families?.[f];
+	const member = family?.members[m];
+	const record = member?.lifeEvents[i];
+	return record && { ...record, title: `${member.name} ${family.surname} ${record.text}` };
+}
+
 function townShot(run, beat) {
 	if (beat.town == null) return null;
-	const {
-		event,
-		preset = 'station',
-		start = 0,
-		end = 1,
-		crowd = 18,
-		zoom = 1.18,
-		pace = 1
-	} = beat.town;
-	const source = Number.isInteger(event) ? run.events[event] : null;
+	const { preset = 'station', start = 0, end = 1, crowd = 18, zoom = 1.18, pace = 1 } = beat.town;
+	const source = cutawaySource(run, beat.town);
 	if (!source || source.year < beat.from || source.year > beat.to || beat.split || beat.card)
-		throw new Error('A town shot needs an event index from the map beat’s years.');
+		throw new Error('A town shot needs a simulation or family event from the map beat’s years.');
 	if (
 		!CUTAWAYS.includes(preset) ||
 		![start, end, crowd, zoom, pace].every(Number.isFinite) ||
@@ -304,18 +357,20 @@ function townShot(run, beat) {
 		tech: source.techId ?? null,
 		color: polityId ? polityColor(polityId) : '#d0a24a',
 		// What this state has built by then dresses the town: poles, masts, aerials, solar roofs, cars.
-		techs: [
-			...new Set(
-				run.events
-					.filter(
-						(e) =>
-							(e.kind === 'invention' || e.kind === 'adoption') &&
-							e.polityIds?.[0] === polityId &&
-							e.year <= source.year
+		techs: polityId
+			? [
+					...new Set(
+						run.events
+							.filter(
+								(e) =>
+									(e.kind === 'invention' || e.kind === 'adoption') &&
+									e.polityIds?.[0] === polityId &&
+									e.year <= source.year
+							)
+							.map((e) => e.techId)
 					)
-					.map((e) => e.techId)
-			)
-		]
+				]
+			: []
 	};
 }
 
