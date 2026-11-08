@@ -12,6 +12,7 @@ import { verb } from './rules/conflict.js';
 
 const NOTABLE = ['union', 'secession', 'conquest', 'history', 'coup', 'war']; // what makes a line, best first
 const snap = (run, y) => run.history.find((h) => h.year === y) ?? run.history.at(-1);
+const thousands = (n) => (n >= 1000 ? `${Math.round(n / 1000)} thousand` : `${Math.round(n)}`);
 const people = (n) =>
 	n >= 1e6 ? `${Math.round(n / 1e6)} million` : `${Math.round(n / 1e3)} thousand`;
 const stat = (run, y, key) => statsAt(run, defaultData.national, y).find((s) => s.key === key);
@@ -107,8 +108,13 @@ export function shortScript(run, inputs, summary = null, { town = false } = {}) 
 	const rows = endingRows(run, defaultData.national, summary);
 	const city = rows.find((r) => r.label === 'Biggest city').theirs;
 	const pop = stat(run, end, 'pop');
+	const income = rows.find((r) => r.label === 'Income per person');
+	const earns =
+		income.theirs && income.oursValue
+			? ` The average person earns about ${thousands(income.theirs)} dollars a year. Ours, about ${thousands(income.oursValue)}.`
+			: '';
 	beats.push({
-		say: `${people(pop.value)} people, against ${people(pop.ours)} in ours. ${city}${city === 'Lagos' ? ' is still' : ', not Lagos, is'} the biggest city.${summary ? ` ${formedLine(summary)}` : ''}`,
+		say: `${people(pop.value)} people, against ${people(pop.ours)} in ours.${earns} ${city}${city === 'Lagos' ? ' is still' : ', not Lagos, is'} the biggest city.${summary ? ` ${formedLine(summary)}` : ''}`,
 		from: end,
 		to: end,
 		card: true
@@ -356,6 +362,18 @@ export function planShort(
 	return { duration, cues, segments, at };
 }
 
+// The Short's scorecard: how people live, not only how many there are and how often they fought.
+const SCORECARD = [
+	'Population',
+	'Income per person',
+	'Has electricity',
+	'Can read (school)',
+	'Life expectancy',
+	'Wars',
+	'Biggest city',
+	'People in space'
+];
+
 /** What one frame of the Short shows. */
 export function shortSceneAt(run, plan, time, summary = null) {
 	const { phase, year, line, town } = plan.at(time);
@@ -372,7 +390,7 @@ export function shortSceneAt(run, plan, time, summary = null) {
 		line,
 		stats: [pick('pop'), pick('wars')],
 		card: rows && {
-			rows: ['Population', 'Wars', 'Biggest city'].map((l) => rows.find((r) => r.label === l)),
+			rows: SCORECARD.map((l) => rows.find((r) => r.label === l)).filter(Boolean),
 			runs: rows.find((r) => r.label.startsWith('In '))
 		}
 	};

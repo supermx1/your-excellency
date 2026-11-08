@@ -5,7 +5,12 @@
  * @param {number | null | undefined} access share connected (0–1) @param {number | null | undefined} service usable service (0–1)
  */
 export function powerText(access, service) {
-	if (typeof access !== 'number' || typeof service !== 'number' || !Number.isFinite(access + service)) return null; // older recordings
+	if (
+		typeof access !== 'number' ||
+		typeof service !== 'number' ||
+		!Number.isFinite(access + service)
+	)
+		return null; // older recordings
 	if (access < 0.005) return 'No one is connected';
 	return `${Math.round(access * 100)}% connected · about ${Math.round((24 * service) / access)} hours a day`;
 }
@@ -24,5 +29,6 @@ export function formatStat(key, v) {
 	if (key === 'litAny' || key === 'litSchool' || key === 'urban' || key === 'electricityAccess')
 		return `${Math.round(v * 100)}%`;
 	if (key === 'lifeExp') return `${Math.round(v)} yrs`;
+	if (key === 'incomePc') return `$${(Math.round(v / 10) * 10).toLocaleString('en-US')}`;
 	return `${Math.round(v)}`;
 }

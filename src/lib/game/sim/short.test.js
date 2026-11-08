@@ -182,7 +182,18 @@ describe('shortSceneAt', () => {
 	});
 	it('ends on the result card', () => {
 		const s = shortSceneAt(run, plan, plan.duration, summary);
-		expect(s.card.rows.map((r) => r.label)).toEqual(['Population', 'Wars', 'Biggest city']);
-		expect(s.card.runs.theirs).toMatch(/0 formed a Nigeria/);
+		expect(s.card.rows.map((r) => r.label)).toEqual([
+			'Population',
+			'Income per person',
+			'Has electricity',
+			'Can read (school)',
+			'Life expectancy',
+			'Wars',
+			'Biggest city'
+		]);
+		expect(beats.at(-1).say).toMatch(
+			/The average person earns about \d+ thousand dollars a year\. Ours, about \d+ thousand\./
+		);
+		expect(s.card.runs.theirs).toMatch(/Nigeria never formed$/);
 	});
 });
