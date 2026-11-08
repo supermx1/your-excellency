@@ -12,10 +12,10 @@ import {
 	tree,
 	wire
 } from './town-art.js';
-import { SPACE_SCENES } from './space.js';
+import { RAISED_SCENES } from './raised.js';
 import { EVERYDAY_SCENES } from './everyday.js';
 
-const CUTAWAY_VIEWS = { ...SPACE_SCENES, ...EVERYDAY_SCENES };
+const CUTAWAY_VIEWS = { ...RAISED_SCENES, ...EVERYDAY_SCENES };
 
 const VIEW = [216, 270];
 const WORLD = [336, 392];

@@ -196,7 +196,8 @@ export const CUTAWAYS = [
 	'internet',
 	'broadcast',
 	'home-power',
-	'workshop'
+	'workshop',
+	'battle'
 ];
 
 /** "Kingdom of Lagos sends the first people into space" (its verb agrees with plural names too). */
@@ -260,16 +261,43 @@ function milestoneCutaways(run, inRange) {
 	});
 }
 
+const peaceOf = (run, war) => run.events.find((e) => e.kind === 'peace' && e.warId === war.warId);
+const dead = (n) =>
+	n >= 1e6
+		? `${(n / 1e6).toFixed(1).replace(/\.0$/, '')} million people`
+		: `${Math.max(1, Math.round(n / 1e3))} thousand people`;
+
+/** The run's deadliest war, as a battle scene: who fought, and how many died before peace. */
+function battleCutaway(run, inRange, end) {
+	let best = null;
+	for (const [event, war] of run.events.entries()) {
+		if (war.kind !== 'war' || !inRange(war.year)) continue;
+		const deaths = peaceOf(run, war)?.deaths ?? 0;
+		if (!best || deaths > best.deaths) best = { event, war, deaths };
+	}
+	if (!best) return null;
+	const peace = peaceOf(run, best.war);
+	const toll = peace
+		? best.deaths
+			? ` ${dead(best.deaths)} die before peace in ${peace.year}.`
+			: ''
+		: ` It is still going in ${end}.`;
+	const { year, title } = best.war;
+	return { year, say: `${year}: ${title}.${toll}`, town: { event: best.event, preset: 'battle' } };
+}
+
 /**
- * Up to four scenes of what the land gains: the run's world firsts, then the milestones furthest from
- * when they reached our Nigeria (earlier or later), one per scene and spread across the run.
+ * Up to four scenes of what the land gains and loses: the run's world firsts, its deadliest war,
+ * then the milestones furthest from when they reached our Nigeria (earlier or later), one per scene
+ * and spread across the run.
  */
 function addCutaways(run, beats, start, end) {
 	const inRange = (year) => year > start && year <= end;
 	const firsts = inventionCutaways(run, inRange).slice(0, 2);
+	const war = battleCutaway(run, inRange, end);
 	const milestones = milestoneCutaways(run, inRange).sort((a, b) => b.gap - a.gap);
 	const picked = [];
-	for (const shot of [...firsts, ...milestones]) {
+	for (const shot of [...firsts, war, ...milestones].filter(Boolean)) {
 		if (picked.length === SHOTS) break;
 		const clash = picked.some(
 			(p) =>
@@ -372,6 +400,11 @@ function townShot(run, beat) {
 		title: source.title,
 		tech: source.techId ?? null,
 		color: polityId ? polityColor(polityId) : '#d0a24a',
+		// A battle shows both sides in their map colours, and which of them won (-1: never ended).
+		...(preset === 'battle' && {
+			rivals: (source.polityIds ?? []).slice(0, 2).map(polityColor),
+			winner: (source.polityIds ?? []).indexOf(peaceOf(run, source)?.winner)
+		}),
 		// What this state has built by then dresses the town: poles, masts, aerials, solar roofs, cars.
 		techs: polityId
 			? [

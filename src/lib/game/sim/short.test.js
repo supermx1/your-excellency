@@ -81,7 +81,23 @@ describe('shortScript', () => {
 		expect(new Set(cut.map((b) => b.town.preset)).size).toBe(cut.length);
 		for (let i = 1; i < cut.length; i++)
 			expect(cut[i].to - cut[i - 1].to).toBeGreaterThanOrEqual(15);
-		for (const b of cut) {
+		// The deadliest war gets a battle: both sides' colours, and who won.
+		const battle = cut.find((b) => b.town.preset === 'battle');
+		const war = run.events[battle.town.event];
+		expect(war.kind).toBe('war');
+		expect(battle.say).toMatch(
+			new RegExp(
+				`^${war.year}: .+\\. [\\d.]+ (million|thousand) people die before peace in \\d{4}\\.$`
+			)
+		);
+		const shot = shortSceneAt(
+			run,
+			planShort(run, [battle], [{ file: 'b.wav', seconds: 4 }], { town: true }),
+			1
+		).town;
+		expect(shot.rivals).toHaveLength(2);
+		expect([-1, 0, 1]).toContain(shot.winner);
+		for (const b of cut.filter((x) => x !== battle)) {
 			const e = run.events[b.town.event];
 			expect(['adoption', 'invention']).toContain(e.kind);
 			const ours = defaultData.tech.find((t) => t.id === e.techId).nigeriaYear;
@@ -109,7 +125,7 @@ describe('shortScript', () => {
 		const cut = shortScript(r, genius, summary, { town: true }).filter((b) => b.town);
 		expect(cut.length).toBeLessThanOrEqual(4);
 		for (let i = 1; i < cut.length; i++) expect(cut[i].to).toBeGreaterThan(cut[i - 1].to);
-		const firsts = cut.filter((b) => !b.say.includes('our Nigeria'));
+		const firsts = cut.filter((b) => !b.say.includes('our Nigeria') && b.town.preset !== 'battle');
 		expect(firsts.length).toBeGreaterThan(0);
 		for (const b of firsts) {
 			const e = r.events[b.town.event];
