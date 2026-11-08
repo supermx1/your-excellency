@@ -249,8 +249,12 @@ const WORK_SCENES = {
 const RELATION = ['', 'child', 'grandchild', 'great-grandchild'];
 const cellName = (id) => defaultData.cells.find((c) => c.id === id)?.name ?? id;
 const job = (e) => e.text.replace(/^works as an? /, '');
-const sceneOf = (e) =>
-	e.kind === 'work' ? (WORK_SCENES[job(e)] ?? 'market') : LIFE_SCENES[e.kind];
+// The fields scene has a tractor and high-yield crops, so land work before 1950 plays at the market.
+const sceneOf = (e) => {
+	if (e.kind !== 'work') return LIFE_SCENES[e.kind];
+	const scene = WORK_SCENES[job(e)] ?? 'market';
+	return scene === 'fields' && e.year < 1950 ? 'market' : scene;
+};
 
 /** Where a member lived in `year`: where they were born until they moved. */
 function cellAt(member, year) {

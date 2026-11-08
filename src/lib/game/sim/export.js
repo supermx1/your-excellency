@@ -66,6 +66,11 @@ export function captionChunks(text, seconds) {
 	const chunks = [];
 	let cur = [];
 	for (const w of words) {
+		// Two lines on the caption plate hold about 46 characters; start a new chunk before it spills.
+		if (cur.length && `${cur.join(' ')} ${w}`.length > 46) {
+			chunks.push(cur.join(' '));
+			cur = [];
+		}
 		cur.push(w);
 		const end = /[.!?;:,]$/.test(w);
 		if ((end && cur.length >= 4) || /[.!?]$/.test(w) || cur.length >= 10) {
