@@ -108,7 +108,7 @@ export function shortScript(run, inputs, summary = null, { town = false } = {}) 
 	const city = rows.find((r) => r.label === 'Biggest city').theirs;
 	const pop = stat(run, end, 'pop');
 	beats.push({
-		say: `${people(pop.value)} people, against ${people(pop.ours)} in ours. ${city}${city === 'Lagos' ? ' is still' : ', not Lagos, is'} the biggest city.${summary ? ` In ${summary.runs} runs, Nigeria formed ${times(summary.nigeriaFormed)}.` : ''}`,
+		say: `${people(pop.value)} people, against ${people(pop.ours)} in ours. ${city}${city === 'Lagos' ? ' is still' : ', not Lagos, is'} the biggest city.${summary ? ` ${formedLine(summary)}` : ''}`,
 		from: end,
 		to: end,
 		card: true
@@ -163,7 +163,7 @@ const sinceOurs = (worldYear, year) =>
 	worldYear == null
 		? ' Nobody in our world has done that yet.'
 		: worldYear > year
-			? ` That's ${worldYear - year} years before ours.`
+			? ` That's ${worldYear - year} years before anyone in our world did it.`
 			: '';
 
 function addInventionBeats(run, beats) {
@@ -218,15 +218,21 @@ function addRailwayBeat(run, beats, start, end) {
 	const gap = ours ? ours - rail.year : 0;
 	const early =
 		gap > 0
-			? ` That's ${gap} years before ours.`
+			? ` That's ${gap} years before Nigeria's first railway in our world.`
 			: gap < 0
-				? ` That's ${-gap} years after ours.`
+				? ` That's ${-gap} years after Nigeria's first railway in our world.`
 				: '';
 	const say = `${rail.year}: ${rail.title}.${early} Picture a trader carrying a sack from the market as the train pulls in.`;
 	addCutaway(run, beats, event, say, 'station');
 }
 
-const times = (n) => (n === 0 ? 'zero times' : n === 1 ? 'once' : `${n} times`);
+/** How often Nigeria formed across the summary runs, said the way a person would say it. */
+function formedLine({ runs, nigeriaFormed: n }) {
+	const lead = `I ran this world ${runs} times, and Nigeria`;
+	if (n === 0) return `${lead} never formed. Not once.`;
+	if (n === runs) return `${lead} formed every time.`;
+	return `${lead} formed ${n === 1 ? 'only once' : `in ${n} of them`}.`;
+}
 const ease = (k) => k * k * (3 - 2 * k);
 
 function townShot(run, beat) {

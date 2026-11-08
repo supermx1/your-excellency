@@ -44,7 +44,13 @@ describe('shortScript', () => {
 			expect(beats[i].from).toBeGreaterThanOrEqual(beats[i - 1].from);
 		expect(beats.filter((b) => b.split).map((b) => b.to)).toEqual([1960]);
 		expect(beats.at(-1).card).toBe(true);
-		expect(beats.at(-1).say).toMatch(/In 50 runs, Nigeria formed zero times\.$/);
+		expect(beats.at(-1).say).toMatch(
+			/I ran this world 50 times, and Nigeria never formed\. Not once\.$/
+		);
+		const said = (n) => shortScript(run, inputs, { ...summary, nigeriaFormed: n }).at(-1).say;
+		expect(said(1)).toMatch(/Nigeria formed only once\.$/);
+		expect(said(12)).toMatch(/Nigeria formed in 12 of them\.$/);
+		expect(said(50)).toMatch(/Nigeria formed every time\.$/);
 	});
 	it('keeps a short run short: premise, what happened, result', () => {
 		const r = runSimulation({ ...inputs, startYear: 2015 });
@@ -65,7 +71,11 @@ describe('shortScript', () => {
 		expect(b.say).toContain(event.title);
 		const gap = 1898 - event.year; // our first railway in Nigeria
 		expect(b.say).toContain(
-			gap > 0 ? `${gap} years before ours` : gap < 0 ? `${-gap} years after ours` : event.title
+			gap > 0
+				? `${gap} years before Nigeria's first railway in our world`
+				: gap < 0
+					? `${-gap} years after Nigeria's first railway in our world`
+					: event.title
 		);
 	});
 	it("cuts away to the run's biggest world firsts: at most 3, one per scene, in year order", () => {
@@ -81,7 +91,9 @@ describe('shortScript', () => {
 		for (const [i, e] of events.entries()) {
 			expect(e).toMatchObject({ kind: 'invention', worldFirst: true });
 			expect(cut[i].say.startsWith(`${e.year}: `)).toBe(true);
-			expect(cut[i].say).toMatch(/years before ours\.|Nobody in our world has done that yet\./);
+			expect(cut[i].say).toMatch(
+				/years before anyone in our world did it\.|Nobody in our world has done that yet\./
+			);
 			if (i) expect(e.year).toBeGreaterThanOrEqual(events[i - 1].year);
 		}
 		expect(
