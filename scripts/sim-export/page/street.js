@@ -322,9 +322,11 @@ export function street(ctx, site, shot) {
 		[198, 10, 40, 30, 2, 'zinc'],
 		[198, 60, 38, 28, 1, 'rust']
 	];
-	for (const [x, d, w, dd, plaster, roof] of houses)
+	for (const [i, [x, d, w, dd, plaster, roof]] of houses.entries()) {
 		house(ctx, x, d, w, dd, { plaster, roof, lit });
-	compoundWall(ctx, -96, -4, 70);
+		// Each wall goes in front of its own house and before the houses nearer the viewer.
+		if (i === 0) compoundWall(ctx, -96, 4, 60);
+	}
 	compoundWall(ctx, 190, 96, 46);
 	palm(ctx, -30, -18, 1);
 	palm(ctx, 160, -70, 0.95);

@@ -59,6 +59,12 @@ export function window(ctx, x, w, glass, { y = 6, axis = 'x' } = {}) {
 	);
 }
 
+/** Paints now if (x, depth) is inside the room, or after the front wall if it is out on the street. */
+export function indoors(outside, depth, paint) {
+	if (depth > 124) outside.push(paint);
+	else paint();
+}
+
 export function figure(ctx, i, x, y, { scale = 0.9, stride = 0, facing = 1, hero = false } = {}) {
 	walker(ctx, i, x, y, { stride, facing, hero }, scale);
 }
@@ -100,9 +106,10 @@ function room(ctx, site, shot) {
 }
 
 /** The near wall with its doorway, then the street in front. */
-function frontage(ctx, site, shot) {
+function frontage(ctx, site, shot, outside) {
 	solid(ctx, 0, 121, 63, 4, 8, site.wall);
 	solid(ctx, 91, 121, 62, 4, 8, site.wall);
+	for (const paint of outside) paint();
 	streetFront(ctx, site, shot);
 }
 
@@ -174,11 +181,11 @@ function internet(ctx, shot) {
 		plane(ctx, '#4b635e', x + 10, 58, 21, 4, 10.1);
 		figure(ctx, x === 18 ? 2 : 1, x + 22, 70);
 	}
-	table(ctx, 93, 89, 37, 15, TEAL);
-	book(ctx, 106, 93, '#526f68');
 	figure(ctx, 3, mix(65, 81, ease(progress, 0.36, 0.86)), 101, {
 		stride: Math.sin(elapsed * pace * 7)
-	});
+	}); // beside the reading table's far end, so drawn before it
+	table(ctx, 93, 89, 37, 15, TEAL);
+	book(ctx, 106, 93, '#526f68');
 }
 
 function broadcast(ctx, shot) {
@@ -189,9 +196,9 @@ function broadcast(ctx, shot) {
 	solid(ctx, 86, 9, 3, 77, 6, STUDIO.wall);
 	plane(ctx, '#9f7776', 94, 33, 45, 48, 2);
 	table(ctx, 101, 41, 30, 19);
-	figure(ctx, 0, 116, 66, { hero: true });
 	solid(ctx, 112, 47, 2, 2, 12, ['#a69c91', '#5e555c', '#51494e'], 10);
 	solid(ctx, 110, 46, 6, 4, 5, ['#d0c1aa', '#968983', '#6a6263'], 20);
+	figure(ctx, 0, 116, 66, { hero: true }); // in front of the desk and its microphone
 	table(ctx, 16, 49, 59, 20);
 	solid(ctx, 22, 52, 46, 11, 5, ['#747781', '#4b525f', '#414855'], 10);
 	for (let i = 0; i < 10; i++) {
@@ -217,9 +224,9 @@ function homePower(ctx, shot) {
 	plane(ctx, '#ffdd95', 10, 13, 90, 88, 2.1);
 	ctx.globalAlpha = 1;
 	plane(ctx, '#ab7e6b', 28, 49, 53, 31, 2.15);
+	figure(ctx, 1, 34, 46); // behind the table, so drawn before it
 	table(ctx, 37, 52, 34, 20);
 	book(ctx, 49, 59, '#ae594c');
-	figure(ctx, 1, 31, 61);
 	figure(ctx, 3, 69, 77);
 	figure(ctx, 0, mix(86, 76, ease(shot.progress, 0.42, 0.83)), 54);
 	const [x, y] = point(53, 36, 30);
@@ -230,7 +237,7 @@ function homePower(ctx, shot) {
 	ctx.globalAlpha = 1;
 }
 
-function workshop(ctx, shot) {
+function workshop(ctx, shot, outside) {
 	captionPlate(ctx, 'WORKSHOP', 45, 6, 12, 63, '#496f60');
 	window(ctx, 119, 19, '#a5afa0');
 	const opening = ease(shot.progress, 0.12, 0.61);
@@ -250,9 +257,12 @@ function workshop(ctx, shot) {
 	solid(ctx, 114, 65, 14, 12, 8, WOOD);
 	solid(ctx, 119, 83, 17, 12, 6, WOOD);
 	const walk = ease(shot.progress, 0.28, 0.91);
-	figure(ctx, 0, mix(78, 72, walk), mix(153, 88, walk), {
-		stride: Math.sin(shot.elapsed * shot.pace * 7) * (1 - ease(shot.progress, 0.83, 0.91))
-	});
+	const d = mix(153, 88, walk);
+	indoors(outside, d, () =>
+		figure(ctx, 0, mix(78, 72, walk), d, {
+			stride: Math.sin(shot.elapsed * shot.pace * 7) * (1 - ease(shot.progress, 0.83, 0.91))
+		})
+	);
 }
 
 /** Opens on the set filling the frame, then pushes in: the people are the subject, not the street. */
@@ -271,8 +281,9 @@ function framed(ctx, shot, paint) {
 export const cutaway = (site, draw) => (ctx, shot) =>
 	framed(ctx, shot, () => {
 		room(ctx, site, shot);
-		draw(ctx, shot);
-		frontage(ctx, site, shot);
+		const outside = []; // people out past the front wall, drawn after it
+		draw(ctx, shot, outside);
+		frontage(ctx, site, shot, outside);
 	});
 
 /** The same street with an open lot where the room would be (`site.lot` is its ground). */
