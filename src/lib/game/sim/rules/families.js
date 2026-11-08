@@ -64,6 +64,7 @@ function newMember(world, family, cellId, born, parentFaith) {
 		name: pick(world.familyRand, nameList(world, cellId).given),
 		born,
 		cell: cellId,
+		bornIn: cellId,
 		occupation: 'child',
 		canRead: false,
 		hasElectricity: cell.electricityAccess > connectionThreshold,

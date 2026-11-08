@@ -3,7 +3,7 @@
 // shortScript drafts the lines from a run (he can edit them before they are voiced); planShort times
 // each line's years to its audio; shortSceneAt says what each frame shows. Pure functions.
 import { scenarioCard, captionChunks } from './export.js';
-import { frameAt } from './frame.js';
+import { frameAt, warsDuring } from './frame.js';
 import { realFrame, statsAt, captionsAt, endingRows } from './hud.js';
 import { defaultData } from './data/index.js';
 import { PRESETS } from './switches.js';
@@ -17,6 +17,7 @@ const people = (n) =>
 	n >= 1e6 ? `${Math.round(n / 1e6)} million` : `${Math.round(n / 1e3)} thousand`;
 const stat = (run, y, key) => statsAt(run, defaultData.national, y).find((s) => s.key === key);
 const warsBy = (run, y) => run.events.filter((e) => e.kind === 'war' && e.year <= y).length;
+const wars = (n) => `${n} war${n === 1 ? '' : 's'}`;
 const standout = (run, a, b) => {
 	for (const kind of NOTABLE) {
 		const e = run.events.find(
@@ -60,7 +61,7 @@ export function shortScript(run, inputs, summary = null, { town = false } = {}) 
 		[
 			...presets.map((p) => p.description.split('. ')[0].replace(/\.?$/, '.')),
 			rest.length
-				? `I changed ${rest.map((c) => `${c.label.toLowerCase()} to ${c.value}`).join(', ')}.`
+				? `I set ${rest.map((c) => `${c.label.toLowerCase()}${/ from$/.test(c.label) ? '' : ' to'} ${c.value}`).join(', ')}.`
 				: ''
 		]
 			.filter(Boolean)
@@ -73,7 +74,7 @@ export function shortScript(run, inputs, summary = null, { town = false } = {}) 
 		const c1 = start + 10 < 1914 && 1914 < end - 20 ? 1914 : start + Math.round((end - start) / 3);
 		const c2 = c1 + 10 < 1960 && 1960 < end - 10 ? 1960 : c1 + Math.round((end - c1) / 2);
 		beats.push({
-			say: `${standout(run, start, c1)}By ${c1}, ${statesAt(run, c1)}, after ${warsBy(run, c1)} wars.`,
+			say: `${standout(run, start, c1)}By ${c1}, ${statesAt(run, c1)}, after ${wars(warsBy(run, c1))}.`,
 			from: start,
 			to: c1
 		});
@@ -93,13 +94,13 @@ export function shortScript(run, inputs, summary = null, { town = false } = {}) 
 			split: true
 		});
 		beats.push({
-			say: `${standout(run, c2, end)}By ${end}, ${warsBy(run, end)} wars. Ours had ${stat(run, end, 'wars').ours}.`,
+			say: `${standout(run, c2, end)}By ${end}, ${wars(warsBy(run, end))}. Ours had ${stat(run, end, 'wars').ours}.`,
 			from: c2,
 			to: end
 		});
 	} else {
 		beats.push({
-			say: `${standout(run, start, end)}By ${end}, ${warsBy(run, end)} wars.`,
+			say: `${standout(run, start, end)}By ${end}, ${wars(warsBy(run, end))}.`,
 			from: start,
 			to: end
 		});
@@ -149,7 +150,6 @@ const INVENTIONS = {
 	'motor-car': ['build the first motor car', 'market']
 };
 const STORY_SHOTS = 3;
-const FAMILY_SCENES = { school: 'school', electricity: 'home-power', business: 'workshop' };
 const COMMUNICATION_SCENES = { internet: 'internet', radio: 'broadcast', television: 'broadcast' };
 /** The cutaway scenes the Short page can draw. */
 export const CUTAWAYS = [
@@ -209,54 +209,207 @@ function inventionCutaways(run, inRange) {
 	});
 }
 
-function familyCutaways(run, inRange) {
-	const first = new Map();
-	for (const [f, family] of (run.families ?? []).entries()) {
-		for (const [m, member] of family.members.entries()) {
-			for (const [i, e] of member.lifeEvents.entries()) {
-				const preset = FAMILY_SCENES[e.kind];
-				if (!preset || !inRange(e.year) || (first.get(preset)?.year ?? Infinity) <= e.year)
-					continue;
-				const name = `${member.name} ${family.surname}`;
-				first.set(preset, {
-					year: e.year,
-					say: `${e.year}: ${name} ${e.text}.`,
-					town: { familyEvent: [f, m, i], preset }
-				});
-			}
-		}
+// The family thread: one of the run's four families carries the Short, from a first milestone through
+// its hardest moment (tied to the war on the map when there is one) to how its line ends up.
+const WEIGHT = {
+	'no-school': 3,
+	'savings-gone': 3,
+	hardship: 2,
+	stays: 2,
+	migrates: 2,
+	business: 2,
+	school: 1,
+	reads: 1,
+	electricity: 1,
+	work: 1
+};
+const LOW = ['no-school', 'savings-gone', 'hardship', 'stays']; // the hard moment, worst first
+const UP = ['business', 'migrates', 'electricity', 'work', 'reads', 'school'];
+const LIFE_SCENES = {
+	school: 'school',
+	'no-school': 'school',
+	reads: 'school',
+	electricity: 'home-power',
+	business: 'workshop',
+	'savings-gone': 'market',
+	hardship: 'market',
+	stays: 'market',
+	migrates: 'market'
+};
+const WORK_SCENES = {
+	farmer: 'fields',
+	herder: 'fields',
+	fisher: 'fields',
+	teacher: 'school',
+	engineer: 'workshop',
+	nurse: 'clinic',
+	artisan: 'workshop',
+	'factory worker': 'workshop'
+};
+const RELATION = ['', 'child', 'grandchild', 'great-grandchild'];
+const cellName = (id) => defaultData.cells.find((c) => c.id === id)?.name ?? id;
+const job = (e) => e.text.replace(/^works as an? /, '');
+const sceneOf = (e) =>
+	e.kind === 'work' ? (WORK_SCENES[job(e)] ?? 'market') : LIFE_SCENES[e.kind];
+
+/** Where a member lived in `year`: where they were born until they moved. */
+function cellAt(member, year) {
+	const moved = member.lifeEvents.find((e) => e.kind === 'migrates')?.year;
+	return moved != null && year < moved ? (member.bornIn ?? member.cell) : member.cell;
+}
+
+/** The state ruling a cell in `year`. */
+const rulerAt = (run, year, cellId) =>
+	snap(run, year).polities.find((p) => p.cellIds?.includes(cellId));
+
+/** Whether the state ruling where the member lived was at war that year. */
+function warHere(run, member, year) {
+	const ruler = rulerAt(run, year, cellAt(member, year));
+	return !!ruler && warsDuring(run, year).some((pair) => pair.includes(ruler.id));
+}
+
+/** The youngest working adult still alive at the end: who the family is by then. */
+const heirOf = (family, end) =>
+	family.members.findLast((m) => !m.died && end - m.born >= 18 && m.occupation !== 'child');
+
+/**
+ * The family with the most turns in its story, and up to three moments from it in year order: a
+ * milestone, its hard moment (one the map's wars caused if it can, near the middle of the run), and
+ * a later milestone, the heir's own if they have one.
+ */
+function familyThread(run, inRange, start, end) {
+	const lives = (run.families ?? []).map((family, f) => ({
+		family,
+		f,
+		moments: family.members
+			.flatMap((member, m) =>
+				member.lifeEvents.map((e, i) => ({ m, i, member, e, scene: sceneOf(e) }))
+			)
+			.filter((x) => x.scene && inRange(x.e.year))
+			.sort((a, b) => a.e.year - b.e.year)
+	}));
+	const score = (l) => l.moments.reduce((s, x) => s + (WEIGHT[x.e.kind] ?? 0), 0);
+	const best = lives.reduce((a, b) => (score(b) > score(a) ? b : a), lives[0]);
+	if (!best?.moments.length) return null;
+	const { moments } = best;
+	const middle = (start + end) / 2;
+	const war = (x) => (warHere(run, x.member, x.e.year) ? 1 : 0);
+	const low = moments
+		.filter((x) => LOW.includes(x.e.kind))
+		.sort(
+			(a, b) => war(b) - war(a) || Math.abs(a.e.year - middle) - Math.abs(b.e.year - middle)
+		)[0];
+	const ups = moments.filter((x) => UP.includes(x.e.kind));
+	const heir = heirOf(best.family, end);
+	let picks;
+	if (low)
+		picks = [
+			ups.find((x) => x.e.year < low.e.year - 5),
+			low,
+			ups.findLast((x) => x.member === heir && x.e.year > low.e.year + 5) ??
+				ups.findLast((x) => x.e.year > low.e.year + 5)
+		];
+	else {
+		const [first, last] = [ups[0], ups.at(-1)];
+		const mid = ups.find(
+			(x) => x.e.year > first.e.year + 5 && x.e.year < last.e.year - 5 && x.m !== first.m
+		);
+		picks = [first, mid, last];
 	}
-	return Object.values(FAMILY_SCENES)
-		.map((preset) => first.get(preset))
-		.filter(Boolean);
+	picks = picks
+		.filter(Boolean)
+		.filter((x, k, xs) => xs.findIndex((y) => y.e.year === x.e.year) === k);
+	return { ...best, picks };
+}
+
+/** The thread's lines: the family is introduced once, and each new generation is named from the last. */
+function threadShots(run, { family, f, picks }) {
+	return picks.map((x, k) => {
+		const { member, e } = x;
+		const prev = picks[k - 1];
+		const d = prev ? x.m - prev.m : 0;
+		const full = `${member.name} ${family.surname}`;
+		const who =
+			k === 0
+				? full
+				: d === 0
+					? member.name
+					: d > 0
+						? `${prev.member.name}'s ${RELATION[d] ?? 'descendant'}, ${member.name},`
+						: full;
+		const war =
+			LOW.includes(e.kind) && warHere(run, member, e.year) && !/conflict/.test(e.text)
+				? `War comes to ${cellName(cellAt(member, e.year))}. `
+				: '';
+		const meet =
+			k === 0 ? `Meet the ${family.surname} family of ${cellName(family.homeCell)}. ` : '';
+		return {
+			year: e.year,
+			say: `${e.year}: ${meet}${war}${who} ${e.text}.`,
+			town: { familyEvent: [f, x.m, x.i], preset: x.scene }
+		};
+	});
+}
+
+/** ", home of the Okafor family" when the event's state rules where the family lived that year. */
+function homeOf(run, { family }, e) {
+	const member = family.members.findLast((m) => m.born <= e.year) ?? family.members[0];
+	const ruler = rulerAt(run, e.year, cellAt(member, e.year));
+	return ruler && e.polityIds?.includes(ruler.id) ? `, home of the ${family.surname} family` : null;
+}
+
+/** "In 2025, Zainab Lawal works as a teacher in Rivers." The youngest working adult still alive. */
+function heirLine({ family }, end) {
+	const heir = heirOf(family, end);
+	if (!heir) return '';
+	const work =
+		heir.occupation === 'shop owner'
+			? 'runs a shop'
+			: `works as ${/^[aeiou]/.test(heir.occupation) ? 'an' : 'a'} ${heir.occupation}`;
+	return `In ${end}, ${heir.name} ${family.surname} ${work} in ${cellName(heir.cell)}. `;
 }
 
 function addCutaways(run, beats, start, end) {
 	const inRange = (year) => year > start && year <= end;
-	const railway = railwayCutaway(run, inRange);
+	const thread = familyThread(run, inRange, start, end);
 	const firsts = inventionCutaways(run, inRange);
-	const family = familyCutaways(run, inRange);
-	const communications = Object.entries(COMMUNICATION_SCENES).flatMap(([techId, preset]) => {
-		const event = run.events.findIndex(
-			(e) => e.techId === techId && ['adoption', 'invention'].includes(e.kind) && inRange(e.year)
+	const communications = (home) =>
+		Object.entries(COMMUNICATION_SCENES).flatMap(([techId, preset]) => {
+			const event = run.events.findIndex(
+				(e) => e.techId === techId && ['adoption', 'invention'].includes(e.kind) && inRange(e.year)
+			);
+			if (event < 0) return [];
+			const e = run.events[event];
+			const tag = home ? home(e) : '';
+			if (tag == null) return [];
+			return [{ year: e.year, say: `${e.year}: ${e.title}${tag}.`, town: { event, preset } }];
+		});
+	let picked;
+	if (thread) {
+		// The family carries the Short; at most one other scene: a world first, or the railway or a
+		// new medium reaching the family's home.
+		const home = (e) => homeOf(run, thread, e);
+		const family = threadShots(run, thread);
+		const other = [firsts[0], railwayCutaway(run, inRange, home), ...communications(home)].find(
+			(shot) => shot && !family.some((p) => p.year === shot.year)
 		);
-		if (event < 0) return [];
-		const { year, title } = run.events[event];
-		return [{ year, say: `${year}: ${title}.`, town: { event, preset } }];
-	});
-	const lead = firsts.find((shot) => shot.year !== railway?.year);
-	const personal = family.find((shot) => shot.year !== railway?.year && shot.year !== lead?.year);
-	// After the lead stories, rotate the remaining choices by the saved run's seed.
-	const everyday = [...communications, ...family.filter((shot) => shot !== personal)];
-	const offset = (run.inputs.seed >>> 0) % (everyday.length || 1);
-	const varied = [...everyday.slice(offset), ...everyday.slice(0, offset)];
-	const picked = railway ? [railway] : [];
-	const limit = picked.length + STORY_SHOTS;
-	for (const shot of [lead, personal, ...varied, ...firsts]) {
-		if (picked.length === limit) break;
-		if (!shot || picked.some((p) => p.year === shot.year || p.town.preset === shot.town.preset))
-			continue;
-		picked.push(shot);
+		picked = other ? [...family, other] : family;
+		const card = beats.find((b) => b.card);
+		if (card) card.say = `${heirLine(thread, end)}${card.say}`;
+	} else {
+		const railway = railwayCutaway(run, inRange);
+		const lead = firsts.find((shot) => shot.year !== railway?.year);
+		const everyday = communications(null);
+		const offset = (run.inputs.seed >>> 0) % (everyday.length || 1);
+		const varied = [...everyday.slice(offset), ...everyday.slice(0, offset)];
+		picked = railway ? [railway] : [];
+		const limit = picked.length + STORY_SHOTS;
+		for (const shot of [lead, ...varied, ...firsts]) {
+			if (picked.length === limit) break;
+			if (!shot || picked.some((p) => p.year === shot.year || p.town.preset === shot.town.preset))
+				continue;
+			picked.push(shot);
+		}
 	}
 	for (const shot of picked.sort((a, b) => a.year - b.year)) addCutaway(run, beats, shot);
 }
@@ -273,10 +426,13 @@ function addCutaway(run, beats, { year, say, town }) {
 	beat.say = `${laterLead}${beat.say.slice(oldLead.length)}`;
 }
 
-function railwayCutaway(run, inRange) {
+/** With `home`, only when it reaches the family's home, said as such and without the stand-in trader. */
+function railwayCutaway(run, inRange, home = null) {
 	const event = run.events.findIndex((e) => e.techId === 'railway' && inRange(e.year));
 	if (event === -1) return;
 	const rail = run.events[event];
+	const tag = home ? home(rail) : '';
+	if (tag == null) return;
 	const ours = defaultData.tech.find((t) => t.id === 'railway')?.nigeriaYear;
 	const gap = ours ? ours - rail.year : 0;
 	const early =
@@ -285,7 +441,10 @@ function railwayCutaway(run, inRange) {
 			: gap < 0
 				? ` That's ${-gap} years after Nigeria's first railway in our world.`
 				: '';
-	const say = `${rail.year}: ${rail.title}.${early} Picture a trader carrying a sack from the market as the train pulls in.`;
+	const picture = home
+		? ''
+		: ' Picture a trader carrying a sack from the market as the train pulls in.';
+	const say = `${rail.year}: ${rail.title}${tag}.${early}${picture}`;
 	return { year: rail.year, say, town: { event, preset: 'station' } };
 }
 
@@ -295,6 +454,8 @@ function railwayCutaway(run, inRange) {
  */
 function formedLine({ runs, nigeriaFormed: n, withCivilWar = 0, withWar = 0 }) {
 	const lead = `I ran this world ${runs} times, and`;
+	// With no Nigeria in any run, a "civil war" count reads as a contradiction of the card.
+	if (n === 0) return `${lead} Nigeria never formed. Not once.`;
 	const varied = [
 		[n, 'Nigeria formed'],
 		[withCivilWar, 'a civil war broke out'],
