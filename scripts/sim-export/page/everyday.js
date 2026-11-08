@@ -1,5 +1,17 @@
 // Roofless rooms viewed from the same elevated angle as the town. Motion is driven by shot time.
-import { aerial, box, crates, house, person, shape, tree } from './town-art.js';
+import {
+	aerial,
+	box,
+	car,
+	crates,
+	house,
+	person,
+	pole,
+	shape,
+	stall,
+	tree,
+	wire
+} from './town-art.js';
 
 const W = 216;
 const H = 270;
@@ -17,16 +29,104 @@ const ease = (progress, start, end) => {
 	return t * t * (3 - 2 * t);
 };
 
-const SCHOOL = { wall: ['#f0cc91', '#c39967', '#a07758'], floor: '#d8b98c', seam: '#c7a77f' };
-const LAB = { wall: ['#b9c4a4', '#879e90', '#668477'], floor: '#a5afa0', seam: '#97a495' };
-const STUDIO = { wall: ['#e6bd9a', '#a87776', '#855b62'], floor: '#b58d84', seam: '#a37d76' };
+// Each place gets its own street, so two cutaways in one Short never look like the same room.
+function flag(ctx, x, y, t) {
+	box(ctx, INK, x, y - 28, 1, 28);
+	for (let i = 0; i < 3; i++) {
+		const wave = Math.round(Math.sin(t * 5 - i) * 1.2);
+		box(ctx, i === 1 ? '#f4efe2' : '#1f7a3d', x + 1 + i * 4, y - 27 + wave, 4, 9);
+	}
+}
+function mast(ctx, x, y, t) {
+	for (let k = 0; k < 7; k++) {
+		box(ctx, '#5c6669', x - 4 + k * 0.5, y - k * 5, 1, 5);
+		box(ctx, '#5c6669', x + 4 - k * 0.5, y - k * 5, 1, 5);
+		box(ctx, '#7d878a', x - 4 + k * 0.5, y - k * 5, 9 - k, 1);
+	}
+	box(ctx, '#d9dfd5', x - 3, y - 30, 2, 4);
+	box(ctx, '#d9dfd5', x + 2, y - 30, 2, 4);
+	box(ctx, Math.sin(t * 4) > 0 ? '#ff5a43' : '#6e3a34', x, y - 37, 2, 2);
+}
+function dish(ctx, x, y) {
+	box(ctx, INK, x + 4, y + 2, 1, 5);
+	shape(ctx, INK, [
+		[x - 1, y - 6],
+		[x + 10, y - 2],
+		[x + 8, y + 3],
+		[x, y + 1]
+	]);
+	shape(ctx, '#e3e3d8', [
+		[x, y - 5],
+		[x + 9, y - 2],
+		[x + 7, y + 2],
+		[x + 1, y]
+	]);
+}
+const lit = (shot) => ease(shot.progress, 0.26, 0.52) > 0.5;
+
+const SCHOOL = {
+	wall: ['#f0cc91', '#c39967', '#a07758'],
+	floor: '#d8b98c',
+	seam: '#c7a77f',
+	path: '#c98a5e', // laterite
+	around(ctx, shot) {
+		flag(ctx, 72, 236, shot.elapsed * shot.pace);
+		ctx.save();
+		ctx.translate(176, 230);
+		ctx.scale(1.5, 1.2);
+		car(ctx, 0, 0, '#e8b437', -1);
+		ctx.restore();
+	}
+};
+const LAB = {
+	wall: ['#b9c4a4', '#879e90', '#668477'],
+	floor: '#a5afa0',
+	seam: '#97a495',
+	path: '#b9b5a8', // tarred
+	around(ctx, shot) {
+		mast(ctx, 105, 62, shot.elapsed * shot.pace);
+		car(ctx, 40, 228, '#3f5e86');
+	}
+};
+const STUDIO = {
+	wall: ['#e6bd9a', '#a87776', '#855b62'],
+	floor: '#b58d84',
+	seam: '#a37d76',
+	around(ctx) {
+		aerial(ctx, 195, 54);
+		dish(ctx, 150, 26);
+		car(ctx, 182, 228, '#e9e4d6', -1);
+	}
+};
 const HOME = {
 	wall: ['#e2bc8b', '#ad8369', '#795e57'],
 	floor: '#a68c77',
 	seam: '#947e6d',
-	dusk: true
+	dusk: true,
+	around(ctx, shot) {
+		// The street gets power with the house: poles, wires, and the neighbours' windows light up.
+		for (const x of [28, 118]) wire(ctx, x + 1, x + 91, 186);
+		for (const x of [28, 118, 209]) pole(ctx, x, 207);
+		if (!lit(shot)) return;
+		for (const [x, y, w] of [
+			[57, 14, 43],
+			[111, 22, 59],
+			[-17, 54, 59],
+			[172, 58, 66]
+		])
+			for (let i = 25; i < w - 6; i += 13) box(ctx, '#ffd98a', x + i, y + 18, 7, 6);
+	}
 };
-const SHOP = { wall: ['#efc992', '#b48866', '#90664d'], floor: '#cfa878', seam: '#bb946e' };
+const SHOP = {
+	wall: ['#efc992', '#b48866', '#90664d'],
+	floor: '#cfa878',
+	seam: '#bb946e',
+	around(ctx) {
+		stall(ctx, 28, 222, ['#ad4e43', '#efd9a8']);
+		stall(ctx, 158, 222, ['#3d7a5c', '#efd9a8']);
+		crates(ctx, 170, 180);
+	}
+};
 
 // x and depth are positions on the floor. Height raises an object towards the back of the image.
 const point = (x, depth, height = 0) => [23 + x + depth * 0.14, 92 + depth * 0.76 - height];
@@ -106,9 +206,9 @@ function book(ctx, x, y, color) {
 	plane(ctx, '#b69b77', x + 4, y, 0.7, 6, 11.05);
 }
 
-function yard(ctx, site) {
+function yard(ctx, site, shot) {
 	const grass = site.dusk ? '#6f796e' : '#a6a76e';
-	const path = site.dusk ? '#a39480' : '#dfc08d';
+	const path = site.path ?? (site.dusk ? '#a39480' : '#dfc08d');
 	box(ctx, grass, -24, -24, W + 48, H + 48);
 	box(ctx, site.dusk ? '#8c8877' : '#c9af7f', -24, 49, W + 48, 25);
 	box(ctx, site.dusk ? '#7b796d' : '#b8a276', -24, 73, W + 48, 2);
@@ -126,17 +226,17 @@ function yard(ctx, site) {
 	house(ctx, 111, 22, 59, TIN_ROOF);
 	house(ctx, -17, 54, 59, TIN_ROOF);
 	house(ctx, 172, 58, 66, CLAY_ROOF);
-	if (site === STUDIO) aerial(ctx, 195, 54);
 	tree(ctx, 46, 50, 0.59);
 	tree(ctx, 14, 132, 0.67);
 	tree(ctx, 202, 130, 0.73);
 	tree(ctx, 8, 202, 0.84);
 	tree(ctx, 206, 202, 0.85);
 	crates(ctx, 7, 177);
+	site.around(ctx, shot);
 }
 
-function room(ctx, site) {
-	yard(ctx, site);
+function room(ctx, site, shot) {
+	yard(ctx, site, shot);
 	solid(ctx, 0, 0, 153, 124, 2, [site.floor, site.seam, '#8e785e']);
 	for (let y = 13; y < 120; y += 10) plane(ctx, site.seam, 3, y, 147, 0.7, 2);
 	solid(ctx, 0, 0, 153, 6, 29, site.wall);
@@ -255,7 +355,7 @@ function homePower(ctx, shot) {
 	solid(ctx, 101, 11, 3, 69, 6, HOME.wall);
 	solid(ctx, 113, 17, 27, 19, 9, ['#bea08c', '#836459', '#70534b']);
 	solid(ctx, 124, 24, 9, 6, 1, ['#dbccac', '#b4927c', '#8a7063'], 9);
-	const light = ease(shot.progress, 0.26, 0.52);
+	const light = ease(shot.progress, 0.26, 0.52); // same timing as lit()
 	ctx.globalAlpha = 0.35 * light;
 	plane(ctx, '#ffdd95', 10, 13, 90, 88, 2.1);
 	ctx.globalAlpha = 1;
@@ -307,7 +407,7 @@ function cutaway(site, draw) {
 		ctx.translate(W / 2 + 2 * (1 - travel), 132);
 		ctx.scale(zoom, zoom);
 		ctx.translate(-W / 2 - 2, -126);
-		room(ctx, site);
+		room(ctx, site, shot);
 		draw(ctx, shot);
 		frontage(ctx, site, shot);
 		ctx.restore();
