@@ -1,5 +1,6 @@
 // @ts-nocheck
 // The state shown at a fractional year: snapshots interpolated, plus war fronts and epidemics.
+import { stateColor } from './colors.js';
 import { defaultData } from './data/index.js';
 
 const NUMERIC = [
@@ -70,7 +71,9 @@ export function frameAt(run, year) {
 			id: ca.id,
 			polityId: ca.polityId,
 			nextPolityId: cb.polityId,
-			religion: ca.religion
+			religion: ca.religion,
+			// Land Nigeria keeps this year and next is painted state by state, like the our-world map.
+			color: ca.polityId === 'nigeria' && cb.polityId === 'nigeria' ? stateColor(ca.id) : undefined
 		};
 		for (const k of NUMERIC) cell[k] = lerp(ca[k] ?? 0, cb[k] ?? 0, t);
 		cell.warFront = wars.some(

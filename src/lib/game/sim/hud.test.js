@@ -208,3 +208,14 @@ describe('shortPeople', () => {
 		expect([23.4e6, 4.46e6, 451_000].map(shortPeople)).toEqual(['23M', '4.5M', '451k']);
 	});
 });
+
+describe('their-world state lines', () => {
+	it('paints each state Nigeria holds its own colour, and leaves other polities to their polity colour', () => {
+		const f = frameAt(baseline, 2025);
+		const held = f.cells.filter((c) => c.polityId === 'nigeria' && c.nextPolityId === 'nigeria');
+		expect(held.length).toBeGreaterThan(1);
+		expect(new Set(held.map((c) => c.color)).size).toBe(held.length);
+		expect(f.cells.filter((c) => c.polityId !== 'nigeria').every((c) => c.color === undefined)).toBe(true);
+		expect(frameAt(never, 1850).cells.every((c) => c.color === undefined)).toBe(true);
+	});
+});
