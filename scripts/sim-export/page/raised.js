@@ -13,6 +13,7 @@ import {
 	plane,
 	solid,
 	figure,
+	indoors,
 	table,
 	window as pane,
 	captionPlate,
@@ -101,7 +102,7 @@ const CLINIC = {
 };
 
 /** Medicine reaches everyone: the queue comes in from the street, beds along the wall, a nurse. */
-function clinic(ctx, shot) {
+function clinic(ctx, shot, outside) {
 	const { progress: p, elapsed, pace } = shot;
 	captionPlate(ctx, 'CLINIC', 54, 6, 12, 44, '#a8423a');
 	pane(ctx, 14, 22, '#9fc0c4');
@@ -133,24 +134,27 @@ function clinic(ctx, shot) {
 			box(ctx, SKIN[i % 3], hx - 1, hy - 2, 3, 2);
 		}
 	}
-	// The nurse's desk, and the nurse going from bed to bed.
-	table(ctx, 54, 56, 30, 14, ['#f3f1ea', '#a9b3ad', '#8d9993']);
-	solid(ctx, 62, 59, 8, 6, 3, ['#d6e2e8', '#c9433b', '#a8423a'], 10);
+	// The nurse goes from bed to bed along the aisle behind the desk, so the desk is drawn after her.
 	const round = (elapsed * pace * 0.09) % 1;
 	const go = round < 0.5 ? round * 2 : 2 - round * 2;
-	actor(ctx, mix(36, 108, smooth(go)), mix(48, 54, go), {
+	actor(ctx, mix(36, 104, smooth(go)), 46, {
 		color: '#f4f2ec',
 		cap: '#f4f2ec',
 		skin: SKIN[0],
 		facing: round < 0.5 ? 1 : -1,
 		stride: Math.round(Math.sin(elapsed * pace * 7))
 	});
+	table(ctx, 54, 56, 30, 14, ['#f3f1ea', '#a9b3ad', '#8d9993']);
+	solid(ctx, 62, 59, 8, 6, 3, ['#d6e2e8', '#c9433b', '#a8423a'], 10);
 	// The queue shuffles in through the door, one step at a time.
 	for (let i = 0; i < 5; i++) {
 		const step = ease(p, 0.04 + i * 0.1, 0.4 + i * 0.1);
-		figure(ctx, i, 74 + (i % 2) * 4, mix(168 + i * 14, 80 + i * 13, step), {
-			stride: step > 0 && step < 1 ? Math.sin(elapsed * pace * 8 + i) : 0
-		});
+		const d = mix(168 + i * 14, 80 + i * 13, step);
+		indoors(outside, d, () =>
+			figure(ctx, i, 74 + (i % 2) * 4, d, {
+				stride: step > 0 && step < 1 ? Math.sin(elapsed * pace * 8 + i) : 0
+			})
+		);
 	}
 }
 
