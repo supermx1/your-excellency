@@ -1,3 +1,4 @@
+import { polityColor } from './colors.js';
 // @ts-nocheck
 import { describe, expect, it } from 'vitest';
 import { runSimulation } from './world.js';
@@ -128,9 +129,13 @@ describe('shortScript', () => {
 		expect(event.kind).toBe('school');
 		expect(beat.say).toBe(`${event.year}: ${member.name} ${family.surname} ${event.text}.`);
 		const planned = planShort(run, [beat], [{ file: 'school.wav', seconds: 4 }], { town: true });
+		const ruler = run.history
+			.find((h) => h.year === event.year)
+			.polities.find((p) => p.cellIds.includes(member.cell));
 		expect(shortSceneAt(run, planned, 1).town).toMatchObject({
 			year: event.year,
-			preset: 'school'
+			preset: 'school',
+			color: polityColor(ruler.id) // the school flag flies the state that rules the family's home
 		});
 		const legacy = shortScript({ ...run, families: undefined }, inputs, summary, { town: true });
 		expect(legacy.some((b) => b.town?.familyEvent)).toBe(false);

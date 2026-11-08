@@ -320,7 +320,16 @@ function cutawaySource(run, { event, familyEvent }) {
 	const family = run.families?.[f];
 	const member = family?.members[m];
 	const record = member?.lifeEvents[i];
-	return record && { ...record, title: `${member.name} ${family.surname} ${record.text}` };
+	if (!record) return null;
+	// The state ruling the family's home that year, so the scene flies its flag.
+	const ruler = run.history
+		.find((h) => h.year === record.year)
+		?.polities.find((p) => p.cellIds?.includes(member.cell));
+	return {
+		...record,
+		polityIds: ruler ? [ruler.id] : [],
+		title: `${member.name} ${family.surname} ${record.text}`
+	};
 }
 
 function townShot(run, beat) {

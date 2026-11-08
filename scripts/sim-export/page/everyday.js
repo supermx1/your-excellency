@@ -30,11 +30,14 @@ const ease = (progress, start, end) => {
 };
 
 // Each place gets its own street, so two cutaways in one Short never look like the same room.
-function flag(ctx, x, y, t) {
+// The ruling state's flag, drawn like the Moon and Mars flags: its map colour with a white stripe.
+function flag(ctx, x, y, t, color) {
 	box(ctx, INK, x, y - 28, 1, 28);
-	for (let i = 0; i < 3; i++) {
-		const wave = Math.round(Math.sin(t * 5 - i) * 1.2);
-		box(ctx, i === 1 ? '#f4efe2' : '#1f7a3d', x + 1 + i * 4, y - 27 + wave, 4, 9);
+	for (let i = 0; i < 4; i++) {
+		const top = y - 27 + Math.round(Math.sin(t * 5 - i) * 1.2);
+		box(ctx, INK, x + 1 + i * 4, top - 1, 4, 10);
+		box(ctx, color, x + 1 + i * 4, top, 4, 8);
+		box(ctx, '#f4ecd2', x + 1 + i * 4, top + 3, 4, 2);
 	}
 }
 function mast(ctx, x, y, t) {
@@ -70,7 +73,7 @@ const SCHOOL = {
 	seam: '#c7a77f',
 	path: '#c98a5e', // laterite
 	around(ctx, shot) {
-		flag(ctx, 72, 236, shot.elapsed * shot.pace);
+		flag(ctx, 72, 236, shot.elapsed * shot.pace, shot.color ?? '#d0a24a');
 		ctx.save();
 		ctx.translate(176, 230);
 		ctx.scale(1.5, 1.2);
