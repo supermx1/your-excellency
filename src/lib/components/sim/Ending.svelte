@@ -11,16 +11,23 @@
 
 	const rows = $derived(endingRows(run, defaultData.national, summary));
 	const show = (row, v) => (typeof v === 'number' && row.key ? formatStat(row.key, v) : (v ?? '—'));
+	let open = $state(true); // minimized: the maps stay visible and the scorecard sits in a small bar
 	const btn = 'border-2 border-black px-4 py-2 font-black uppercase shadow-[4px_4px_0_0_#000]';
 </script>
 
-<section
+{#if open}<section
 	class="absolute inset-0 z-20 overflow-y-auto bg-black/50 p-4 text-black md:p-10"
 	aria-labelledby="ending-title"
 >
 	<div
-		class="mx-auto max-w-3xl border-4 border-black bg-white p-5 shadow-[6px_6px_0_0_#000] md:p-8"
+		class="relative mx-auto max-w-3xl border-4 border-black bg-white p-5 shadow-[6px_6px_0_0_#000] md:p-8"
 	>
+		<button
+			type="button"
+			class="absolute top-3 right-3 z-10 border-2 border-black bg-white px-3 py-1 text-xs font-black uppercase shadow-[3px_3px_0_0_#000] md:top-5 md:right-5"
+			aria-expanded="true"
+			onclick={() => (open = false)}>Minimize ▾</button
+		>
 		<p class="text-xs font-black tracking-[0.2em] uppercase opacity-60">The Timeline</p>
 		<h1 id="ending-title" class="text-3xl font-black uppercase md:text-5xl">
 			Their Nigeria in {run.history.at(-1).year}
@@ -55,3 +62,11 @@
 		</div>
 	</div>
 </section>
+{:else}
+	<button
+		type="button"
+		class="absolute bottom-3 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap md:top-1/2 md:bottom-auto md:mt-10 {btn} bg-white text-sm text-black"
+		aria-expanded="false"
+		onclick={() => (open = true)}>Their Nigeria in {run.history.at(-1).year} · Show scorecard ▴</button
+	>
+{/if}
