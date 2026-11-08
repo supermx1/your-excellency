@@ -137,11 +137,18 @@ const INVENTIONS = {
 	'interstellar-probe': ['send a probe to the stars', 'stars'],
 	'asteroid-mining': ['mine an asteroid', 'asteroid'],
 	satellite: ['launch the first satellite', 'launch'],
-	'fusion-power': ['switch on fusion power', 'market'],
+	'fusion-power': ['switch on fusion power', 'fusion'],
+	'conversational-ai': ['build the first AI you can talk to', 'signal'],
+	vaccines: ['vaccinate every child', 'clinic'],
+	'malaria-control': ['beat malaria with bed nets and new drugs', 'clinic'],
+	'green-revolution': ['grow the first high-yield crops', 'fields'],
+	'mobile-phone': ['make the first mobile phone call', 'signal'],
+	internet: ['switch on the first internet', 'signal'],
+	antibiotics: ['make the first antibiotics', 'clinic'],
+	fertiliser: ['make the first synthetic fertiliser', 'fields'],
 	'solar-power': ['make solar power cheap', 'market'],
-	'mobile-phone': ['make the first mobile phone call', 'market'],
-	television: ['broadcast the first television', 'market'],
-	radio: ['broadcast the first radio', 'market'],
+	television: ['broadcast the first television', 'signal'],
+	radio: ['broadcast the first radio', 'signal'],
 	'motor-car': ['build the first motor car', 'market']
 };
 const INVENTION_SHOTS = 3;
@@ -155,7 +162,11 @@ export const CUTAWAYS = [
 	'moon',
 	'mars',
 	'asteroid',
-	'stars'
+	'stars',
+	'clinic',
+	'fields',
+	'fusion',
+	'signal'
 ];
 
 /** "Kingdom of Lagos sends the first people into space" (its verb agrees with plural names too). */
