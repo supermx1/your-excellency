@@ -43,8 +43,19 @@ function layout(isSplit) {
 	if (isSplit === split) return;
 	split = isSplit;
 	const h = isSplit ? H / 2 : H;
-	Object.assign(mapCanvas.style, { top: `${isSplit ? H / 2 : 0}px`, height: `${h}px`, width: `${W}px`, left: '0px' });
-	Object.assign(realCanvas.style, { top: '0px', height: `${H / 2}px`, width: `${W}px`, left: '0px', display: isSplit ? 'block' : 'none' });
+	Object.assign(mapCanvas.style, {
+		top: `${isSplit ? H / 2 : 0}px`,
+		height: `${h}px`,
+		width: `${W}px`,
+		left: '0px'
+	});
+	Object.assign(realCanvas.style, {
+		top: '0px',
+		height: `${H / 2}px`,
+		width: `${W}px`,
+		left: '0px',
+		display: isSplit ? 'block' : 'none'
+	});
 	map.resize(W, h);
 	if (isSplit) real.resize(W, H / 2);
 }

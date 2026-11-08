@@ -2,13 +2,12 @@
 // town and the rooms: the clinic and fusion plant as rooms; fields, the phone mast, the launch range
 // and the battle as open lots in the same street; the Moon, Mars, the asteroid, orbit and deep space
 // as ground (or sky) seen from that angle. Every frame comes from the shot's progress and time only.
-import { box, house, person, crates, car, pole, wire } from './town-art.js';
+import { box, person, crates } from './town-art.js';
 import {
 	W,
 	H,
 	INK,
 	PAPER,
-	WOOD,
 	SKIN,
 	point,
 	plane,
@@ -18,14 +17,13 @@ import {
 	window as pane,
 	captionPlate,
 	monitor,
-	flag,
-	mast,
 	ease,
 	mix,
 	cutaway,
 	outdoor,
 	landscape
 } from './everyday.js';
+import { flagPole, house, kiosk, palm, wallText, plate } from './street.js';
 import {
 	rocket,
 	astronaut,
@@ -81,15 +79,16 @@ function ringAt(ctx, color, x, depth, r, height) {
 	}
 }
 
-/** Lit windows in the street's houses (the same houses yard() draws), for night scenes. */
-function litStreet(ctx) {
-	for (const [x, y, w] of [
-		[57, 14, 43],
-		[111, 22, 59],
-		[-17, 54, 59],
-		[172, 58, 66]
-	])
-		for (let i = 25; i < w - 6; i += 13) box(ctx, '#ffd98a', x + i, y + 18, 7, 6);
+/** A lattice mast with its warning light. */
+function mast(ctx, x, y, t) {
+	for (let k = 0; k < 7; k++) {
+		box(ctx, '#5c6669', x - 4 + k * 0.5, y - k * 5, 1, 5);
+		box(ctx, '#5c6669', x + 4 - k * 0.5, y - k * 5, 1, 5);
+		box(ctx, '#7d878a', x - 4 + k * 0.5, y - k * 5, 9 - k, 1);
+	}
+	box(ctx, '#d9dfd5', x - 3, y - 30, 2, 4);
+	box(ctx, '#d9dfd5', x + 2, y - 30, 2, 4);
+	box(ctx, Math.sin(t * 4) > 0 ? '#ff5a43' : '#6e3a34', x, y - 37, 2, 2);
 }
 
 // --- Rooms -----------------------------------------------------------------------------------
@@ -98,11 +97,7 @@ const CLINIC = {
 	wall: ['#e9eee4', '#b9c7bd', '#93a69b'],
 	floor: '#cfd8cf',
 	seam: '#bcc8bf',
-	path: '#c98a5e',
-	around(ctx, shot) {
-		flag(ctx, 72, 236, shot.elapsed * shot.pace, shot.color ?? '#d0a24a');
-		car(ctx, 178, 228, '#f1efe8', -1);
-	}
+	flag: true
 };
 
 /** Medicine reaches everyone: the queue comes in from the street, beds along the wall, a nurse. */
@@ -163,13 +158,8 @@ const PLANT = {
 	wall: ['#aab3bd', '#76808f', '#5d6573'],
 	floor: '#8c939c',
 	seam: '#7c838c',
-	path: '#b9b5a8',
 	dusk: true,
-	around(ctx, shot) {
-		for (const x of [28, 118]) wire(ctx, x + 1, x + 91, 186);
-		for (const x of [28, 118, 209]) pole(ctx, x, 207);
-		if (shot.progress > 0.45) litStreet(ctx);
-	}
+	lights: (shot) => shot.progress > 0.45
 };
 
 /** Fusion power: the reactor ring comes up to full glow, and the street's lights come on. */
@@ -228,13 +218,7 @@ function tractor(ctx, x, d, color) {
 			solid(ctx, wx, wd, big ? 6 : 4, 2, big ? 7 : 5, [INK, '#2a2629', INK]);
 }
 
-const FARM = {
-	lot: '#9b7a4c',
-	path: '#c98a5e',
-	around(ctx, shot) {
-		flag(ctx, 72, 236, shot.elapsed * shot.pace, shot.color ?? '#d0a24a');
-	}
-};
+const FARM = { lot: '#9b7a4c', flag: true };
 
 /** Farming: rows of crops grow green; people work the rows, and from 1950 a tractor joins them. */
 function fields(ctx, shot) {
@@ -277,14 +261,7 @@ function fields(ctx, shot) {
 	if ((shot.techs ?? []).includes('fertiliser')) crates(ctx, 160, 176);
 }
 
-const SQUARE = {
-	lot: '#8d8a84',
-	path: '#a39480',
-	dusk: true,
-	around(ctx) {
-		litStreet(ctx);
-	}
-};
+const SQUARE = { lot: '#8d8a84', dusk: true, lights: () => true };
 
 /** Phones and talking machines: a mast in the town square, and phones lighting up around it. */
 function signal(ctx, shot) {
@@ -320,13 +297,7 @@ function signal(ctx, shot) {
 	}
 }
 
-const RANGE = {
-	lot: '#b9b2a2',
-	path: '#c9b8a0',
-	around(ctx, shot) {
-		flag(ctx, 180, 236, shot.elapsed * shot.pace, shot.color ?? '#d0a24a');
-	}
-};
+const RANGE = { lot: '#b9b2a2', flag: true };
 
 /** The launch range: a pad with its tower, and a fence with the town crowded along it. */
 function range(ctx, shot) {
@@ -387,20 +358,19 @@ function landing(ctx, shot) {
 	fence(ctx, shot, p > 0.78);
 }
 
-const FIELD = {
-	lot: '#9fa26a',
-	path: '#c98a5e',
-	around() {}
-};
+const FIELD = { lot: '#9fa26a' };
 
-/** A raised flag on the floor; `raise` 0–1 lowers it (a lost battle). */
+/** A flag on the floor; as `raise` goes from 1 to 0 it comes down its pole (a lost battle). */
 function standard(ctx, x, d, color, raise, t) {
 	const [sx, sy] = point(x, d);
-	const height = Math.round(28 * raise);
-	if (height <= 0) return;
-	box(ctx, INK, Math.round(sx), Math.round(sy) - height, 1, height);
-	if (height < 20) return;
-	flag(ctx, Math.round(sx), Math.round(sy) - height + 28, t, color);
+	ctx.save();
+	ctx.translate(Math.round(sx), Math.round(sy));
+	box(ctx, INK, 0, -28, 1, 28);
+	if (raise > 0.12) {
+		ctx.translate(0, Math.round(26 * (1 - raise)));
+		flagPole(ctx, t, color);
+	}
+	ctx.restore();
 }
 
 /**
@@ -416,19 +386,26 @@ function battle(ctx, shot) {
 	const fighting = p > 0.3 && p < 0.74;
 	const loser = shot.winner === 0 ? 1 : shot.winner === 1 ? 0 : -1;
 	const retreat = ease(p, 0.72, 0.98);
-	// Smoke from a roof behind the field.
+	// A neighbour's roof burning behind the field (the zinc house at the back right).
+	const [fx, fy] = point(130, -39, 27);
 	for (let i = 0; i < 6; i++) {
 		const age = (t * 0.4 + i / 6) % 1;
 		ctx.globalAlpha = 0.7 * (1 - age);
-		disc(ctx, i % 2 ? '#5e5a58' : '#7d7874', 140 + Math.sin(i + t) * 4, 18 - age * 40, 3 + age * 6);
+		disc(
+			ctx,
+			i % 2 ? '#5e5a58' : '#7d7874',
+			fx + Math.sin(i + t) * 4 + age * 6,
+			fy - 6 - age * 34,
+			3 + age * 6
+		);
 	}
 	ctx.globalAlpha = 1;
 	for (let i = 0; i < 4; i++)
 		box(
 			ctx,
 			['#e0592a', '#f6a33a'][i % 2],
-			128 + i * 6,
-			22 - (Math.sin(t * 9 + i) > 0 ? 3 : 0),
+			Math.round(fx) - 10 + i * 5,
+			Math.round(fy) - 4 - (Math.sin(t * 9 + i) > 0 ? 3 : 0),
 			4,
 			5
 		);
@@ -477,6 +454,105 @@ function battle(ctx, shot) {
 			if (Math.sin(t * 13 + i * 2.1) > 0.85)
 				box(ctx, '#fff0b2', Math.round(sx) - 1, Math.round(sy) - 1, 3, 2);
 		}
+}
+
+/** The railway: a station house behind the line, a platform, the train pulling in, a trader arriving. */
+const STATION = { lot: '#c9a978', flag: true };
+function station(ctx, shot) {
+	const { progress: p, elapsed, pace } = shot;
+	const t = elapsed * pace;
+	house(ctx, 18, -4, 96, 30, { plaster: 0, roof: 'clay' });
+	plate(ctx, 48, 26, 9, 36, 9, '#efcf94');
+	wallText(ctx, 'RAILWAY', 66, 26, 13.5, INK);
+	plane(ctx, '#9b8b78', -220, 36, 600, 18);
+	for (let x = -200; x < 380; x += 6) plane(ctx, '#6b5a4a', x, 38, 2, 14, 0.3);
+	for (const d of [41, 48]) plane(ctx, '#d6d2c8', -220, d, 600, 1, 0.8);
+	solid(ctx, -40, 56, 230, 14, 3, ['#d9c8a6', '#b19c78', '#9b8664']);
+	// The train pulls in and stops at the platform.
+	const head = mix(-150, 112, smooth(clamp(p / 0.8, 0, 1)));
+	for (let k = 2; k >= 0; k--) {
+		const x = head - k * 34;
+		const body = k === 0 ? ['#4d6f70', '#384f50', '#2e4243'] : ['#8a7350', '#6e593e', '#5a4832'];
+		solid(ctx, x, 40, 30, 11, 12, body, 1.5);
+		for (let w = x + 4; w < x + 26; w += 7) plate(ctx, w, 51, 7, 4, 4, '#d2c19d');
+		if (k === 0) {
+			solid(ctx, x + 22, 43, 4, 4, 7, ['#3a3537', '#2c282a', '#221f21'], 13.5);
+			for (let i = 0; i < 4; i++) {
+				const age = (t * 1.2 + i / 4) % 1;
+				ctx.globalAlpha = 0.6 * (1 - age);
+				const [sx, sy] = point(x + 24 - age * 20, 45, 22 + age * 14);
+				disc(ctx, '#e0cdb1', sx, sy, 2 + age * 4);
+			}
+			ctx.globalAlpha = 1;
+		}
+	}
+	crates(ctx, ...point(10, 60, 3).map(Math.round));
+	crates(ctx, ...point(150, 58, 3).map(Math.round));
+	for (let i = 0; i < Math.min(6, shot.crowd ?? 6); i++)
+		figure(ctx, i, 20 + i * 22, 64 + (i % 2) * 3, { facing: i % 2 ? 1 : -1 });
+	// The trader walks up from the road with a sack to meet the train.
+	const walk = ease(p, 0.05, 0.85);
+	at(ctx, mix(70, 92, walk), mix(150, 72, walk), 0, 0.9, (c) =>
+		person(c, 0, 0, {
+			color: '#30685d',
+			skin: '#b37749',
+			cap: '#f0d0a0',
+			sack: true,
+			hero: true,
+			stride: walk < 1 ? Math.round(2 * Math.sin(t * 7)) : 0
+		})
+	);
+}
+
+/** A market: stalls in rows under striped awnings, traders behind them, shoppers along the lanes. */
+const MARKET = { lot: '#d8b784', flag: true };
+const AWNINGS = [
+	['#b95345', '#edc98b'],
+	['#547b72', '#f2d098'],
+	['#d09b49', '#eee0a9']
+];
+function market(ctx, shot) {
+	const t = shot.elapsed * shot.pace;
+	house(ctx, 24, -6, 100, 26, { plaster: 2, roof: 'rust' });
+	plate(ctx, 56, 20, 9, 36, 9, '#efcf94');
+	wallText(ctx, 'MARKET', 74, 20, 13.5, INK);
+	const lanes = [48, 78, 108];
+	for (const [r, d] of [30, 60, 90].entries()) {
+		for (const [c, x] of [6, 44, 82, 120].entries()) {
+			figure(ctx, r * 4 + c, x + 11, d - 2, { scale: 0.8, facing: c % 2 ? 1 : -1 });
+			solid(ctx, x, d, 24, 10, 6, ['#c99a64', '#936147', '#724b3c']);
+			for (let g = 0; g < 4; g++)
+				plane(
+					ctx,
+					['#ac603b', '#698255', '#d9a148', '#8e5847'][(g + c) % 4],
+					x + 2 + g * 5,
+					d + 2,
+					4,
+					6,
+					6.1
+				);
+			for (const [px, pd] of [
+				[x, d],
+				[x + 23, d],
+				[x, d + 9],
+				[x + 23, d + 9]
+			])
+				solid(ctx, px, pd, 1, 1, 14, [INK, INK, INK]);
+			const colors = AWNINGS[(r + c) % 3];
+			for (let k = 0; k < 6; k++) plane(ctx, colors[k % 2], x - 1 + k * 4.4, d - 2, 4.4, 14, 14);
+		}
+		// Shoppers walking the lane in front of this row.
+		for (let i = 0; i < Math.min(3, shot.crowd ?? 3); i++) {
+			const go = (t * 0.04 + i * 0.33 + r * 0.2) % 1;
+			const east = (i + r) % 2 === 0;
+			figure(ctx, i + r * 3 + 1, mix(-20, 170, east ? go : 1 - go), lanes[r] + (i % 2) * 3, {
+				facing: east ? 1 : -1,
+				stride: Math.round(Math.sin(t * 7 + i))
+			});
+		}
+	}
+	palm(ctx, 150, 6, 0.9);
+	kiosk(ctx, 138, 112);
 }
 
 // --- Other worlds ----------------------------------------------------------------------------
@@ -733,6 +809,8 @@ function probe(ctx, shot) {
 }
 
 export const RAISED_SCENES = {
+	station: outdoor(STATION, station),
+	market: outdoor(MARKET, market),
 	clinic: cutaway(CLINIC, clinic),
 	fusion: cutaway(PLANT, fusion),
 	fields: outdoor(FARM, fields),
