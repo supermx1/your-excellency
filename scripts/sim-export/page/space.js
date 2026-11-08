@@ -218,14 +218,14 @@ function crowd(ctx, shot, y) {
 	}
 }
 
-function skyline(ctx, base) {
+function skyline(ctx, base, lit = 0.4) {
 	for (let x = 0, i = 0; x < W; i++) {
 		const w = 10 + ((i * 7) % 14);
 		const h = 16 + ((i * 13) % 34);
 		box(ctx, '#3c3a55', x, base - h, w - 1, h);
 		for (let wy = base - h + 3; wy < base - 3; wy += 4)
 			for (let wx = x + 2; wx < x + w - 3; wx += 3)
-				if ((wx * 7 + wy * 3 + i) % 5 < 2) box(ctx, '#f2d36b', wx, wy, 1, 2);
+				if (((wx * 7 + wy * 3 + i) % 10) / 10 < lit) box(ctx, '#f2d36b', wx, wy, 1, 2);
 		x += w;
 	}
 }
@@ -548,4 +548,169 @@ function deep(ctx, shot) {
 }
 
 /** The cutaways this file draws, by shot preset. */
-export const SPACE_SCENES = { launch, landing, orbit, moon, mars, asteroid, stars: deep };
+const walker = (ctx, i, x, y, stride) =>
+	person(ctx, x, y, {
+		color: CLOTHES[i % CLOTHES.length],
+		skin: SKIN[i % SKIN.length],
+		cap: ['#d0b081', '#4f4f4c', '#a36a49'][i % 3],
+		stride
+	});
+
+function daylight(ctx, ground) {
+	sky(ctx, ['#8fc1d9', '#a9d0df', '#c6dfe2', '#e3ead8'], 150);
+	disc(ctx, '#f8e7a8', 172, 92, 9);
+	box(ctx, ground, 0, 148, W, H - 148);
+}
+
+/** Medicine for everyone: a queue moves into the clinic, a nurse at the door. */
+function clinic(ctx, shot) {
+	const { progress: p, elapsed: t, color } = shot;
+	daylight(ctx, '#d8b784');
+	tree(ctx, 20, 160, 1.2);
+	tree(ctx, 200, 158, 1.1);
+	box(ctx, INK, 50, 96, 116, 62);
+	box(ctx, '#eee8da', 52, 98, 112, 58);
+	shape(ctx, INK, [
+		[44, 100],
+		[108, 74],
+		[172, 100]
+	]);
+	shape(ctx, color, [
+		[49, 99],
+		[108, 77],
+		[167, 99]
+	]);
+	box(ctx, '#c9433b', 101, 106, 14, 4);
+	box(ctx, '#c9433b', 106, 101, 4, 14);
+	box(ctx, INK, 100, 126, 16, 32);
+	box(ctx, '#6a8fa6', 102, 128, 12, 30);
+	for (const wx of [62, 140]) box(ctx, '#6a8fa6', wx, 122, 14, 10);
+	person(ctx, 122, 160, { color: '#f1efe8', skin: SKIN[1], cap: '#f1efe8' });
+	// The queue steps forward; the front of it goes in through the door.
+	for (let i = 0; i < 7; i++) {
+		const step = smooth(phase(p, i * 0.1, i * 0.1 + 0.25));
+		const x = lerp(30 + i * 16, 108, step) + (1 - step) * 60;
+		if (step < 1)
+			walker(
+				ctx,
+				i,
+				Math.min(x, 200),
+				178 - (1 - step) * 4 + (i % 2) * 6,
+				step > 0 && step < 1 ? Math.round(Math.sin(t * 8 + i)) : 0
+			);
+	}
+}
+
+/** High-yield crops: the rows grow tall and green as a tractor works the field. */
+function fields(ctx, shot) {
+	const { progress: p, elapsed: t, color } = shot;
+	daylight(ctx, '#b99a5e');
+	const grow = smooth(p);
+	for (let row = 0; row < 12; row++) {
+		const y = 158 + row * 9;
+		box(ctx, '#8f6f45', 0, y + 1, W, 2);
+		for (let x = (row % 2) * 4; x < W; x += 8) {
+			const h = Math.round(2 + grow * (5 + (row % 3)));
+			box(ctx, grow > 0.5 ? '#4f8a3a' : '#8e9a50', x, y - h, 3, h);
+			if (grow > 0.8) box(ctx, '#e1c45a', x, y - h, 3, 1);
+		}
+	}
+	const tx = Math.round(lerp(-20, 236, p));
+	box(ctx, INK, tx - 12, 180, 22, 10);
+	box(ctx, color, tx - 11, 181, 20, 8);
+	box(ctx, INK, tx - 4, 172, 9, 9);
+	box(ctx, '#bfd6e0', tx - 3, 173, 7, 4);
+	disc(ctx, INK, tx - 7, 191, 4);
+	disc(ctx, INK, tx + 7, 192, 3);
+	if (Math.sin(t * 10) > 0) box(ctx, '#cdc1b0', tx - 15, 174 - (Math.floor(t * 4) % 3), 3, 2);
+	walker(ctx, 2, 40 + Math.sin(t * 0.8) * 10, 214, Math.round(Math.sin(t * 7)));
+}
+
+/** Fusion power: the reactor's ring glows, and the city lights come on. */
+function fusion(ctx, shot) {
+	const { progress: p, elapsed: t, color } = shot;
+	sky(ctx, ['#1b1f3a', '#26305a', '#3a3f6e', '#5b4f7c'], 170);
+	stars(ctx, t, { count: 40, bottom: 110 });
+	skyline(ctx, 170, 0.1 + 0.85 * smooth(phase(p, 0.25, 0.9)));
+	box(ctx, '#3f3a45', 0, 168, W, H - 168);
+	oval(ctx, INK, 108, 206, 48, 36, true);
+	oval(ctx, '#d9d6cf', 108, 206, 46, 34, true);
+	oval(ctx, '#bdb8ad', 120, 206, 30, 28, true);
+	const glow = 0.5 + 0.5 * Math.sin(t * 5);
+	box(ctx, INK, 62, 204, 92, 6);
+	box(
+		ctx,
+		phase(p, 0.1, 0.25) > 0 ? (glow > 0.5 ? '#9fe7ff' : '#5fc6f0') : '#5b5560',
+		64,
+		205,
+		88,
+		4
+	);
+	box(ctx, color, 100, 178, 16, 4);
+	for (const x of [40, 176]) {
+		box(ctx, INK, x, 168, 2, 40);
+		line(ctx, INK, x + 1, 170, x < 108 ? 0 : W, 160);
+	}
+	if (p > 0.15)
+		for (let i = 0; i < 6; i++)
+			box(
+				ctx,
+				'#9fe7ff',
+				108 + Math.round(Math.cos(t * 3 + i) * 30),
+				176 + Math.round(Math.sin(t * 3 + i) * 6),
+				2,
+				1
+			);
+}
+
+/** Phones, the internet, talking machines: a mast sends rings out over a city street at night. */
+function signal(ctx, shot) {
+	const { progress: p, elapsed: t, color } = shot;
+	sky(ctx, ['#141833', '#1f2650', '#2e3567', '#463f74'], 175);
+	stars(ctx, t, { count: 40, bottom: 120 });
+	skyline(ctx, 176, 0.7);
+	box(ctx, '#4a4553', 0, 174, W, H - 174);
+	box(ctx, '#6a6475', 0, 196, W, 3);
+	line(ctx, INK, 160, 172, 170, 70, 2);
+	line(ctx, INK, 180, 172, 170, 70, 2);
+	for (let y = 84; y < 170; y += 12) box(ctx, '#8c3b31', 166, y, 9, 1);
+	box(ctx, color, 167, 74, 7, 5);
+	box(ctx, Math.sin(t * 6) > 0 ? '#e0592a' : '#5b5560', 169, 66, 3, 3);
+	for (let k = 0; k < 3; k++) {
+		const r = Math.round(((t * 18 + k * 22) % 66) + 6);
+		for (let a = 0; a < 40; a++) {
+			const ang = Math.PI + (a / 40) * Math.PI;
+			box(
+				ctx,
+				r < 50 ? '#7fd6c8' : '#4f8f88',
+				170 + Math.round(Math.cos(ang) * r),
+				76 + Math.round(Math.sin(ang) * r * 0.6),
+				1,
+				1
+			);
+		}
+	}
+	// People on the street with glowing phones; more of them as it spreads.
+	const n = Math.round(lerp(3, 10, p));
+	for (let i = 0; i < n; i++) {
+		const x = 12 + ((i * 29) % 140);
+		const y = 192 + (i % 3) * 6;
+		walker(ctx, i, x, y, 0);
+		box(ctx, '#bff3ea', x + 3, y - 13, 2, 3);
+	}
+}
+
+/** The cutaways this file draws, by shot preset. */
+export const SPACE_SCENES = {
+	launch,
+	landing,
+	orbit,
+	moon,
+	mars,
+	asteroid,
+	stars: deep,
+	clinic,
+	fields,
+	fusion,
+	signal
+};
