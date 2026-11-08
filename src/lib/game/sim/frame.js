@@ -38,7 +38,7 @@ function epidemicCells(run, year) {
 }
 
 /** Pairs of polities at war during `year` (from war/peace events). */
-export function warsDuring(run, year) {
+function warsDuring(run, year) {
 	const wars = [];
 	for (const e of run.events) {
 		if (e.kind !== 'war' || e.year > year) continue;

@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { runSimulation } from './world.js';
 import { defaultSwitches, PRESETS } from './switches.js';
 import { shortScript, planShort, shortSceneAt, shortLabel } from './short.js';
+import { defaultData } from './data/index.js';
 
 const inputs = {
 	seed: 5,
@@ -72,50 +73,55 @@ describe('shortScript', () => {
 			'card'
 		]);
 	});
-	it('without families, drafts the station shot from a railway event in the run', () => {
+	it('shows up to four milestones, each against when it reached our Nigeria, spread over the run', () => {
 		expect(beats.some((beat) => beat.town)).toBe(false);
-		const b = shortScript({ ...run, families: [] }, inputs, summary, { town: true }).find(
-			(beat) => beat.town?.preset === 'station'
-		);
-		const event = run.events[b.town.event];
-		expect(event.techId).toBe('railway');
-		expect(event.year).toBeGreaterThan(b.from);
-		expect(event.year).toBeLessThanOrEqual(b.to);
-		expect(b.say).toContain(event.title);
-		const gap = 1898 - event.year; // our first railway in Nigeria
-		expect(b.say).toContain(
-			gap > 0
-				? `${gap} years before Nigeria's first railway in our world`
-				: gap < 0
-					? `${-gap} years after Nigeria's first railway in our world`
-					: event.title
-		);
-	});
-	it('without families, mixes world firsts with everyday scenes, one per preset and in year order', () => {
-		const genius = { ...inputs, switches: { ...inputs.switches, learning: 3 }, endYear: 2100 };
-		const r = { ...runSimulation(genius), families: [] };
-		const cut = shortScript(r, genius, summary, { town: true }).filter(
-			(b) => b.town && b.town.preset !== 'station'
-		);
-		expect(cut.length).toBeGreaterThan(0);
-		expect(cut.length).toBeLessThanOrEqual(3);
+		const cut = townBeats.filter((b) => b.town);
+		expect(cut.length).toBeGreaterThan(1);
+		expect(cut.length).toBeLessThanOrEqual(4);
 		expect(new Set(cut.map((b) => b.town.preset)).size).toBe(cut.length);
+		for (let i = 1; i < cut.length; i++)
+			expect(cut[i].to - cut[i - 1].to).toBeGreaterThanOrEqual(15);
+		for (const b of cut) {
+			const e = run.events[b.town.event];
+			expect(['adoption', 'invention']).toContain(e.kind);
+			const ours = defaultData.tech.find((t) => t.id === e.techId).nigeriaYear;
+			const n = Math.abs(ours - e.year);
+			expect(b.say).toBe(
+				`${e.year}: ${e.title}.${
+					ours === e.year
+						? ' The same year as in our Nigeria.'
+						: ` That's ${n} year${n === 1 ? '' : 's'} ${ours > e.year ? 'earlier' : 'later'} than in our Nigeria.`
+				}`
+			);
+		}
+		expect(townBeats.some((b) => b.town?.familyEvent)).toBe(false); // no family thread
+		// The scene flies the flag of the state the milestone reached.
+		const planned = planShort(run, [cut[0]], [{ file: 'a.wav', seconds: 4 }], { town: true });
+		const e = run.events[cut[0].town.event];
+		expect(shortSceneAt(run, planned, 1).town).toMatchObject({
+			year: e.year,
+			color: polityColor(e.polityIds[0])
+		});
+	});
+	it('puts the run’s world firsts first', () => {
+		const genius = { ...inputs, switches: { ...inputs.switches, learning: 3 }, endYear: 2100 };
+		const r = runSimulation(genius);
+		const cut = shortScript(r, genius, summary, { town: true }).filter((b) => b.town);
+		expect(cut.length).toBeLessThanOrEqual(4);
 		for (let i = 1; i < cut.length; i++) expect(cut[i].to).toBeGreaterThan(cut[i - 1].to);
-		// Radio, television and internet shots say the event's own title, world first or not.
-		const inventions = cut.filter(
-			(b) =>
-				r.events[b.town.event]?.worldFirst && !['broadcast', 'internet'].includes(b.town.preset)
-		);
-		const events = inventions.map((b) => r.events[b.town.event]);
-		for (const [i, e] of events.entries()) {
+		const firsts = cut.filter((b) => !b.say.includes('our Nigeria'));
+		expect(firsts.length).toBeGreaterThan(0);
+		for (const b of firsts) {
+			const e = r.events[b.town.event];
 			expect(e).toMatchObject({ kind: 'invention', worldFirst: true });
-			expect(inventions[i].say.startsWith(`${e.year}: `)).toBe(true);
-			expect(inventions[i].say).toMatch(
+			expect(b.say).toMatch(
 				/years before anyone in our world did it\.|Nobody in our world has done that yet\./
 			);
 		}
 		expect(
-			events.some((e) => ['crewed-spaceflight', 'moon-base', 'mars-landing'].includes(e.techId))
+			firsts.some((b) =>
+				['crewed-spaceflight', 'moon-base', 'mars-landing'].includes(r.events[b.town.event].techId)
+			)
 		).toBe(true);
 		// Each shot carries what the page needs: the state's colour and what it had built by then.
 		const all = shortScript(r, genius, summary, { town: true });
@@ -125,58 +131,11 @@ describe('shortScript', () => {
 			all.map((_, i) => ({ file: `audio/${i}.wav`, seconds: 4 })),
 			{ town: true }
 		);
-		const shots = p.segments
-			.filter((sg) => sg.town && sg.town.preset !== 'station')
-			.map((sg) => sg.town);
-		for (const shot of shots) {
+		for (const shot of p.segments.filter((sg) => sg.town).map((sg) => sg.town)) {
 			expect(shot.color).toMatch(/^#[0-9a-f]{6}$/);
 			if (shot.tech) expect(shot.techs).toContain(shot.tech);
 		}
 		expect(shortScript(r, genius, summary).some((b) => b.town)).toBe(false);
-	});
-	it('follows one family through the Short, introduced once, generation by generation', () => {
-		const cut = townBeats.filter((b) => b.town);
-		const family = cut.filter((b) => b.town.familyEvent);
-		expect(family.length).toBeGreaterThanOrEqual(2);
-		expect(family.length).toBeLessThanOrEqual(3);
-		expect(cut.length - family.length).toBeLessThanOrEqual(1); // at most one other scene
-		const f = family[0].town.familyEvent[0];
-		expect(family.every((b) => b.town.familyEvent[0] === f)).toBe(true);
-		const { surname, members } = run.families[f];
-		const moment = (b) => {
-			const [, m, i] = b.town.familyEvent;
-			return { m, member: members[m], event: members[m].lifeEvents[i] };
-		};
-		const first = moment(family[0]);
-		expect(family[0].say).toMatch(
-			new RegExp(`^${first.event.year}: Meet the ${surname} family of [^.]+\\. `)
-		);
-		expect(family[0].say).toContain(`${first.member.name} ${surname} ${first.event.text}.`);
-		for (let k = 1; k < family.length; k++) {
-			const [prev, now] = [moment(family[k - 1]), moment(family[k])];
-			if (now.m > prev.m) expect(family[k].say).toContain(`${prev.member.name}'s `);
-			expect(family[k].say).toContain(now.event.text);
-		}
-		// The scene flies the flag of the state ruling the family's home that year.
-		const planned = planShort(run, [family[0]], [{ file: 'a.wav', seconds: 4 }], { town: true });
-		const ruler = run.history
-			.find((h) => h.year === first.event.year)
-			.polities.find((p) => p.cellIds.includes(first.member.cell));
-		expect(shortSceneAt(run, planned, 1).town.color).toBe(polityColor(ruler.id));
-		// The result card opens on who the family is by the end.
-		expect(townBeats.at(-1).say).toMatch(new RegExp(`^In 2025, \\S+ ${surname} `));
-		const legacy = shortScript({ ...run, families: undefined }, inputs, summary, { town: true });
-		expect(legacy.some((b) => b.town?.familyEvent)).toBe(false);
-	});
-	it('can show an adopted communication technology without a world first', () => {
-		const events = run.events.filter((e) => e.kind !== 'invention');
-		const r = { ...run, events, families: [] };
-		const draft = shortScript(r, inputs, summary, { town: true });
-		const broadcast = draft.find((b) => b.town?.preset === 'broadcast');
-		const event = events[broadcast.town.event];
-		expect(event.kind).toBe('adoption');
-		expect(['radio', 'television']).toContain(event.techId);
-		expect(broadcast.say).toContain(event.title);
 	});
 	it('labels the Short with every what-if it combines', () => {
 		expect(shortLabel(inputs)).toBe('Never colonized');
