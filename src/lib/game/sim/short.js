@@ -243,12 +243,22 @@ function addRailwayBeat(run, beats, start, end) {
 	addCutaway(run, beats, event, say, 'station');
 }
 
-/** How often Nigeria formed across the summary runs, said the way a person would say it. */
-function formedLine({ runs, nigeriaFormed: n }) {
-	const lead = `I ran this world ${runs} times, and Nigeria`;
-	if (n === 0) return `${lead} never formed. Not once.`;
-	if (n === runs) return `${lead} formed every time.`;
-	return `${lead} formed ${n === 1 ? 'only once' : `in ${n} of them`}.`;
+/**
+ * What the summary runs disagreed on, said the way a person would say it. Nigeria first; when every
+ * run agrees on it (amalgamation off means it never forms), a civil war or a war count instead.
+ */
+function formedLine({ runs, nigeriaFormed: n, withCivilWar = 0, withWar = 0 }) {
+	const lead = `I ran this world ${runs} times, and`;
+	const varied = [
+		[n, 'Nigeria formed'],
+		[withCivilWar, 'a civil war broke out'],
+		[withWar, 'a war broke out']
+	].find(([k]) => k > 0 && k < runs);
+	if (varied) {
+		const [k, what] = varied;
+		return `${lead} ${what} ${k === 1 ? 'only once' : `in ${k} of them`}.`;
+	}
+	return n === 0 ? `${lead} Nigeria never formed. Not once.` : `${lead} Nigeria formed every time.`;
 }
 const ease = (k) => k * k * (3 - 2 * k);
 

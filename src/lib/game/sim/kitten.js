@@ -44,6 +44,7 @@ export function speakable(/** @type {string} */ text) {
 	return text
 		.replace(/₦\s?([\d,.]+)(\s*(?:thousand|million|billion|trillion))?/g, '$1$2 naira')
 		.replace(/(\d)\s?%/g, '$1 percent')
+		.replace(/×\s?([\d.]+)/g, '$1 times') // ×1.5 → "1.5 times": the clone voice stalls on the glyph
 		.replace(/\b(1[1-9]\d\d|20\d\d)s\b/g, (_, y) => yearWords(+y).replace(/y$/, 'ie') + 's')
 		.replace(/\b(1[1-9]\d\d|20\d\d)\b(?![.,]\d)/g, (y) => yearWords(+y))
 		.replace(/\d+(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?/g, (n) => {
