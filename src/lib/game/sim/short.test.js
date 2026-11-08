@@ -51,6 +51,8 @@ describe('shortScript', () => {
 		expect(said(1)).toMatch(/Nigeria formed only once\.$/);
 		expect(said(12)).toMatch(/Nigeria formed in 12 of them\.$/);
 		expect(said(50)).toMatch(/Nigeria formed every time\.$/);
+		const civil = shortScript(run, inputs, { ...summary, withCivilWar: 2 }).at(-1).say;
+		expect(civil).toMatch(/I ran this world 50 times, and a civil war broke out in 2 of them\.$/);
 	});
 	it('keeps a short run short: premise, what happened, result', () => {
 		const r = runSimulation({ ...inputs, startYear: 2015 });
