@@ -36,8 +36,10 @@ describe('shortScript', () => {
 		);
 		const more = { ...inputs, switches: { ...inputs.switches, coups: 'off' } };
 		expect(shortScript(run, more)[0].say).toBe(
-			'Britain never conquers the region. I changed military coups to off. I ran Nigeria from 1850 to 2025.'
+			'Britain never conquers the region. I set military coups to off. I ran Nigeria from 1850 to 2025.'
 		);
+		const power = { ...inputs, switches: { ...inputs.switches, power24hFromYear: 1960 } };
+		expect(shortScript(run, power)[0].say).toContain('I set 24-hour power from 1960.');
 	});
 	it('moves forward through the run, with one split screen and the result last', () => {
 		for (const b of beats) expect(b.from).toBeLessThanOrEqual(b.to);
@@ -52,7 +54,13 @@ describe('shortScript', () => {
 		expect(said(1)).toMatch(/Nigeria formed only once\.$/);
 		expect(said(12)).toMatch(/Nigeria formed in 12 of them\.$/);
 		expect(said(50)).toMatch(/Nigeria formed every time\.$/);
-		const civil = shortScript(run, inputs, { ...summary, withCivilWar: 2 }).at(-1).say;
+		// A civil war count only when Nigeria formed somewhere: with no Nigeria it reads as a contradiction.
+		expect(shortScript(run, inputs, { ...summary, withCivilWar: 1 }).at(-1).say).toMatch(
+			/Nigeria never formed\. Not once\.$/
+		);
+		const civil = shortScript(run, inputs, { ...summary, nigeriaFormed: 50, withCivilWar: 2 }).at(
+			-1
+		).say;
 		expect(civil).toMatch(/I ran this world 50 times, and a civil war broke out in 2 of them\.$/);
 	});
 	it('keeps a short run short: premise, what happened, result', () => {
@@ -64,9 +72,11 @@ describe('shortScript', () => {
 			'card'
 		]);
 	});
-	it('drafts the station shot from a railway event in the run', () => {
+	it('without families, drafts the station shot from a railway event in the run', () => {
 		expect(beats.some((beat) => beat.town)).toBe(false);
-		const b = townBeats.find((beat) => beat.town?.preset === 'station');
+		const b = shortScript({ ...run, families: [] }, inputs, summary, { town: true }).find(
+			(beat) => beat.town?.preset === 'station'
+		);
 		const event = run.events[b.town.event];
 		expect(event.techId).toBe('railway');
 		expect(event.year).toBeGreaterThan(b.from);
@@ -81,9 +91,9 @@ describe('shortScript', () => {
 					: event.title
 		);
 	});
-	it('mixes world firsts with everyday scenes, one per preset and in year order', () => {
+	it('without families, mixes world firsts with everyday scenes, one per preset and in year order', () => {
 		const genius = { ...inputs, switches: { ...inputs.switches, learning: 3 }, endYear: 2100 };
-		const r = runSimulation(genius);
+		const r = { ...runSimulation(genius), families: [] };
 		const cut = shortScript(r, genius, summary, { town: true }).filter(
 			(b) => b.town && b.town.preset !== 'station'
 		);
@@ -91,7 +101,11 @@ describe('shortScript', () => {
 		expect(cut.length).toBeLessThanOrEqual(3);
 		expect(new Set(cut.map((b) => b.town.preset)).size).toBe(cut.length);
 		for (let i = 1; i < cut.length; i++) expect(cut[i].to).toBeGreaterThan(cut[i - 1].to);
-		const inventions = cut.filter((b) => r.events[b.town.event]?.worldFirst);
+		// Radio, television and internet shots say the event's own title, world first or not.
+		const inventions = cut.filter(
+			(b) =>
+				r.events[b.town.event]?.worldFirst && !['broadcast', 'internet'].includes(b.town.preset)
+		);
 		const events = inventions.map((b) => r.events[b.town.event]);
 		for (const [i, e] of events.entries()) {
 			expect(e).toMatchObject({ kind: 'invention', worldFirst: true });
@@ -120,23 +134,37 @@ describe('shortScript', () => {
 		}
 		expect(shortScript(r, genius, summary).some((b) => b.town)).toBe(false);
 	});
-	it('uses a recorded school day and can still draft older runs without families', () => {
-		const beat = townBeats.find((b) => b.town?.preset === 'school');
-		const [f, m, i] = beat.town.familyEvent;
-		const family = run.families[f];
-		const member = family.members[m];
-		const event = member.lifeEvents[i];
-		expect(event.kind).toBe('school');
-		expect(beat.say).toBe(`${event.year}: ${member.name} ${family.surname} ${event.text}.`);
-		const planned = planShort(run, [beat], [{ file: 'school.wav', seconds: 4 }], { town: true });
+	it('follows one family through the Short, introduced once, generation by generation', () => {
+		const cut = townBeats.filter((b) => b.town);
+		const family = cut.filter((b) => b.town.familyEvent);
+		expect(family.length).toBeGreaterThanOrEqual(2);
+		expect(family.length).toBeLessThanOrEqual(3);
+		expect(cut.length - family.length).toBeLessThanOrEqual(1); // at most one other scene
+		const f = family[0].town.familyEvent[0];
+		expect(family.every((b) => b.town.familyEvent[0] === f)).toBe(true);
+		const { surname, members } = run.families[f];
+		const moment = (b) => {
+			const [, m, i] = b.town.familyEvent;
+			return { m, member: members[m], event: members[m].lifeEvents[i] };
+		};
+		const first = moment(family[0]);
+		expect(family[0].say).toMatch(
+			new RegExp(`^${first.event.year}: Meet the ${surname} family of [^.]+\\. `)
+		);
+		expect(family[0].say).toContain(`${first.member.name} ${surname} ${first.event.text}.`);
+		for (let k = 1; k < family.length; k++) {
+			const [prev, now] = [moment(family[k - 1]), moment(family[k])];
+			if (now.m > prev.m) expect(family[k].say).toContain(`${prev.member.name}'s `);
+			expect(family[k].say).toContain(now.event.text);
+		}
+		// The scene flies the flag of the state ruling the family's home that year.
+		const planned = planShort(run, [family[0]], [{ file: 'a.wav', seconds: 4 }], { town: true });
 		const ruler = run.history
-			.find((h) => h.year === event.year)
-			.polities.find((p) => p.cellIds.includes(member.cell));
-		expect(shortSceneAt(run, planned, 1).town).toMatchObject({
-			year: event.year,
-			preset: 'school',
-			color: polityColor(ruler.id) // the school flag flies the state that rules the family's home
-		});
+			.find((h) => h.year === first.event.year)
+			.polities.find((p) => p.cellIds.includes(first.member.cell));
+		expect(shortSceneAt(run, planned, 1).town.color).toBe(polityColor(ruler.id));
+		// The result card opens on who the family is by the end.
+		expect(townBeats.at(-1).say).toMatch(new RegExp(`^In 2025, \\S+ ${surname} `));
 		const legacy = shortScript({ ...run, families: undefined }, inputs, summary, { town: true });
 		expect(legacy.some((b) => b.town?.familyEvent)).toBe(false);
 	});
