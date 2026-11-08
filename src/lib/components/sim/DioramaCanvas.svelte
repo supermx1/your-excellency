@@ -46,7 +46,12 @@
 	// --- map controls -------------------------------------------------------------
 	const pointers = new Map();
 	let gesture = null;
-	const view = () => ({ target: camera.target, zoom: camera.zoom, yaw: camera.yaw ?? 0, tilt: camera.tilt ?? DEFAULT_TILT });
+	const view = () => ({
+		target: camera.target,
+		zoom: camera.zoom,
+		yaw: camera.yaw ?? 0,
+		tilt: camera.tilt ?? DEFAULT_TILT
+	});
 	const clampZoom = (z) => Math.min(4, Math.max(0.6, z));
 	const local = (e) => {
 		const r = e.currentTarget.getBoundingClientRect();
@@ -59,7 +64,13 @@
 		e.currentTarget.setPointerCapture(e.pointerId);
 		pointers.set(e.pointerId, [e.clientX, e.clientY]);
 		const turn = e.button === 2 || e.shiftKey;
-		gesture = { start: [e.clientX, e.clientY], last: [e.clientX, e.clientY], moved: false, turn, view: view() };
+		gesture = {
+			start: [e.clientX, e.clientY],
+			last: [e.clientX, e.clientY],
+			moved: false,
+			turn,
+			view: view()
+		};
 		if (pointers.size === 2) {
 			const [a, b] = [...pointers.values()];
 			gesture.pinch = { dist: Math.hypot(a[0] - b[0], a[1] - b[1]), zoom: view().zoom };
@@ -73,7 +84,8 @@
 			return;
 		}
 		pointers.set(e.pointerId, [e.clientX, e.clientY]);
-		if (Math.hypot(e.clientX - gesture.start[0], e.clientY - gesture.start[1]) > 4) gesture.moved = true;
+		if (Math.hypot(e.clientX - gesture.start[0], e.clientY - gesture.start[1]) > 4)
+			gesture.moved = true;
 		if (!gesture.moved) return;
 		onHover?.(null);
 		if (gesture.pinch && pointers.size === 2) {
@@ -122,7 +134,17 @@
 		<canvas {@attach mount} class="block h-full w-full" aria-hidden="true"></canvas>
 	</div>
 {:else}
-	<div class="relative h-full w-full" role="img" aria-label={label}>
+	<!-- Not movable, but the mouse still names the state under it. -->
+	<div
+		class="relative h-full w-full"
+		role="img"
+		aria-label={label}
+		onpointermove={(e) =>
+			e.pointerType === 'mouse' &&
+			diorama &&
+			onHover?.(diorama.pick(...local(e)), e.clientX, e.clientY)}
+		onpointerleave={() => onHover?.(null)}
+	>
 		<canvas {@attach mount} class="block h-full w-full" aria-hidden="true"></canvas>
 	</div>
 {/if}
