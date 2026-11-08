@@ -1,204 +1,69 @@
-// Roofless rooms viewed from the same elevated angle as the town. Motion is driven by shot time.
+// Roofless rooms on the isometric street: the school, the internet lab, the studio, a home getting
+// power, a workshop, and the shared room, framing and furniture the other cutaways use too.
 import {
-	aerial,
-	box,
-	car,
-	crates,
-	house,
-	person,
-	pole,
-	shape,
-	stall,
-	tree,
-	wire
-} from './town-art.js';
+	W,
+	H,
+	INK,
+	PAPER,
+	SKIN,
+	SHIRTS,
+	mix,
+	ease,
+	point,
+	plane,
+	solid,
+	wallRect,
+	plate,
+	wallText,
+	walker,
+	street,
+	streetFront
+} from './street.js';
+import { box } from './town-art.js';
 
-const W = 216;
-const H = 270;
-const INK = '#302a34';
-const PAPER = '#f1dfb4';
-const WOOD = ['#cb9563', '#936147', '#724b3c'];
+export { W, H, INK, PAPER, SKIN, SHIRTS, mix, ease, point, plane, solid, plate };
+export const WOOD = ['#cb9563', '#936147', '#724b3c'];
 const TEAL = ['#83aaa0', '#597f77', '#425f60'];
-const CLAY_ROOF = ['#a86749', '#cb8960', '#784f40'];
-const TIN_ROOF = ['#738279', '#a0a993', '#52655e'];
-const SKIN = ['#966041', '#b78054', '#764c3a'];
-const SHIRTS = ['#aa5747', '#536f82', '#6b8261', '#b88148'];
-const mix = (a, b, t) => a + (b - a) * t;
-const ease = (progress, start, end) => {
-	const t = Math.max(0, Math.min(1, (progress - start) / (end - start)));
-	return t * t * (3 - 2 * t);
-};
 
-// Each place gets its own street, so two cutaways in one Short never look like the same room.
-// The ruling state's flag, drawn like the Moon and Mars flags: its map colour with a white stripe.
-function flag(ctx, x, y, t, color) {
-	box(ctx, INK, x, y - 28, 1, 28);
-	for (let i = 0; i < 4; i++) {
-		const top = y - 27 + Math.round(Math.sin(t * 5 - i) * 1.2);
-		box(ctx, INK, x + 1 + i * 4, top - 1, 4, 10);
-		box(ctx, color, x + 1 + i * 4, top, 4, 8);
-		box(ctx, '#f4ecd2', x + 1 + i * 4, top + 3, 4, 2);
-	}
-}
-function mast(ctx, x, y, t) {
-	for (let k = 0; k < 7; k++) {
-		box(ctx, '#5c6669', x - 4 + k * 0.5, y - k * 5, 1, 5);
-		box(ctx, '#5c6669', x + 4 - k * 0.5, y - k * 5, 1, 5);
-		box(ctx, '#7d878a', x - 4 + k * 0.5, y - k * 5, 9 - k, 1);
-	}
-	box(ctx, '#d9dfd5', x - 3, y - 30, 2, 4);
-	box(ctx, '#d9dfd5', x + 2, y - 30, 2, 4);
-	box(ctx, Math.sin(t * 4) > 0 ? '#ff5a43' : '#6e3a34', x, y - 37, 2, 2);
-}
-function dish(ctx, x, y) {
-	box(ctx, INK, x + 4, y + 2, 1, 5);
-	shape(ctx, INK, [
-		[x - 1, y - 6],
-		[x + 10, y - 2],
-		[x + 8, y + 3],
-		[x, y + 1]
-	]);
-	shape(ctx, '#e3e3d8', [
-		[x, y - 5],
-		[x + 9, y - 2],
-		[x + 7, y + 2],
-		[x + 1, y]
-	]);
-}
-const lit = (shot) => ease(shot.progress, 0.26, 0.52) > 0.5;
-
-const SCHOOL = {
-	wall: ['#f0cc91', '#c39967', '#a07758'],
-	floor: '#d8b98c',
-	seam: '#c7a77f',
-	path: '#c98a5e', // laterite
-	around(ctx, shot) {
-		flag(ctx, 72, 236, shot.elapsed * shot.pace, shot.color ?? '#d0a24a');
-		ctx.save();
-		ctx.translate(176, 230);
-		ctx.scale(1.5, 1.2);
-		car(ctx, 0, 0, '#e8b437', -1);
-		ctx.restore();
-	}
-};
-const LAB = {
-	wall: ['#b9c4a4', '#879e90', '#668477'],
-	floor: '#a5afa0',
-	seam: '#97a495',
-	path: '#b9b5a8', // tarred
-	around(ctx, shot) {
-		mast(ctx, 105, 62, shot.elapsed * shot.pace);
-		car(ctx, 40, 228, '#3f5e86');
-	}
-};
-const STUDIO = {
-	wall: ['#e6bd9a', '#a87776', '#855b62'],
-	floor: '#b58d84',
-	seam: '#a37d76',
-	around(ctx) {
-		aerial(ctx, 195, 54);
-		dish(ctx, 150, 26);
-		car(ctx, 182, 228, '#e9e4d6', -1);
-	}
-};
-const HOME = {
-	wall: ['#e2bc8b', '#ad8369', '#795e57'],
-	floor: '#a68c77',
-	seam: '#947e6d',
-	dusk: true,
-	around(ctx, shot) {
-		// The street gets power with the house: poles, wires, and the neighbours' windows light up.
-		for (const x of [28, 118]) wire(ctx, x + 1, x + 91, 186);
-		for (const x of [28, 118, 209]) pole(ctx, x, 207);
-		if (!lit(shot)) return;
-		for (const [x, y, w] of [
-			[57, 14, 43],
-			[111, 22, 59],
-			[-17, 54, 59],
-			[172, 58, 66]
-		])
-			for (let i = 25; i < w - 6; i += 13) box(ctx, '#ffd98a', x + i, y + 18, 7, 6);
-	}
-};
-const SHOP = {
-	wall: ['#efc992', '#b48866', '#90664d'],
-	floor: '#cfa878',
-	seam: '#bb946e',
-	around(ctx) {
-		stall(ctx, 28, 222, ['#ad4e43', '#efd9a8']);
-		stall(ctx, 158, 222, ['#3d7a5c', '#efd9a8']);
-		crates(ctx, 170, 180);
-	}
-};
-
-// x and depth are positions on the floor. Height raises an object towards the back of the image.
-const point = (x, depth, height = 0) => [23 + x + depth * 0.14, 92 + depth * 0.76 - height];
-
-function plane(ctx, color, x, y, w, d, z = 0) {
-	shape(ctx, color, [
-		point(x, y, z),
-		point(x + w, y, z),
-		point(x + w, y + d, z),
-		point(x, y + d, z)
-	]);
+/** A sign with its text, on the back wall (axis 'x') or the left wall (axis 'd'). */
+export function captionPlate(ctx, text, x, y, z, width, fill, ink = PAPER, axis = 'x') {
+	plate(ctx, x, y, z, width, 10, fill, INK, axis);
+	const [cx, cy] = axis === 'x' ? [x + width / 2, y] : [x, y + width / 2];
+	wallText(ctx, text, cx, cy, z + 5, ink, axis);
 }
 
-function solid(ctx, x, y, w, d, h, [top, front, side], z = 0) {
-	const face = z + h;
-	shape(ctx, side, [point(x, y, z), point(x, y + d, z), point(x, y + d, face), point(x, y, face)]);
-	shape(ctx, front, [
-		point(x, y + d, z),
-		point(x + w, y + d, z),
-		point(x + w, y + d, face),
-		point(x, y + d, face)
-	]);
-	plane(ctx, top, x, y, w, d, face);
+/** A window with its frame and sill. */
+export function window(ctx, x, w, glass, { y = 6, axis = 'x' } = {}) {
+	plate(ctx, x, y, 7, w, 14, glass, INK, axis);
+	const [mx, my] = axis === 'x' ? [x + w / 2, y] : [x, y + w / 2];
+	wallRect(ctx, '#4f534e', mx, my, 8, 1, 12, axis);
+	wallRect(
+		ctx,
+		'#4f534e',
+		x + (axis === 'x' ? 1 : 0),
+		y + (axis === 'd' ? 1 : 0),
+		13,
+		w - 2,
+		1,
+		axis
+	);
+	wallRect(
+		ctx,
+		PAPER,
+		x - (axis === 'x' ? 1 : 0),
+		y - (axis === 'd' ? 1 : 0),
+		5.5,
+		w + 2,
+		1.5,
+		axis
+	);
 }
 
-function plate(ctx, x, y, z, w, h, color, edge = INK) {
-	const [left, bottom] = point(x, y, z);
-	box(ctx, edge, left, bottom - h, w, h);
-	box(ctx, color, left + 1, bottom - h + 1, w - 2, h - 2);
+export function figure(ctx, i, x, y, { scale = 0.9, stride = 0, facing = 1, hero = false } = {}) {
+	walker(ctx, i, x, y, { stride, facing, hero }, scale);
 }
 
-function label(ctx, text, x, y, color) {
-	ctx.font = 'bold 6px monospace';
-	ctx.textAlign = 'center';
-	ctx.fillStyle = color;
-	ctx.fillText(text, x, y);
-}
-
-function captionPlate(ctx, text, x, y, z, width, fill, ink = PAPER) {
-	plate(ctx, x, y, z, width, 10, fill);
-	const [left, bottom] = point(x, y, z);
-	label(ctx, text, left + width / 2, bottom - 3, ink);
-}
-
-function window(ctx, x, w, glass) {
-	plate(ctx, x, 6, 7, w, 14, glass);
-	const [left, bottom] = point(x, 6, 7);
-	box(ctx, '#4f534e', left + w / 2, bottom - 13, 1, 12);
-	box(ctx, '#4f534e', left + 1, bottom - 7, w - 2, 1);
-	box(ctx, PAPER, left - 1, bottom, w + 2, 2);
-}
-
-function figure(ctx, i, x, y, { scale = 0.9, stride = 0, facing = 1, hero = false } = {}) {
-	const [left, bottom] = point(x, y);
-	ctx.save();
-	ctx.translate(left, bottom);
-	ctx.scale(scale, scale);
-	person(ctx, 0, 0, {
-		color: SHIRTS[i % SHIRTS.length],
-		skin: SKIN[i % SKIN.length],
-		cap: i % 3 === 0 ? PAPER : '#574039',
-		stride,
-		facing,
-		hero
-	});
-	ctx.restore();
-}
-
-function table(ctx, x, y, w, d, colors = WOOD) {
+export function table(ctx, x, y, w, d, colors = WOOD) {
 	for (const leg of [x + 2, x + w - 4])
 		solid(ctx, leg, y + d - 3, 2, 2, 7, ['#755043', '#634437', '#51403b']);
 	solid(ctx, x, y, w, d, 3, colors, 7);
@@ -209,73 +74,71 @@ function book(ctx, x, y, color) {
 	plane(ctx, '#b69b77', x + 4, y, 0.7, 6, 11.05);
 }
 
-function yard(ctx, site, shot) {
-	const grass = site.dusk ? '#6f796e' : '#a6a76e';
-	const path = site.path ?? (site.dusk ? '#a39480' : '#dfc08d');
-	box(ctx, grass, -24, -24, W + 48, H + 48);
-	box(ctx, site.dusk ? '#8c8877' : '#c9af7f', -24, 49, W + 48, 25);
-	box(ctx, site.dusk ? '#7b796d' : '#b8a276', -24, 73, W + 48, 2);
-	box(ctx, path, -24, 206, W + 48, 36);
-	box(ctx, site.dusk ? '#8d8174' : '#ba9b6e', -24, 241, W + 48, 2);
-	plane(ctx, path, 62, 120, 29, 38);
-	plane(ctx, site.dusk ? '#756d61' : '#988260', -4, -1, 163, 131);
-	for (let i = 0; i < 135; i++) {
-		const x = ((i * 97) % 227) - 5;
-		const y = (i * 53) % 267;
-		if (y > 202 && y < 242) box(ctx, site.dusk ? '#afa08b' : '#e9cf9e', x, y, 2, 0.7);
-		else box(ctx, site.dusk ? '#82867a' : '#b6b47c', x, y, 2, 0.7);
-	}
-	house(ctx, 57, 14, 43, CLAY_ROOF);
-	house(ctx, 111, 22, 59, TIN_ROOF);
-	house(ctx, -17, 54, 59, TIN_ROOF);
-	house(ctx, 172, 58, 66, CLAY_ROOF);
-	tree(ctx, 46, 50, 0.59);
-	tree(ctx, 14, 132, 0.67);
-	tree(ctx, 202, 130, 0.73);
-	tree(ctx, 8, 202, 0.84);
-	tree(ctx, 206, 202, 0.85);
-	crates(ctx, 7, 177);
-	site.around(ctx, shot);
+export function monitor(ctx, x, y, lit, activity) {
+	solid(ctx, x, y, 23, 12, 15, ['#a4b4a5', '#778e86', '#586f6d'], 10);
+	plate(ctx, x + 3, y + 12, 12, 17, 11, lit ? '#25474e' : '#354b51');
+	for (let i = 0; i < 3; i++)
+		wallRect(
+			ctx,
+			'#a9dec1',
+			x + 6,
+			y + 12,
+			15 + i * 2,
+			(10 - i) * ease(activity, i / 4, i / 4 + 0.42),
+			0.8
+		);
 }
 
+/** The room: floor, two tall back walls, and the near walls cut low so the floor stays in view. */
 function room(ctx, site, shot) {
-	yard(ctx, site, shot);
+	street(ctx, site, shot);
 	solid(ctx, 0, 0, 153, 124, 2, [site.floor, site.seam, '#8e785e']);
 	for (let y = 13; y < 120; y += 10) plane(ctx, site.seam, 3, y, 147, 0.7, 2);
+	solid(ctx, 0, 0, 4, 124, 29, site.wall);
 	solid(ctx, 0, 0, 153, 6, 29, site.wall);
-	// The near and side walls are cut low so the floor plan remains visible.
-	solid(ctx, 0, 6, 4, 117, 8, site.wall);
 	solid(ctx, 149, 6, 4, 117, 8, site.wall);
 }
 
+/** The near wall with its doorway, then the street in front. */
 function frontage(ctx, site, shot) {
 	solid(ctx, 0, 121, 63, 4, 8, site.wall);
 	solid(ctx, 91, 121, 62, 4, 8, site.wall);
-	for (let i = 0; i < Math.min(3, shot.crowd); i++) {
-		const travel = (shot.elapsed * shot.pace * 0.07 + 0.33 * i) % 1;
-		const east = i % 2 === 0;
-		figure(ctx, i + 1, mix(-54, 191, east ? travel : 1 - travel), 159 + 9 * (i % 2), {
-			scale: 0.74,
-			facing: east ? 1 : -1,
-			stride: Math.sin(shot.elapsed * shot.pace * 7 + i)
-		});
-	}
+	streetFront(ctx, site, shot);
 }
+
+const SCHOOL = {
+	wall: ['#f0cc91', '#c39967', '#a07758'],
+	floor: '#d8b98c',
+	seam: '#c7a77f',
+	flag: true
+};
+const LAB = { wall: ['#b9c4a4', '#879e90', '#668477'], floor: '#a5afa0', seam: '#97a495' };
+const STUDIO = { wall: ['#e6bd9a', '#a87776', '#855b62'], floor: '#b58d84', seam: '#a37d76' };
+const lit = (shot) => ease(shot.progress, 0.26, 0.52) > 0.5;
+const HOME = {
+	wall: ['#e2bc8b', '#ad8369', '#795e57'],
+	floor: '#a68c77',
+	seam: '#947e6d',
+	dusk: true,
+	lights: lit // the street gets power with the house
+};
+const SHOP = { wall: ['#efc992', '#b48866', '#90664d'], floor: '#cfa878', seam: '#bb946e' };
 
 function school(ctx, shot) {
 	window(ctx, 14, 20, '#93b4ac');
 	window(ctx, 120, 20, '#93b4ac');
+	window(ctx, 30, 20, '#93b4ac', { y: 4, axis: 'd' });
 	plate(ctx, 41, 6, 6, 69, 20, '#36584e', '#6f4f3b');
-	const [chalkX, chalkY] = point(49, 6, 14);
 	const lesson = ease(shot.progress, 0.09, 0.66);
-	label(
+	wallText(
 		ctx,
-		['A', 'A   B', 'A   B   C'][Math.min(2, Math.floor(lesson * 3))].padEnd(9),
-		chalkX + 24,
-		chalkY - 3,
+		['A', 'A  B', 'A  B  C'][Math.min(2, Math.floor(lesson * 3))],
+		75,
+		6,
+		17,
 		'#eee6bc'
 	);
-	box(ctx, '#bbcaad', chalkX, chalkY + 3, 48 * lesson, 0.9);
+	wallRect(ctx, '#bbcaad', 49, 6, 11, 48 * lesson, 0.9);
 	figure(ctx, 1, mix(87, 67, lesson), 23, { stride: Math.sin(lesson * Math.PI * 3) });
 	for (const [row, y] of [39, 65, 91].entries()) {
 		for (const [col, x] of [17, 61, 105].entries()) {
@@ -287,23 +150,14 @@ function school(ctx, shot) {
 	}
 }
 
-function monitor(ctx, x, y, lit, activity) {
-	solid(ctx, x, y, 23, 12, 15, ['#a4b4a5', '#778e86', '#586f6d'], 10);
-	plate(ctx, x + 3, y + 12, 12, 17, 11, lit ? '#25474e' : '#354b51');
-	const [left, bottom] = point(x + 6, y + 12, 15);
-	for (let i = 0; i < 3; i++)
-		box(ctx, '#a9dec1', left, bottom - i * 2, (10 - i) * ease(activity, i / 4, i / 4 + 0.42), 0.8);
-}
-
 function internet(ctx, shot) {
 	const { progress, elapsed, pace } = shot;
 	captionPlate(ctx, progress < 0.5 ? 'LINKING' : 'CONNECTED', 48, 6, 11, 57, '#325e61');
 	for (const x of [15, 122]) {
 		solid(ctx, x, 12, 14, 13, 24, ['#b6c4ad', '#4d6764', '#405557']);
-		const [left, bottom] = point(x + 2, 25, 5);
 		for (let i = 0; i < 5; i++) {
-			box(ctx, '#769e8a', left, bottom - 4 * i, 10, 2);
-			box(ctx, '#c0e5ae', left + 2, bottom - 4 * i, 1, 1);
+			wallRect(ctx, '#769e8a', x + 2, 25, 5 + 4 * i, 10, 2);
+			wallRect(ctx, '#c0e5ae', x + 4, 25, 5 + 4 * i, 1, 1);
 		}
 	}
 	const send = ease(progress, 0.14, 0.49);
@@ -381,10 +235,10 @@ function workshop(ctx, shot) {
 	window(ctx, 119, 19, '#a5afa0');
 	const opening = ease(shot.progress, 0.12, 0.61);
 	plate(ctx, 21, 7, 3, 19, 20, '#604a3d');
-	const [doorX, doorY] = point(22, 7, 3);
-	box(ctx, '#a7785a', doorX, doorY - 19, 17, 18 * (1 - opening));
+	const shutter = 18 * (1 - opening);
+	wallRect(ctx, '#a7785a', 22, 7, 22 - shutter, 17, shutter);
 	for (const offset of [4, 8, 12, 16])
-		if (offset < 18 * (1 - opening)) box(ctx, '#c18d66', doorX, doorY - 19 + offset, 17, 1);
+		if (offset < shutter) wallRect(ctx, '#c18d66', 22, 7, 22 - offset, 17, 1);
 	for (const x of [13, 56, 106]) {
 		table(ctx, x, 26, 28, 14);
 		for (let i = 0; i < 3; i++)
@@ -401,21 +255,40 @@ function workshop(ctx, shot) {
 	});
 }
 
-function cutaway(site, draw) {
-	return (ctx, shot) => {
-		// Open on the room filling the frame, then push in: the people are the subject, not the yard.
-		const travel = ease(shot.progress, 0, 0.94);
-		const zoom = 1.14 + (shot.zoom - 1) * travel * 0.5;
-		ctx.save();
-		ctx.translate(W / 2 + 2 * (1 - travel), 132);
-		ctx.scale(zoom, zoom);
-		ctx.translate(-W / 2 - 2, -126);
+/** Opens on the set filling the frame, then pushes in: the people are the subject, not the street. */
+function framed(ctx, shot, paint) {
+	const travel = ease(shot.progress, 0, 0.94);
+	const zoom = 1.14 + (shot.zoom - 1) * travel * 0.5;
+	ctx.save();
+	ctx.translate(W / 2 + 2 * (1 - travel), 132);
+	ctx.scale(zoom, zoom);
+	ctx.translate(-W / 2 - 2, -126);
+	paint();
+	ctx.restore();
+}
+
+/** A roofless room in its street. */
+export const cutaway = (site, draw) => (ctx, shot) =>
+	framed(ctx, shot, () => {
 		room(ctx, site, shot);
 		draw(ctx, shot);
 		frontage(ctx, site, shot);
-		ctx.restore();
-	};
-}
+	});
+
+/** The same street with an open lot where the room would be (`site.lot` is its ground). */
+export const outdoor = (site, draw) => (ctx, shot) =>
+	framed(ctx, shot, () => {
+		street(ctx, site, shot);
+		draw(ctx, shot);
+		streetFront(ctx, site, shot);
+	});
+
+/** Somewhere with no street (the Moon, Mars, orbit): `backdrop` paints the whole ground. */
+export const landscape = (backdrop, draw) => (ctx, shot) =>
+	framed(ctx, shot, () => {
+		backdrop(ctx, shot);
+		draw(ctx, shot);
+	});
 
 export const EVERYDAY_SCENES = {
 	school: cutaway(SCHOOL, school),

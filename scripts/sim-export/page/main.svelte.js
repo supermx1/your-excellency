@@ -22,7 +22,13 @@ const map = new Diorama(mapCanvas, { pixelRatio: 1 });
 const real = new Diorama(realCanvas, { pixelRatio: 1 });
 real.popLabels = true;
 
-const props = $state({ scene: null, card, label: card.label, startYear: plan.from, endYear: plan.to });
+const props = $state({
+	scene: null,
+	card,
+	label: card.label,
+	startYear: plan.from,
+	endYear: plan.to
+});
 mount(Overlay, { target: document.getElementById('hf-hud'), props });
 
 let split = null;
