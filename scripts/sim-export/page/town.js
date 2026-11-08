@@ -13,6 +13,9 @@ import {
 	wire
 } from './town-art.js';
 import { SPACE_SCENES } from './space.js';
+import { EVERYDAY_SCENES } from './everyday.js';
+
+const CUTAWAY_VIEWS = { ...SPACE_SCENES, ...EVERYDAY_SCENES };
 
 const VIEW = [216, 270];
 const WORLD = [336, 392];
@@ -291,9 +294,10 @@ export function createTownView(canvas) {
 	ctx.imageSmoothingEnabled = false;
 	const backgrounds = new Map();
 	return (shot) => {
-		if (SPACE_SCENES[shot.preset]) {
+		const drawCutaway = CUTAWAY_VIEWS[shot.preset];
+		if (drawCutaway) {
 			ctx.setTransform(OUTPUT_SCALE, 0, 0, OUTPUT_SCALE, 0, 0);
-			SPACE_SCENES[shot.preset](ctx, shot);
+			drawCutaway(ctx, shot);
 			return;
 		}
 		const set = SETS[shot.preset];
