@@ -1,7 +1,7 @@
 // @ts-nocheck
 // Polities: stability, armies, coups, secessions and unions. Same rules for every polity.
 import { PARAMS as P } from '../params.js';
-import { borders, transferCell } from './conflict.js';
+import { borders, transferCell, verb } from './conflict.js';
 
 const COUPS = { off: 0, history: 0.5, likely: 2 };
 const TRUST = { low: 1.5, history: 1, high: 0.5 };
@@ -21,17 +21,29 @@ export function stepPolities(world) {
 		const tension = avg(cells, (c) => c.tension);
 		const income = avg(cells, (c) => c.incomePc);
 		const target =
-			0.55 + 0.15 * Math.min(1, Math.log10(income / 500)) - 0.5 * tension - 0.15 * (p.atWarWith.length > 0) +
+			0.55 +
+			0.15 * Math.min(1, Math.log10(income / 500)) -
+			0.5 * tension -
+			0.15 * (p.atWarWith.length > 0) +
 			CORRUPTION[sw.corruption ?? 'history'];
-		p.stability = Math.min(1, Math.max(0, p.stability + (target - p.stability) * 0.15 + (world.rand() - 0.5) * 0.04));
+		p.stability = Math.min(
+			1,
+			Math.max(0, p.stability + (target - p.stability) * 0.15 + (world.rand() - 0.5) * 0.04)
+		);
 		p.army = 0.015 + 0.02 * (p.atWarWith.length > 0);
 
-		if (coupMult && !p.british && world.rand() < P.coupBase * coupMult * (1 - p.stability)) coup(world, p);
+		if (coupMult && !p.british && world.rand() < P.coupBase * coupMult * (1 - p.stability))
+			coup(world, p);
 		else if (p.government === 'military' && world.rand() < 0.06) {
 			// Hand power back to whatever ruled before (a kingdom stays a kingdom), worded for the era.
 			const before = p.governmentBeforeCoup ?? 'republic';
 			const modern = ['republic', 'federation', 'colony'].includes(before);
-			setGovernment(world, p, before, modern ? `Civilian rule returns in ${p.name}` : `The old order is restored in ${p.name}`);
+			setGovernment(
+				world,
+				p,
+				before,
+				modern ? `Civilian rule returns in ${p.name}` : `The old order is restored in ${p.name}`
+			);
 		}
 	}
 
@@ -47,13 +59,17 @@ export function stepPolities(world) {
 		const pa = world.polities.find((p) => p.id === a);
 		const pb = world.polities.find((p) => p.id === b);
 		if (!pa || !pb || pa.atWarWith.includes(b)) continue;
-		const tension = avg([...cells].map((id) => world.cellById.get(id)), (c) => c.tension);
+		const tension = avg(
+			[...cells].map((id) => world.cellById.get(id)),
+			(c) => c.tension
+		);
 		if (pa.stability < 0.6 || pb.stability < 0.6 || tension > 0.3) continue;
 		if (world.rand() < P.unionBase / splitMult) unite(world, pa, pb);
 	}
 
 	world.polities = world.polities.filter((p) => p.cellIds.length > 0);
-	for (const p of world.polities) if (!p.cellIds.includes(p.capitalCell)) p.capitalCell = p.cellIds[0];
+	for (const p of world.polities)
+		if (!p.cellIds.includes(p.capitalCell)) p.capitalCell = p.cellIds[0];
 }
 
 export function coup(world, p, { log = true } = {}) {
@@ -62,7 +78,13 @@ export function coup(world, p, { log = true } = {}) {
 	p.lastCoupYear = world.year;
 	// Same rule in every era; only the name changes (an 1850 kingdom has palace coups, not military ones).
 	const what = world.year < 1900 ? 'Palace coup' : 'Military coup';
-	if (log) world.events.push({ year: world.year, kind: 'coup', polityIds: [p.id], title: `${what} in ${p.name}` });
+	if (log)
+		world.events.push({
+			year: world.year,
+			kind: 'coup',
+			polityIds: [p.id],
+			title: `${what} in ${p.name}`
+		});
 	p.stability = Math.max(0, p.stability - 0.1);
 }
 
@@ -76,9 +98,19 @@ export function secede(world, p, cellIds, name) {
 	const cells = cellsOf(world, p);
 	let leaving = cellIds;
 	if (!leaving) {
-		const seed = cells.filter((c) => c.id !== p.capitalCell).sort((x, y) => y.tension - x.tension)[0];
+		const seed = cells
+			.filter((c) => c.id !== p.capitalCell)
+			.sort((x, y) => y.tension - x.tension)[0];
 		if (!seed) return null;
-		leaving = [seed.id, ...seed.neighbours.filter((id) => p.cellIds.includes(id) && id !== p.capitalCell && world.cellById.get(id).tension >= seed.tension * 0.8)];
+		leaving = [
+			seed.id,
+			...seed.neighbours.filter(
+				(id) =>
+					p.cellIds.includes(id) &&
+					id !== p.capitalCell &&
+					world.cellById.get(id).tension >= seed.tension * 0.8
+			)
+		];
 	}
 	leaving = leaving.filter((id) => p.cellIds.includes(id) && id !== p.capitalCell);
 	if (!leaving.length) return null;
@@ -99,7 +131,13 @@ export function secede(world, p, cellIds, name) {
 	};
 	world.polities.push(fresh);
 	for (const id of leaving) transferCell(world, world.cellById.get(id), fresh);
-	world.events.push({ year: world.year, kind: 'secession', polityIds: [p.id, fresh.id], cellIds: leaving, title: `${fresh.name} breaks away from ${p.name}` });
+	world.events.push({
+		year: world.year,
+		kind: 'secession',
+		polityIds: [p.id, fresh.id],
+		cellIds: leaving,
+		title: `${fresh.name} breaks away from ${p.name}`
+	});
 	return fresh;
 }
 
@@ -110,5 +148,10 @@ export function unite(world, pa, pb, name) {
 	big.tech = [...new Set([...big.tech, ...small.tech])];
 	big.knowledge = Math.max(big.knowledge, small.knowledge);
 	if (name) big.name = name;
-	world.events.push({ year: world.year, kind: 'union', polityIds: [big.id, small.id], title: `${small.name} joins ${big.name}` });
+	world.events.push({
+		year: world.year,
+		kind: 'union',
+		polityIds: [big.id, small.id],
+		title: `${small.name} ${verb(small.name, 'joins', 'join')} ${big.name}`
+	});
 }

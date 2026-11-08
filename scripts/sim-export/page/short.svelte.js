@@ -7,10 +7,11 @@ import { Diorama } from '$lib/components/sim/diorama/Diorama.js';
 import { planShort, shortSceneAt } from '$lib/game/sim/short.js';
 import { WIDE } from '$lib/game/sim/camera.js';
 import ShortOverlay from './ShortOverlay.svelte';
+import { createTownView } from './town.js';
 import './page.css';
 
-const { run, beats, voices, summary, label } = data;
-const plan = planShort(run, beats, voices);
+const { run, beats, voices, summary, label, town } = data;
+const plan = planShort(run, beats, voices, { town });
 const root = document.getElementById('root');
 const W = Number(root.dataset.width);
 const H = Number(root.dataset.height);
@@ -25,7 +26,17 @@ const LOW = { mode: 'diorama', target: [WIDE.target[0], WIDE.target[1] - 70], zo
 const HALF = { mode: 'diorama', ...WIDE };
 
 const props = $state({ scene: null, label });
-mount(ShortOverlay, { target: document.getElementById('hf-hud'), props });
+const hud = document.getElementById('hf-hud');
+const townCanvas = town ? document.createElement('canvas') : null;
+const drawTown = townCanvas ? createTownView(townCanvas) : null;
+if (townCanvas) {
+	townCanvas.id = 'hf-town';
+	townCanvas.hidden = true;
+	townCanvas.setAttribute('aria-hidden', 'true');
+	townCanvas.setAttribute('data-layout-allow-overflow', '');
+	root.insertBefore(townCanvas, hud);
+}
+mount(ShortOverlay, { target: hud, props });
 
 let split = null;
 function layout(isSplit) {
@@ -40,10 +51,15 @@ function layout(isSplit) {
 
 function renderAt(time) {
 	const scene = shortSceneAt(run, plan, time, summary);
-	const isSplit = scene.phase === 'split';
-	layout(isSplit);
-	if (isSplit) real.draw(scene.real, HALF); // our world on top, theirs below
-	map.draw(scene.frame, isSplit ? HALF : LOW);
+	if (townCanvas) townCanvas.hidden = scene.phase !== 'town';
+	if (scene.phase === 'town') {
+		drawTown(scene.town);
+	} else {
+		const isSplit = scene.phase === 'split';
+		layout(isSplit);
+		if (isSplit) real.draw(scene.real, HALF); // our world on top, theirs below
+		map.draw(scene.frame, isSplit ? HALF : LOW);
+	}
 	props.scene = scene;
 	flushSync();
 }

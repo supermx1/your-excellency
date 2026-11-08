@@ -36,6 +36,21 @@ describe('the future tech ladder', () => {
 		for (const p of r.history.at(-1).polities) expect(p.tech ?? []).not.toContain(undefined);
 	});
 
+	it('only the first state to invent something gets the world first; the rest are breakthroughs', () => {
+		const r = run(1, { learning: 3 });
+		const firstsByTech = new Map();
+		for (const e of r.events.filter((x) => x.kind === 'invention')) {
+			if (e.worldFirst) {
+				expect(firstsByTech.has(e.techId), e.techId).toBe(false);
+				firstsByTech.set(e.techId, e.year);
+				expect(e.title).toMatch(/^World first: /);
+			} else expect(e.title).toMatch(/^Breakthrough in /);
+		}
+		const repeats = r.events.filter((x) => x.kind === 'invention' && !x.worldFirst && firstsByTech.has(x.techId));
+		expect(repeats.length).toBeGreaterThan(0);
+		for (const e of repeats) expect(e.year).toBeGreaterThanOrEqual(firstsByTech.get(e.techId));
+	});
+
 	it('invention headlines read cleanly for every technology', () => {
 		const r = run(2, { learning: 3 });
 		for (const e of r.events.filter((x) => x.kind === 'invention')) expect(e.title).not.toMatch(/invents the|the the/i);

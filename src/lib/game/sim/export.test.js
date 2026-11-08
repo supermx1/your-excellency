@@ -141,8 +141,8 @@ describe('scenarioCard', () => {
 		const card = scenarioCard({ seed: 1, switches: { ...defaultSwitches(), ...PRESETS.neverColonized.switches }, startYear: 1850, endYear: 2025 });
 		expect(card.label).toBe('Never colonized');
 		expect(card.changes).toEqual([
-			{ label: 'British conquest', value: 'off' },
-			{ label: 'Amalgamation', value: 'off' }
+			{ key: 'britishConquest', label: 'British conquest', value: 'off' },
+			{ key: 'amalgamation', label: 'Amalgamation', value: 'off' }
 		]);
 		expect(card.spoken).toMatch(/^Never colonized\. Britain never conquers.*from 1850 to 2025\. Changed from history: British conquest, off; Amalgamation, off\.$/);
 	});

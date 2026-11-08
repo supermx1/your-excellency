@@ -23,7 +23,20 @@
 	{/if}
 {/snippet}
 
-{#if scene?.phase === 'split'}
+{#if scene?.phase === 'town'}
+	<div class="absolute inset-0 text-[#2c2930]">
+		<div class="absolute inset-x-[52px] top-[48px]">
+			<div class="inline-flex items-center gap-5 border-4 border-[#2c2930] bg-[#2c2930] px-5 py-2 font-mono text-[29px] font-bold tracking-[0.12em] text-[#f4d896] uppercase">
+				<span>Illustrated cutaway</span>
+				<span class="border-l-2 border-[#f4d896] pl-5">{scene.town.year}</span>
+			</div>
+			<p class="w-fit max-w-full border-4 border-[#2c2930] bg-[#f4e4bb] px-6 py-3 text-[49px] leading-[1.08] font-black tracking-tight shadow-[7px_7px_0_0_#2c2930]">
+				{scene.town.title}
+			</p>
+		</div>
+		<div class="absolute inset-x-0 bottom-[105px]">{@render caption(null)}</div>
+	</div>
+{:else if scene?.phase === 'split'}
 	<div class="absolute inset-0 text-[#f2efe6]">
 		<div class="absolute inset-x-0 top-8">{@render caption(null)}</div>
 		<div class="absolute top-1/2 right-0 left-0 border-t-4 border-white/40"></div>

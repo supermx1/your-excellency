@@ -33,3 +33,4 @@ scripts/sim-data/__pycache__/
 /exports
 /my voice*.m4a
 /voice/
+/.playwright-mcp/

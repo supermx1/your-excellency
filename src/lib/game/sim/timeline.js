@@ -66,7 +66,7 @@ export function buildTimeline(
 			e.kind === 'secession' ||
 			e.kind === 'union' ||
 			(e.kind === 'conquest' && e.annexed) ||
-			(e.kind === 'invention' && (e.aheadOfReal > 10 || (e.worldFirst && e.aheadOfReal === 0)))
+			(e.kind === 'invention' && e.worldFirst && (e.aheadOfReal > 10 || e.aheadOfReal === 0))
 		)
 			key.add(e.year);
 	}

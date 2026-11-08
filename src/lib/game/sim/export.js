@@ -12,7 +12,15 @@ import { speakable } from './kitten.js';
 import { incomeDrivers } from './explanations.js';
 import { defaultData } from './data/index.js';
 
-const LEVEL = { low: 'low', history: 'as in history', high: 'high', off: 'off', likely: 'more likely', secular: 'secular', choose: 'each state chooses' };
+const LEVEL = {
+	low: 'low',
+	history: 'as in history',
+	high: 'high',
+	off: 'off',
+	likely: 'more likely',
+	secular: 'secular',
+	choose: 'each state chooses'
+};
 
 /** What the viewer needs before the run starts: which what-if, which years, what was switched. */
 export function scenarioCard(inputs) {
@@ -20,18 +28,33 @@ export function scenarioCard(inputs) {
 	const preset = Object.values(PRESETS).find((p) => p.label === label);
 	const def = defaultSwitches();
 	const value = (s, v) =>
-		s.type === 'bool' ? (v ? 'on' : 'off') : s.type === 'number' ? `×${v}` : s.type === 'year' ? (v ?? (s.default ? 'never' : 'as in history')) : LEVEL[v] ?? v;
+		s.type === 'bool'
+			? v
+				? 'on'
+				: 'off'
+			: s.type === 'number'
+				? `×${v}`
+				: s.type === 'year'
+					? (v ?? (s.default ? 'never' : 'as in history'))
+					: (LEVEL[v] ?? v);
 	const changes = Object.entries(SWITCHES)
 		.filter(([k]) => inputs.switches[k] !== def[k])
-		.map(([k, s]) => ({ label: s.label, value: value(s, inputs.switches[k]) }));
-	const spokenChanges = changes.length ? `Changed from history: ${changes.map((c) => `${c.label}, ${c.value}`).join('; ')}.` : 'Every switch is as in history.';
+		.map(([k, s]) => ({ key: k, label: s.label, value: value(s, inputs.switches[k]) }));
+	const spokenChanges = changes.length
+		? `Changed from history: ${changes.map((c) => `${c.label}, ${c.value}`).join('; ')}.`
+		: 'Every switch is as in history.';
 	return {
 		label,
 		description: preset?.description ?? null,
 		from: inputs.startYear,
 		to: inputs.endYear,
 		changes,
-		spoken: [label === 'What if' ? 'What if.' : `${label}.`, preset?.description ?? '', `Nigeria, from ${inputs.startYear} to ${inputs.endYear}.`, spokenChanges]
+		spoken: [
+			label === 'What if' ? 'What if.' : `${label}.`,
+			preset?.description ?? '',
+			`Nigeria, from ${inputs.startYear} to ${inputs.endYear}.`,
+			spokenChanges
+		]
 			.filter(Boolean)
 			.join(' ')
 	};
@@ -70,7 +93,17 @@ export function captionChunks(text, seconds) {
  */
 export function planExport(
 	run,
-	{ from, to, splits, audio = {}, texts = {}, summary = null, splitSeconds = 4, gap = 0.8, titleSeconds = 6 } = {}
+	{
+		from,
+		to,
+		splits,
+		audio = {},
+		texts = {},
+		summary = null,
+		splitSeconds = 4,
+		gap = 0.8,
+		titleSeconds = 6
+	} = {}
 ) {
 	const timeline = buildTimeline(run);
 	const start = run.history[0].year;
@@ -92,7 +125,10 @@ export function planExport(
 	};
 
 	if (audio.title) cues.push({ chapter: 'title', start: 0, seconds: audio.title });
-	push({ p0: 0, p1: 0, phase: 'title', year: from }, Math.max(titleSeconds, (audio.title ?? 0) + gap));
+	push(
+		{ p0: 0, p1: 0, phase: 'title', year: from },
+		Math.max(titleSeconds, (audio.title ?? 0) + gap)
+	);
 	push({ p0: 0, p1: INTRO, phase: 'intro', year: from }, INTRO);
 
 	for (const c of chaptersFor(run)) {
@@ -115,7 +151,14 @@ export function planExport(
 			p = hold;
 		}
 		if (p1 > p) push({ p0: p, p1, phase: 'run' }, (p1 - p) * scale);
-		chapters.push({ index: c.index, from: c.from, to: c.to, v0, v1: v, captions: texts[c.index] && seconds ? captionChunks(texts[c.index], seconds) : [] });
+		chapters.push({
+			index: c.index,
+			from: c.from,
+			to: c.to,
+			v0,
+			v1: v,
+			captions: texts[c.index] && seconds ? captionChunks(texts[c.index], seconds) : []
+		});
 	}
 	push({ p0: timeline.duration, p1: timeline.duration + OUTRO, phase: 'outro', year: to }, OUTRO);
 	const still = { p0: timeline.duration + OUTRO, p1: timeline.duration + OUTRO, year: to };
@@ -161,12 +204,20 @@ export function sceneAt(run, plan, shots, time, national) {
 	// A split shows the end of its year, as the live view does.
 	const shown = phase === 'split' ? year + 1 : year;
 	const camera =
-		phase === 'intro' || phase === 'title' ? introCamera(play) : phase === 'run' ? cameraAt(shots, play) : phase === 'outro' ? outroCamera(since) : { mode: 'diorama', ...WIDE };
+		phase === 'intro' || phase === 'title'
+			? introCamera(play)
+			: phase === 'run'
+				? cameraAt(shots, play)
+				: phase === 'outro'
+					? outroCamera(since)
+					: { mode: 'diorama', ...WIDE };
 	const all = captionsAt(run, phase === 'split' ? year + 0.99 : year, phase === 'split' ? 1 : 1.5);
 	const own = all.find((c) => c.title);
 	const ours = all.find((c) => c.ours)?.ours;
 	const chapter = plan.chapters.find((c) => time >= c.v0 && time < c.v1) ?? null;
-	const line = chapter?.captions.find((c) => time - chapter.v0 >= c.start && time - chapter.v0 < c.end);
+	const line = chapter?.captions.find(
+		(c) => time - chapter.v0 >= c.start && time - chapter.v0 < c.end
+	);
 	const last = run.history.at(-1);
 	const biggest = last.cells.reduce((a, b) => (b.urban * b.pop > a.urban * a.pop ? b : a));
 	return {
@@ -178,15 +229,34 @@ export function sceneAt(run, plan, shots, time, national) {
 		stats: statsAt(run, national, shown),
 		caption: own || ours ? { year: own?.year ?? year, title: own?.title, ours } : null,
 		families: phase === 'run' ? familyCardsAt(run, year) : [],
-		subtitle: chapter && (phase === 'run' || phase === 'split') ? { kicker: `Chapter ${chapter.index + 1} · ${chapter.from}–${chapter.to}`, text: line?.text ?? null } : null,
+		subtitle:
+			chapter && (phase === 'run' || phase === 'split')
+				? {
+						kicker: `Chapter ${chapter.index + 1} · ${chapter.from}–${chapter.to}`,
+						text: line?.text ?? null
+					}
+				: null,
 		ending: phase === 'ending' ? endingRows(run, national, plan.summary) : null,
 		ranges:
 			phase === 'range'
-				? { runs: plan.summary.runs, endYear: plan.summary.endYear, rows: RANGES.filter(([, , k]) => plan.summary.outcomes[k]).map(([label, key, k]) => ({ label, key, ...plan.summary.outcomes[k] })) }
+				? {
+						runs: plan.summary.runs,
+						endYear: plan.summary.endYear,
+						rows: RANGES.filter(([, , k]) => plan.summary.outcomes[k]).map(([label, key, k]) => ({
+							label,
+							key,
+							...plan.summary.outcomes[k]
+						}))
+					}
 				: null,
 		shaped:
 			phase === 'shaped'
-				? { name: defaultData.cells.find((c) => c.id === biggest.id)?.name ?? biggest.id, year: last.year, income: biggest.incomePc, drivers: incomeDrivers(biggest) }
+				? {
+						name: defaultData.cells.find((c) => c.id === biggest.id)?.name ?? biggest.id,
+						year: last.year,
+						income: biggest.incomePc,
+						drivers: incomeDrivers(biggest)
+					}
 				: null
 	};
 }
