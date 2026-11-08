@@ -19,7 +19,12 @@ describe('parseArgs', () => {
 		});
 	});
 	it('reads the Short options', () => {
-		expect(parseArgs([ID, '--fresh-script', '--voice-ref', 'voice/me.wav'])).toMatchObject({ freshScript: true, voiceRef: 'voice/me.wav' });
+		expect(parseArgs([ID]).town).toBeUndefined();
+		expect(parseArgs([ID, '--town', '--fresh-script', '--voice-ref', 'voice/me.wav'])).toMatchObject({
+			town: true,
+			freshScript: true,
+			voiceRef: 'voice/me.wav'
+		});
 	});
 	it('refuses a bad id or option', () => {
 		expect(() => parseArgs(['nope'])).toThrow(/run id/);

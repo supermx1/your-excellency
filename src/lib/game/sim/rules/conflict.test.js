@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { describe, expect, it } from 'vitest';
 import { runSimulation } from '../world.js';
-import { ambition } from './conflict.js';
+import { ambition, verb } from './conflict.js';
 
 const inputs = (seed, switches = {}) => ({ seed, switches, startYear: 1850, endYear: 2025 });
 const seeds = Array.from({ length: 20 }, (_, i) => i + 1);
@@ -61,7 +61,7 @@ describe('polities and conflict', () => {
 			for (const { e, r } of taken) {
 				expect(e.polityIds).toHaveLength(2);
 				expect(e.cellIds.length).toBeGreaterThan(0);
-				expect(e.title).toMatch(/takes|conquers/);
+				expect(e.title).toMatch(/\b(takes?|conquers?)\b/);
 				const after = r.history.find((h) => h.year === e.year + 1);
 				const owner = after.cells.find((c) => c.id === e.cellIds[0]).polityId;
 				expect(after.polities.find((p) => p.id === owner)).toBeTruthy();
@@ -77,10 +77,22 @@ describe('polities and conflict', () => {
 			}
 		});
 
+		it('titles agree with plural names', () => {
+			expect(verb('Middle Belt peoples', 'conquers', 'conquer')).toBe('conquer');
+			expect(verb('Igbo communities', 'joins', 'join')).toBe('join');
+			expect(verb('Sokoto Caliphate', 'conquers', 'conquer')).toBe('conquers');
+			const titles = runs.flatMap((r) => r.events.map((e) => e.title ?? ''));
+			expect(
+				titles.filter((t) =>
+					/(peoples|communities) (conquers|takes|joins|attacks|cedes|prevails)\b/.test(t)
+				)
+			).toEqual([]);
+		});
+
 		it('a clear victory ends in a peace that hands over land', () => {
 			const ceded = all('peace').filter(({ e }) => e.ceded?.length);
 			expect(ceded.length).toBeGreaterThan(0);
-			for (const { e } of ceded) expect(e.title).toMatch(/cedes/);
+			for (const { e } of ceded) expect(e.title).toMatch(/\bcedes?\b/);
 		});
 
 		it("a stronger, crowded, settled state wants its neighbour's land more than an equal one does", () => {

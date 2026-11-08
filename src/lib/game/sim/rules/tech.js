@@ -55,18 +55,22 @@ function adopt(world, p, t, kind) {
 		const c = world.cellById.get(id);
 		if (t.effects.infra) c.infra = Math.min(1, c.infra + t.effects.infra);
 	}
+	// A world first is the first anywhere: before our world had it (worldYear null: nobody has yet)
+	// and before any other state in this run. A state that gets there later has a breakthrough.
+	world.invented ??= new Set();
+	const worldFirst = kind === 'invention' && (t.worldYear == null || t.worldYear > world.year) && !world.invented.has(t.id);
+	if (kind === 'invention') world.invented.add(t.id);
 	world.events.push({
 		year: world.year,
 		kind,
 		techId: t.id,
 		polityIds: [p.id],
-		// worldYear null: nobody in our world has done it yet, so any invention is a world first.
 		aheadOfReal: kind === 'invention' && t.worldYear != null ? t.worldYear - world.year : 0,
-		worldFirst: kind === 'invention' && (t.worldYear == null || t.worldYear > world.year),
+		worldFirst,
 		title:
 			kind !== 'invention'
 				? `${t.name} ${/(?<!s)s$| and /.test(t.name) ? 'reach' : 'reaches'} ${p.name}`
-				: t.worldYear == null || t.worldYear > world.year
+				: worldFirst
 					? `World first: ${t.name} in ${p.name}`
 					: `Breakthrough in ${p.name}: ${t.name}`
 	});

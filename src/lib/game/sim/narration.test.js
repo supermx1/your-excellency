@@ -7,6 +7,16 @@ import { defaultSwitches } from './switches.js';
 const baseline = runSimulation({ seed: 1, switches: defaultSwitches(), startYear: 1850, endYear: 2025 });
 
 describe('chapters', () => {
+	it('a 200 IQ run to 2100 stays within the 50 chapters the narration server accepts', () => {
+		const genius = runSimulation({
+			seed: 3244814674,
+			switches: { ...defaultSwitches(), britishConquest: false, amalgamation: false, learning: 3 },
+			startYear: 1850,
+			endYear: 2100
+		});
+		expect(chaptersFor(genius).length).toBeLessThanOrEqual(50);
+	});
+
 	it('cover the run without gaps and none is longer than 25 years', () => {
 		const ch = chaptersFor(baseline);
 		expect(ch[0].from).toBe(1850);

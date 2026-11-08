@@ -6,6 +6,9 @@ import { scenarioCard, captionChunks } from './export.js';
 import { frameAt } from './frame.js';
 import { realFrame, statsAt, captionsAt, endingRows } from './hud.js';
 import { defaultData } from './data/index.js';
+import { PRESETS } from './switches.js';
+import { polityColor } from './colors.js';
+import { verb } from './rules/conflict.js';
 
 const NOTABLE = ['union', 'secession', 'conquest', 'history', 'coup', 'war']; // what makes a line, best first
 const snap = (run, y) => run.history.find((h) => h.year === y) ?? run.history.at(-1);
@@ -27,19 +30,40 @@ const statesAt = (run, y) => {
 	return p.length === 1 ? `${p[0].name} rules it all` : `${p.length} states share the land`;
 };
 
+/** Every what-if preset these switches match: a run can be Never colonized and 200 IQ at once. */
+const presetsOf = (inputs) =>
+	Object.values(PRESETS).filter((p) =>
+		Object.entries(p.switches).every(([k, v]) => inputs.switches[k] === v)
+	);
+
+/** The badge on the Short: every preset it combines ("Never colonized + 200 IQ"), else "What if". */
+export const shortLabel = (inputs) =>
+	presetsOf(inputs)
+		.map((p) => p.label)
+		.join(' + ') || 'What if';
+
 /**
  * The draft script: one line per beat, each playing a stretch of years. Saved as JSON for the owner to edit.
- * @returns {{ say: string, from: number, to: number, split?: boolean, card?: boolean }[]}
+ * With `town`, pixel-art cutaways join the map: the first railway, and the run's biggest world firsts.
+ * @returns {{ say: string, from: number, to: number, split?: boolean, card?: boolean, town?: object }[]}
  */
-export function shortScript(run, inputs, summary = null) {
+export function shortScript(run, inputs, summary = null, { town = false } = {}) {
 	const start = run.history[0].year;
 	const end = run.history.at(-1).year;
 	const card = scenarioCard(inputs);
-	const premise = card.description
-		? card.description.split('. ')[0].replace(/\.?$/, '.')
-		: card.changes.length
-			? `I changed ${card.changes.map((c) => `${c.label.toLowerCase()} to ${c.value}`).join(', ')}.`
-			: 'Every switch as in history.';
+	// Every preset the switches match (Never colonized and 200 IQ can both hold), then any other change.
+	const presets = presetsOf(inputs);
+	const covered = new Set(presets.flatMap((p) => Object.keys(p.switches)));
+	const rest = card.changes.filter((c) => !covered.has(c.key));
+	const premise =
+		[
+			...presets.map((p) => p.description.split('. ')[0].replace(/\.?$/, '.')),
+			rest.length
+				? `I changed ${rest.map((c) => `${c.label.toLowerCase()} to ${c.value}`).join(', ')}.`
+				: ''
+		]
+			.filter(Boolean)
+			.join(' ') || 'Every switch as in history.';
 	const beats = [
 		{ say: `${premise} I ran Nigeria from ${start} to ${end}.`, from: start, to: start }
 	];
@@ -89,17 +113,189 @@ export function shortScript(run, inputs, summary = null) {
 		to: end,
 		card: true
 	});
+	if (town) {
+		addRailwayBeat(run, beats, start, end);
+		addInventionBeats(run, beats);
+	}
 	return beats;
+}
+
+// One line per technology: what the state does, and the cutaway that shows it. The order is the pick
+// order, best first: a Short shows at most INVENTION_SHOTS world firsts, one per scene.
+const INVENTIONS = {
+	'mars-landing': ['land people on Mars', 'mars'],
+	'moon-base': ['build a base on the Moon', 'moon'],
+	'crewed-spaceflight': ['send the first people into space', 'launch'],
+	'reusable-rockets': ['land a rocket and fly it again', 'landing'],
+	'space-station': ['build the first space station', 'orbit'],
+	'interstellar-probe': ['send a probe to the stars', 'stars'],
+	'asteroid-mining': ['mine an asteroid', 'asteroid'],
+	satellite: ['launch the first satellite', 'launch'],
+	'fusion-power': ['switch on fusion power', 'market'],
+	'solar-power': ['make solar power cheap', 'market'],
+	'mobile-phone': ['make the first mobile phone call', 'market'],
+	television: ['broadcast the first television', 'market'],
+	radio: ['broadcast the first radio', 'market'],
+	'motor-car': ['build the first motor car', 'market']
+};
+const INVENTION_SHOTS = 3;
+/** The cutaway scenes the Short page can draw. */
+export const CUTAWAYS = [
+	'station',
+	'market',
+	'launch',
+	'landing',
+	'orbit',
+	'moon',
+	'mars',
+	'asteroid',
+	'stars'
+];
+
+/** "Kingdom of Lagos sends the first people into space" (its verb agrees with plural names too). */
+function does(name, phrase) {
+	const [first, ...rest] = phrase.split(' ');
+	const singular = /(ch|sh|s|x|z)$/.test(first) ? `${first}es` : `${first}s`;
+	return `${name} ${[verb(name, singular, first), ...rest].join(' ')}`;
+}
+
+const sinceOurs = (worldYear, year) =>
+	worldYear == null
+		? ' Nobody in our world has done that yet.'
+		: worldYear > year
+			? ` That's ${worldYear - year} years before ours.`
+			: '';
+
+function addInventionBeats(run, beats) {
+	const order = Object.keys(INVENTIONS);
+	const picked = [];
+	for (const techId of order) {
+		const index = run.events.findIndex(
+			(e) => e.kind === 'invention' && e.worldFirst && e.techId === techId
+		);
+		const scene = INVENTIONS[techId][1];
+		if (index >= 0 && !picked.some((p) => p.scene === scene)) picked.push({ index, scene, techId });
+		if (picked.length === INVENTION_SHOTS) break;
+	}
+	for (const { index, scene, techId } of picked.sort(
+		(a, b) => run.events[a.index].year - run.events[b.index].year
+	)) {
+		const e = run.events[index];
+		const name =
+			run.history.find((h) => h.year === e.year)?.polities.find((p) => p.id === e.polityIds[0])
+				?.name ?? e.polityIds[0];
+		const worldYear = defaultData.tech.find((t) => t.id === techId)?.worldYear;
+		addCutaway(
+			run,
+			beats,
+			index,
+			`${e.year}: ${does(name, INVENTIONS[techId][0])}.${sinceOurs(worldYear, e.year)}`,
+			scene
+		);
+	}
+}
+
+/** Splits the map beat that holds the event: a cutaway line up to its year, the map after it. */
+function addCutaway(run, beats, event, say, preset) {
+	const year = run.events[event].year;
+	const index = beats.findIndex((beat) => beat.from < year && year <= beat.to);
+	if (index === -1) return;
+	const beat = beats[index];
+	const oldLead = standout(run, beat.from, beat.to);
+	const laterLead = standout(run, year, beat.to);
+	beats.splice(index, 0, { say, from: beat.from, to: year, town: { event, preset } });
+	beat.from = year;
+	beat.say = `${laterLead}${beat.say.slice(oldLead.length)}`;
+}
+
+function addRailwayBeat(run, beats, start, end) {
+	const event = run.events.findIndex(
+		(e) => e.techId === 'railway' && e.year > start && e.year <= end
+	);
+	if (event === -1) return;
+	const rail = run.events[event];
+	const ours = defaultData.tech.find((t) => t.id === 'railway')?.nigeriaYear;
+	const gap = ours ? ours - rail.year : 0;
+	const early =
+		gap > 0
+			? ` That's ${gap} years before ours.`
+			: gap < 0
+				? ` That's ${-gap} years after ours.`
+				: '';
+	const say = `${rail.year}: ${rail.title}.${early} Picture a trader carrying a sack from the market as the train pulls in.`;
+	addCutaway(run, beats, event, say, 'station');
 }
 
 const times = (n) => (n === 0 ? 'zero times' : n === 1 ? 'once' : `${n} times`);
 const ease = (k) => k * k * (3 - 2 * k);
 
+function townShot(run, beat) {
+	if (beat.town == null) return null;
+	const {
+		event,
+		preset = 'station',
+		start = 0,
+		end = 1,
+		crowd = 18,
+		zoom = 1.18,
+		pace = 1
+	} = beat.town;
+	const source = Number.isInteger(event) ? run.events[event] : null;
+	if (!source || source.year < beat.from || source.year > beat.to || beat.split || beat.card)
+		throw new Error('A town shot needs an event index from the map beat’s years.');
+	if (
+		!CUTAWAYS.includes(preset) ||
+		![start, end, crowd, zoom, pace].every(Number.isFinite) ||
+		start < 0 ||
+		end > 1 ||
+		start >= end ||
+		!Number.isInteger(crowd) ||
+		crowd < 0 ||
+		crowd > 24 ||
+		zoom < 1 ||
+		zoom > 1.4 ||
+		pace < 0.5 ||
+		pace > 2
+	)
+		throw new Error('Invalid town shot settings. Check preset, start, end, crowd, zoom and pace.');
+	const polityId = source.polityIds?.[0];
+	return {
+		preset,
+		start,
+		end,
+		crowd,
+		zoom,
+		pace,
+		year: source.year,
+		title: source.title,
+		tech: source.techId ?? null,
+		color: polityId ? polityColor(polityId) : '#d0a24a',
+		// What this state has built by then dresses the town: poles, masts, aerials, solar roofs, cars.
+		techs: [
+			...new Set(
+				run.events
+					.filter(
+						(e) =>
+							(e.kind === 'invention' || e.kind === 'adoption') &&
+							e.polityIds?.[0] === polityId &&
+							e.year <= source.year
+					)
+					.map((e) => e.techId)
+			)
+		]
+	};
+}
+
 /**
  * Times the beats to their voice clips.
  * @param {ReturnType<typeof shortScript>} beats @param {{ file: string, seconds: number }[]} voices one per beat
  */
-export function planShort(run, beats, voices, { gap = 0.35, minBeat = 2.5, endHold = 3 } = {}) {
+export function planShort(
+	run,
+	beats,
+	voices,
+	{ gap = 0.35, minBeat = 2.5, endHold = 3, town = false } = {}
+) {
 	const end = run.history.at(-1).year;
 	const segments = [];
 	const cues = [];
@@ -107,6 +303,7 @@ export function planShort(run, beats, voices, { gap = 0.35, minBeat = 2.5, endHo
 	beats.forEach((b, i) => {
 		const seconds = voices[i]?.seconds ?? 0;
 		const length = Math.max(minBeat, seconds + gap);
+		const cutaway = town ? townShot(run, b) : null;
 		if (seconds) cues.push({ id: `line-${i}`, file: voices[i].file, start: v, seconds });
 		segments.push({
 			...b,
@@ -114,6 +311,11 @@ export function planShort(run, beats, voices, { gap = 0.35, minBeat = 2.5, endHo
 			v0: v,
 			v1: v + length,
 			phase: b.card ? 'card' : b.split ? 'split' : 'run',
+			town: cutaway && {
+				...cutaway,
+				in: v + length * cutaway.start,
+				out: v + length * cutaway.end
+			},
 			captions: seconds ? captionChunks(b.say, seconds) : []
 		});
 		v += length;
@@ -134,6 +336,15 @@ export function planShort(run, beats, voices, { gap = 0.35, minBeat = 2.5, endHo
 		const k = s.v1 > s.v0 ? Math.min(1, (t - s.v0) / (s.v1 - s.v0)) : 1;
 		const year = s.phase === 'run' ? s.from + (s.to - s.from) * ease(k) : s.to;
 		const line = s.captions.find((c) => t - s.v0 >= c.start && t - s.v0 < c.end)?.text ?? null;
+		const shot = s.town;
+		if (shot && t >= shot.in && t < shot.out) {
+			return {
+				phase: s.phase,
+				year,
+				line,
+				town: { ...shot, progress: (t - shot.in) / (shot.out - shot.in), elapsed: t - shot.in }
+			};
+		}
 		return { phase: s.phase, year, line };
 	};
 	return { duration, cues, segments, at };
@@ -141,7 +352,8 @@ export function planShort(run, beats, voices, { gap = 0.35, minBeat = 2.5, endHo
 
 /** What one frame of the Short shows. */
 export function shortSceneAt(run, plan, time, summary = null) {
-	const { phase, year, line } = plan.at(time);
+	const { phase, year, line, town } = plan.at(time);
+	if (town) return { phase: 'town', town, line };
 	const shown = phase === 'split' ? year + 1 : year; // a split shows the end of its year
 	const pick = (key) => stat(run, shown, key);
 	const rows = phase === 'card' ? endingRows(run, defaultData.national, summary) : null;

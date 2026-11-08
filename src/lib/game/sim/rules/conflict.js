@@ -42,6 +42,10 @@ export function ambition(world, p, q) {
 
 const nameOf = (world, id) => world.cellById.get(id).name ?? id;
 
+/** The verb that agrees with a polity's name: "Middle Belt peoples conquer", "Sokoto Caliphate conquers". */
+export const verb = (name, singular, plural) =>
+	/(peoples|communities)$/.test(name) ? plural : singular;
+
 /** @param {import('../types.js').World} world */
 export function stepConflict(world) {
 	world.wars ??= [];
@@ -119,7 +123,9 @@ export function stepConflict(world) {
 				att,
 				def,
 				0.3 + 0.4 * world.rand(),
-				wants ? `${att.name} attacks ${def.name} for land` : undefined
+				wants
+					? `${att.name} ${verb(att.name, 'attacks', 'attack')} ${def.name} for land`
+					: undefined
 			);
 		}
 	}
@@ -174,8 +180,8 @@ function endWar(world, war, winner, how) {
 			how === 'collapse'
 				? 'A war ends as one side collapses'
 				: war.ceded
-					? `Peace: ${war.cededBy} cedes ${war.ceded.map((id) => nameOf(world, id)).join(' and ')} to ${winner.name}`
-					: `Peace${winner ? `, ${winner.name} prevails` : ''}`
+					? `Peace: ${war.cededBy} ${verb(war.cededBy, 'cedes', 'cede')} ${war.ceded.map((id) => nameOf(world, id)).join(' and ')} to ${winner.name}`
+					: `Peace${winner ? `, ${winner.name} ${verb(winner.name, 'prevails', 'prevail')}` : ''}`
 	});
 }
 
@@ -188,7 +194,7 @@ function capture(world, war, winner, loser, cell) {
 		warId: war.warId,
 		polityIds: [winner.id, loser.id],
 		cellIds: [cell.id],
-		title: `${winner.name} takes ${nameOf(world, cell.id)} from ${loser.name}`
+		title: `${winner.name} ${verb(winner.name, 'takes', 'take')} ${nameOf(world, cell.id)} from ${loser.name}`
 	});
 }
 
@@ -204,7 +210,7 @@ function conquer(world, war, winner, loser) {
 		warId: war.warId,
 		polityIds: [winner.id, loser.id],
 		cellIds,
-		title: `${winner.name} conquers ${loser.name}`
+		title: `${winner.name} ${verb(winner.name, 'conquers', 'conquer')} ${loser.name}`
 	});
 	endWar(world, war, winner, 'collapse');
 }
