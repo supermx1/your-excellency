@@ -5,7 +5,13 @@ import { defaultData } from './data/index.js';
 import { frameAt } from './frame.js';
 import { populationAt } from './population.js';
 import { whyHere } from './explanations.js';
-import { powerText } from './format.js';
+import { powerText, formatStat } from './format.js';
+
+/** Electricity as a scorecard cell: "73% · 24 h a day". */
+const powerShort = (access, service) =>
+	access > 0.005 && service > 0
+		? `${Math.round(access * 100)}% · ${Math.round((24 * service) / access)} h a day`
+		: `${Math.round((access ?? 0) * 100)}%`;
 
 const realEvents = defaultData.events.events.filter((e) => e.kind === 'history');
 const isRealWar = (e) => e.effects?.war || (e.effects?.conquer && e.effects?.mortality);
@@ -82,7 +88,11 @@ export function captionsAt(run, year, windowYears = 1.5) {
 /** Up to two family life events from the last three years, newest first. */
 /** @param {number | undefined} months */
 const savingsText = (months) =>
-	months == null ? null : months === 0 ? 'No savings left' : `Savings: about ${months} month${months === 1 ? '' : 's'} of income`;
+	months == null
+		? null
+		: months === 0
+			? 'No savings left'
+			: `Savings: about ${months} month${months === 1 ? '' : 's'} of income`;
 
 export function familyCardsAt(run, year) {
 	const cards = [];
@@ -114,6 +124,15 @@ const share2006 = (() => {
 	const total = Object.values(pop).reduce((a, b) => a + b, 0);
 	return Object.fromEntries(Object.entries(pop).map(([id, p]) => [id, p / total]));
 })();
+/** Our latest real figure up to `year`, marked with its year when older than that: "$5,070 (2022)". */
+const dated = (key, value, asOf, year) =>
+	value == null ? null : asOf < Math.floor(year) ? `${formatStat(key, value)} (${asOf})` : value;
+const lastYearOf = (national, key, year) => {
+	for (let y = Math.floor(year); y >= national.years[0]; y--)
+		if (national[key][national.years.indexOf(y)] != null) return y;
+	return null;
+};
+
 const lastKnown = (national, key, year) => {
 	for (let y = Math.floor(year); y >= national.years[0]; y--) {
 		const v = national[key][national.years.indexOf(y)];
@@ -164,6 +183,7 @@ export function endingRows(run, national, summary) {
 	for (const [id, s] of Object.entries(defaultData.regional.religion[2018]))
 		for (const k of Object.keys(ourMix)) ourMix[k] += s[k] * share2006[id];
 	const realWars = realEvents.filter((e) => isRealWar(e) && e.year <= year).length;
+	const space = run.events.find((e) => e.kind === 'invention' && e.techId === 'crewed-spaceflight');
 	const rows = [
 		{
 			label: 'Population',
@@ -174,15 +194,38 @@ export function endingRows(run, national, summary) {
 		{
 			label: 'Can read (school)',
 			theirs: last.totals.litSchool,
-			ours: lastKnown(national, 'litSchool', year),
+			ours: dated('litSchool', lastKnown(national, 'litSchool', year), lastYearOf(national, 'litSchool', year), year),
 			key: 'litSchool'
 		},
 		{ label: 'Can read (any script)', theirs: last.totals.litAny, ours: null, key: 'litAny' },
 		{
 			label: 'Life expectancy',
 			theirs: last.totals.lifeExp,
-			ours: lastKnown(national, 'lifeExp', year),
+			ours: dated('lifeExp', lastKnown(national, 'lifeExp', year), lastYearOf(national, 'lifeExp', year), year),
 			key: 'lifeExp'
+		},
+		{
+			label: 'Income per person',
+			theirs: last.totals.incomePc,
+			ours: dated(
+				'incomePc',
+				lastKnown(national, 'gdpPc', year),
+				lastYearOf(national, 'gdpPc', year),
+				year
+			),
+			oursValue: lastKnown(national, 'gdpPc', year),
+			key: 'incomePc'
+		},
+		{
+			label: 'Has electricity',
+			theirs: powerShort(last.totals.electricityAccess, last.totals.powerService),
+			ours: (() => {
+				const s = defaultData.development.snapshots.filter((x) => x.year <= year).at(-1);
+				return s
+					? dated('electricityAccess', s.national.electricityAccess.value, s.year, year)
+					: null;
+			})(),
+			key: 'electricityAccess'
 		},
 		{
 			label: 'Wars',
@@ -191,12 +234,21 @@ export function endingRows(run, national, summary) {
 			key: 'wars'
 		},
 		{ label: 'Biggest city', theirs: cellName.get(biggest.id) ?? biggest.id, ours: 'Lagos' },
+		...(space
+			? [{ label: 'People in space', theirs: `Since ${space.year}`, ours: 'Not yet' }]
+			: []),
 		{ label: 'Religious mix', theirs: mix(theirMix), ours: mix(ourMix) }
 	];
 	if (summary)
 		rows.push({
 			label: `In ${summary.runs} runs`,
-			theirs: `${summary.withWar} had a war · ${summary.nigeriaFormed} formed a Nigeria`,
+			theirs: `${summary.withWar} had a war · ${
+				summary.nigeriaFormed === 0
+					? 'Nigeria never formed'
+					: summary.nigeriaFormed === summary.runs
+						? 'Nigeria formed every time'
+						: `Nigeria formed in ${summary.nigeriaFormed}`
+			}`,
 			ours: '—'
 		});
 	return rows;

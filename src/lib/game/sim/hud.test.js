@@ -9,7 +9,12 @@ import { shotsFor, cameraAt, WIDE } from './camera.js';
 import { buildTimeline } from './timeline.js';
 
 const run = (switches, seed = 1) =>
-	runSimulation({ seed, switches: { ...defaultSwitches(), ...switches }, startYear: 1850, endYear: 2025 });
+	runSimulation({
+		seed,
+		switches: { ...defaultSwitches(), ...switches },
+		startYear: 1850,
+		endYear: 2025
+	});
 const baseline = run({});
 const never = run(PRESETS.neverColonized.switches);
 const hue = (hex) => {
@@ -51,12 +56,17 @@ describe('hud data', () => {
 
 	it('never-colonized 1914 caption mentions the real amalgamation', () => {
 		const caps = captionsAt(never, 1914.5);
-		expect(caps.some((c) => c.ours === 'In our world: North and South are amalgamated into Nigeria')).toBe(true);
+		expect(
+			caps.some((c) => c.ours === 'In our world: North and South are amalgamated into Nigeria')
+		).toBe(true);
 	});
 
 	it('familyCardsAt returns at most 2 cards', () => {
-		for (const y of [1870, 1900, 1950, 2000]) expect(familyCardsAt(baseline, y).length).toBeLessThanOrEqual(2);
-		expect(familyCardsAt(baseline, 1900).length + familyCardsAt(baseline, 1950).length).toBeGreaterThan(0);
+		for (const y of [1870, 1900, 1950, 2000])
+			expect(familyCardsAt(baseline, y).length).toBeLessThanOrEqual(2);
+		expect(
+			familyCardsAt(baseline, 1900).length + familyCardsAt(baseline, 1950).length
+		).toBeGreaterThan(0);
 	});
 
 	it('family cards have unique keys every year', () => {
@@ -67,7 +77,8 @@ describe('hud data', () => {
 			}
 	});
 
-	it('realBordersAt 1920 is one Nigeria', () => expect(realBordersAt(1920).map((p) => p.id)).toEqual(['nigeria']));
+	it('realBordersAt 1920 is one Nigeria', () =>
+		expect(realBordersAt(1920).map((p) => p.id)).toEqual(['nigeria']));
 	it('our world shows Biafra from 1967 until 1970', () => {
 		expect(realBordersAt(1968).map((p) => p.name)).toContain('Republic of Biafra');
 		expect(realBordersAt(1970).map((p) => p.id)).toEqual(['nigeria']);
@@ -90,15 +101,53 @@ describe('camera', () => {
 import { endingRows, realFrame } from './hud.js';
 
 describe('ending', () => {
-	it('has seven comparison rows, plus 50-run lines when a summary is given', () => {
+	it('compares how people live, plus 50-run lines when a summary is given', () => {
 		const rows = endingRows(never, defaultData.national, null);
-		expect(rows.map((r) => r.label)).toEqual(['Population', 'Can read (school)', 'Can read (any script)', 'Life expectancy', 'Wars', 'Biggest city', 'Religious mix']);
-		const withSummary = endingRows(never, defaultData.national, { runs: 50, withWar: 41, nigeriaFormed: 3 });
-		expect(withSummary.find((r) => r.label === 'In 50 runs').theirs).toBe('41 had a war · 3 formed a Nigeria');
+		expect(rows.map((r) => r.label)).toEqual([
+			'Population',
+			'Can read (school)',
+			'Can read (any script)',
+			'Life expectancy',
+			'Income per person',
+			'Has electricity',
+			'Wars',
+			'Biggest city',
+			'Religious mix'
+		]);
+		const income = rows.find((r) => r.label === 'Income per person');
+		expect(income.theirs).toBeGreaterThan(0);
+		expect(income.oursValue).toBeGreaterThan(4000); // OWID GDP per person, 2022
+		expect(rows.find((r) => r.label === 'Has electricity').theirs).toMatch(/^\d+%/);
+		const withSummary = endingRows(never, defaultData.national, {
+			runs: 50,
+			withWar: 41,
+			nigeriaFormed: 3
+		});
+		expect(withSummary.find((r) => r.label === 'In 50 runs').theirs).toBe(
+			'41 had a war · Nigeria formed in 3'
+		);
+	});
+
+	it("dates our figures when they are older than the run's end, and adds space only when reached", () => {
+		const to2100 = runSimulation({
+			seed: 1,
+			switches: { ...defaultSwitches(), learning: 3 },
+			startYear: 1850,
+			endYear: 2100
+		});
+		const rows = endingRows(to2100, defaultData.national, null);
+		expect(rows.find((r) => r.label === 'Income per person').ours).toMatch(/^\$[\d,]+ \(20\d\d\)$/);
+		expect(rows.find((r) => r.label === 'Has electricity').ours).toMatch(/^\d+% \(2018\)$/);
+		expect(rows.find((r) => r.label === 'People in space')).toMatchObject({ ours: 'Not yet' });
+		expect(
+			endingRows(never, defaultData.national, null).some((r) => r.label === 'People in space')
+		).toBe(false);
 	});
 
 	it('the real side uses Lagos as the biggest city', () => {
-		expect(endingRows(baseline, defaultData.national, null).find((r) => r.label === 'Biggest city').ours).toBe('Lagos');
+		expect(
+			endingRows(baseline, defaultData.national, null).find((r) => r.label === 'Biggest city').ours
+		).toBe('Lagos');
 	});
 
 	it('realFrame paints the real borders for a year', () => {
@@ -122,7 +171,9 @@ describe('placeAt (hover and click on the map)', () => {
 		expect(p.name).toBe('Sokoto Caliphate');
 		expect(p.today).toBe('Kano State today');
 		expect(p.cellIds).toContain('sokoto');
-		expect(placeAt(never, frameAt(never, 1850), 'fct').today).toBe('Federal Capital Territory today');
+		expect(placeAt(never, frameAt(never, 1850), 'fct').today).toBe(
+			'Federal Capital Territory today'
+		);
 	});
 
 	it('adds the real-history name only when it differs', () => {
@@ -146,7 +197,8 @@ describe('placeAt (hover and click on the map)', () => {
 		expect(Array.isArray(p.atWarWith)).toBe(true);
 	});
 
-	it('returns null for an unknown cell', () => expect(placeAt(never, frameAt(never, 1900), 'atlantis')).toBeNull());
+	it('returns null for an unknown cell', () =>
+		expect(placeAt(never, frameAt(never, 1900), 'atlantis')).toBeNull());
 });
 
 import { shortPeople } from './format.js';
