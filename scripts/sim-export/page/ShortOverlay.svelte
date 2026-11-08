@@ -10,6 +10,13 @@
 	const NAMES = { pop: 'People', wars: 'Wars' };
 </script>
 
+<!-- A religious mix puts each faith on its own line so the card stays narrow. -->
+{#snippet value(row, v)}
+	{#if row.label === 'Religious mix' && typeof v === 'string'}
+		{#each v.split(' · ') as part (part)}<span class="block">{part}</span>{/each}
+	{:else}{show(row, v)}{/if}
+{/snippet}
+
 {#snippet caption(kicker)}
 	{#if scene.line || kicker}
 		<div class="mx-auto w-[960px] text-center">
@@ -62,8 +69,8 @@
 		<div class="mt-8">{@render caption(null)}</div>
 	</div>
 	{#if scene.phase === 'card'}
-		<div class="absolute inset-x-8 top-[600px] border-4 border-black bg-white p-8 text-black shadow-[8px_8px_0_0_#000]">
-			<table class="w-full border-collapse text-left text-4xl">
+		<div class="absolute inset-x-8 top-[560px] border-4 border-black bg-white px-8 py-5 text-black shadow-[8px_8px_0_0_#000]">
+			<table class="w-full border-collapse text-left text-[32px] leading-tight">
 				<thead>
 					<tr class="border-b-4 border-black text-[28px] font-black uppercase">
 						<th class="py-2"></th>
@@ -74,9 +81,9 @@
 				<tbody>
 					{#each scene.card.rows as row (row.label)}
 						<tr class="border-b-2 border-black/20">
-							<th class="py-3 pr-3 text-3xl font-black uppercase">{row.label}</th>
-							<td class="py-3 pr-3 font-bold">{show(row, row.theirs)}</td>
-							<td class="py-3 text-black/70">{show(row, row.ours)}</td>
+							<th class="py-2 pr-4 text-[28px] font-black whitespace-nowrap uppercase">{row.label}</th>
+							<td class="py-2 pr-3 font-bold">{@render value(row, row.theirs)}</td>
+							<td class="py-2 text-black/70">{@render value(row, row.ours)}</td>
 						</tr>
 					{/each}
 				</tbody>

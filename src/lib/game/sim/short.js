@@ -111,7 +111,7 @@ export function shortScript(run, inputs, summary = null, { town = false } = {}) 
 	const income = rows.find((r) => r.label === 'Income per person');
 	const earns =
 		income.theirs && income.oursValue
-			? ` The average person earns about ${thousands(income.theirs)} dollars a year. Ours, about ${thousands(income.oursValue)}.`
+			? ` Average income: ${thousands(income.theirs)} dollars a year. Ours: ${thousands(income.oursValue)}.`
 			: '';
 	beats.push({
 		say: `${people(pop.value)} people, against ${people(pop.ours)} in ours.${earns} ${city}${city === 'Lagos' ? ' is still' : ', not Lagos, is'} the biggest city.${summary ? ` ${formedLine(summary)}` : ''}`,
@@ -371,6 +371,7 @@ const SCORECARD = [
 	'Life expectancy',
 	'Wars',
 	'Biggest city',
+	'Religious mix',
 	'People in space'
 ];
 
