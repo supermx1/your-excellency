@@ -189,10 +189,11 @@ describe('shortSceneAt', () => {
 			'Can read (school)',
 			'Life expectancy',
 			'Wars',
-			'Biggest city'
+			'Biggest city',
+			'Religious mix'
 		]);
 		expect(beats.at(-1).say).toMatch(
-			/The average person earns about \d+ thousand dollars a year\. Ours, about \d+ thousand\./
+			/Average income: \d+ thousand dollars a year\. Ours: \d+ thousand\./
 		);
 		expect(s.card.runs.theirs).toMatch(/Nigeria never formed$/);
 	});

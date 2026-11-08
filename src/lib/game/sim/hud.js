@@ -141,8 +141,16 @@ const lastKnown = (national, key, year) => {
 	return null;
 };
 const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
+// Leaves out any faith under half a percent: "75% Muslim · 25% Christian".
 const mix = (r) =>
-	`${pct(r.islam)} Muslim · ${pct(r.christian)} Christian · ${pct(r.traditional)} traditional`;
+	[
+		[r.islam, 'Muslim'],
+		[r.christian, 'Christian'],
+		[r.traditional, 'traditional']
+	]
+		.filter(([v]) => v >= 0.005)
+		.map(([v, name]) => `${pct(v)} ${name}`)
+		.join(' · ');
 
 /** Historical comparison: regional population anchors and national urban averages. */
 export function realFrame(year) {
@@ -194,14 +202,24 @@ export function endingRows(run, national, summary) {
 		{
 			label: 'Can read (school)',
 			theirs: last.totals.litSchool,
-			ours: dated('litSchool', lastKnown(national, 'litSchool', year), lastYearOf(national, 'litSchool', year), year),
+			ours: dated(
+				'litSchool',
+				lastKnown(national, 'litSchool', year),
+				lastYearOf(national, 'litSchool', year),
+				year
+			),
 			key: 'litSchool'
 		},
 		{ label: 'Can read (any script)', theirs: last.totals.litAny, ours: null, key: 'litAny' },
 		{
 			label: 'Life expectancy',
 			theirs: last.totals.lifeExp,
-			ours: dated('lifeExp', lastKnown(national, 'lifeExp', year), lastYearOf(national, 'lifeExp', year), year),
+			ours: dated(
+				'lifeExp',
+				lastKnown(national, 'lifeExp', year),
+				lastYearOf(national, 'lifeExp', year),
+				year
+			),
 			key: 'lifeExp'
 		},
 		{
