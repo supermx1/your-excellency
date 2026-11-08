@@ -2,7 +2,8 @@
 	// @ts-nocheck
 	import DioramaCanvas from './DioramaCanvas.svelte';
 	import { frameAt } from '$lib/game/sim/frame.js';
-	import { realFrame, statsAt, captionsAt } from '$lib/game/sim/hud.js';
+	import { realFrame, statsAt, captionsAt, placeAt } from '$lib/game/sim/hud.js';
+	import PlaceCard from './PlaceCard.svelte';
 	import { WIDE } from '$lib/game/sim/camera.js';
 	import { defaultData } from '$lib/game/sim/data/index.js';
 	import { formatStat } from '$lib/game/sim/format.js';
@@ -18,13 +19,54 @@
 	const caps = $derived(captionsAt(run, yearInt + 0.99, 1));
 	const theirCaption = $derived(caps.find((c) => c.title)?.title ?? 'No major events this year.');
 	const ourCaption = $derived(caps.find((c) => c.ours)?.ours.replace('In our world: ', '') ?? null);
+
+	let hover = $state(null); // { side, cellId, x, y }
+	const cellName = new Map(defaultData.cells.map((c) => [c.id, c.name]));
+	/** Our world has no simulated stats, so its label is just who rules the state that year. */
+	function ourPlace(cellId) {
+		const polity = ours.polities.find((p) => p.cellIds.includes(cellId));
+		if (!polity) return null;
+		const name = cellName.get(cellId) ?? cellId;
+		return {
+			name: polity.name,
+			today: `${name}${cellId === 'fct' ? '' : ' State'} today`,
+			ours: null,
+			cellIds: polity.cellIds
+		};
+	}
+	const hovered = $derived(
+		hover && (hover.side === 'ours' ? ourPlace(hover.cellId) : placeAt(run, theirs, hover.cellId))
+	);
 </script>
 
-<section class="absolute inset-0 z-10 grid grid-rows-2 bg-[#0e1116] text-[#f2efe6] md:grid-cols-2 md:grid-rows-1" aria-label="Two Nigerias in {yearInt}">
+<section
+	class="absolute inset-0 z-10 grid grid-rows-2 bg-[#0e1116] text-[#f2efe6] md:grid-cols-2 md:grid-rows-1"
+	aria-label="Two Nigerias in {yearInt}"
+>
 	{#each [['OUR WORLD', ours, 'ours', ourCaption], ['THEIR WORLD', theirs, 'value', theirCaption]] as [title, frame, key, caption], i (title)}
-		<div class="relative flex flex-col border-white/20 {i === 0 ? 'border-b md:border-r md:border-b-0' : ''}">
-			<p class="pt-3 text-center text-xs font-black tracking-[0.2em] {i ? 'text-amber-400' : 'opacity-70'}">{title}</p>
-			<div class="min-h-0 flex-1"><DioramaCanvas {frame} camera={WIDE} popLabels label="{title} map in {yearInt}" /></div>
+		<div
+			class="relative flex flex-col border-white/20 {i === 0
+				? 'border-b md:border-r md:border-b-0'
+				: ''}"
+		>
+			<p
+				class="pt-3 text-center text-xs font-black tracking-[0.2em] {i
+					? 'text-amber-400'
+					: 'opacity-70'}"
+			>
+				{title}
+			</p>
+			<div class="min-h-0 flex-1">
+				<DioramaCanvas
+					{frame}
+					camera={WIDE}
+					popLabels
+					label="{title} map in {yearInt}"
+					highlight={hover?.side === (i ? 'theirs' : 'ours') ? (hovered?.cellIds ?? null) : null}
+					onHover={(cellId, x, y) =>
+						(hover = cellId ? { side: i ? 'theirs' : 'ours', cellId, x, y } : null)}
+				/>
+			</div>
 			<div class="grid grid-cols-4 gap-2 px-4 pb-2 text-center">
 				{#each stats as s (s.key)}
 					<div>
@@ -37,12 +79,26 @@
 		</div>
 	{/each}
 
-	<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border border-white/40 bg-[#0e1116] px-3 py-1 font-serif text-3xl font-bold">
+	<div
+		class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border border-white/40 bg-[#0e1116] px-3 py-1 font-serif text-3xl font-bold"
+	>
 		{endOfYear ? `End of ${yearInt}` : yearInt}
 	</div>
-	<p class="pointer-events-none absolute top-8 left-1/2 hidden -translate-x-1/2 text-[11px] opacity-60 md:block">
-		Each figure is the number of people in that state; each tower is its towns: taller means more people live in towns there.
+	<p
+		class="pointer-events-none absolute top-8 left-1/2 hidden -translate-x-1/2 text-[11px] opacity-60 md:block"
+	>
+		Each figure is the number of people in that state; each tower is its towns: taller means more
+		people live in towns there.
 	</p>
+	{#if hovered}
+		<div
+			class="pointer-events-none fixed z-30 max-w-xs bg-black/85 px-2 py-1 text-sm text-[#f2efe6]"
+			style:left="{hover.x + 14}px"
+			style:top="{hover.y + 14}px"
+		>
+			<PlaceCard place={hovered} />
+		</div>
+	{/if}
 	{#if onContinue}
 		<button
 			type="button"

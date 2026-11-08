@@ -10,7 +10,12 @@
 	import PlaceCard from '$lib/components/sim/PlaceCard.svelte';
 	import { encodeInputs } from '$lib/game/sim/inputs.js';
 	import { startRun } from '$lib/game/sim/client.js';
-	import { chaptersFor, digestChapter, fallbackNarration, scenarioLabel } from '$lib/game/sim/narration.js';
+	import {
+		chaptersFor,
+		digestChapter,
+		fallbackNarration,
+		scenarioLabel
+	} from '$lib/game/sim/narration.js';
 	import { buildTimeline, createClock } from '$lib/game/sim/timeline.js';
 	import { frameAt } from '$lib/game/sim/frame.js';
 	import { statsAt, captionsAt, familyCardsAt, placeAt } from '$lib/game/sim/hud.js';
@@ -81,7 +86,11 @@
 		fetch('/api/sim/narrate', {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ runId: runId ?? undefined, chapterIndex: ch.index, digest: digestChapter(run, ch) })
+			body: JSON.stringify({
+				runId: runId ?? undefined,
+				chapterIndex: ch.index,
+				digest: digestChapter(run, ch)
+			})
 		})
 			.then((r) => (r.ok ? r.json() : null))
 			.then((body) => {
@@ -165,23 +174,42 @@
 <main class="relative h-[100dvh] overflow-hidden bg-[#0e1116]">
 	{#if error}
 		<div class="flex h-full items-center justify-center p-4">
-			<div role="alert" class="max-w-md border-4 border-black bg-white p-6 shadow-[6px_6px_0_0_#000]">
+			<div
+				role="alert"
+				class="max-w-md border-4 border-black bg-white p-6 shadow-[6px_6px_0_0_#000]"
+			>
 				<h1 class="text-2xl font-black uppercase">This run couldn't load</h1>
 				<p class="mt-2 font-medium">{error}</p>
-				<a href="/sim" class="mt-4 inline-block border-2 border-black bg-emerald-400 px-4 py-2 font-black uppercase shadow-[4px_4px_0_0_#000]">Back to setup</a>
+				<a
+					href="/sim"
+					class="mt-4 inline-block border-2 border-black bg-emerald-400 px-4 py-2 font-black uppercase shadow-[4px_4px_0_0_#000]"
+					>Back to setup</a
+				>
 			</div>
 		</div>
 	{:else if !run}
-		<p class="flex h-full items-center justify-center font-serif text-xl text-[#f2efe6]" aria-live="polite">Running history…</p>
+		<p
+			class="flex h-full items-center justify-center font-serif text-xl text-[#f2efe6]"
+			aria-live="polite"
+		>
+			Running history…
+		</p>
 	{:else}
-		<div class="absolute inset-0 bottom-40 md:bottom-14" data-testid="view" data-camera={camera.mode ?? 'diorama'} data-dip={camera.dip ?? 0}>
+		<div
+			class="absolute inset-0 bottom-40 md:bottom-14"
+			data-testid="view"
+			data-camera={camera.mode ?? 'diorama'}
+			data-dip={camera.dip ?? 0}
+		>
 			<DioramaCanvas
 				{frame}
 				{camera}
 				{popLabels}
 				interactive
 				highlight={(place ?? hovered)?.cellIds ?? null}
-				label={camera.mode === 'globe' ? 'The Earth, turning towards Nigeria' : `Map of Nigeria in ${Math.floor(year)}`}
+				label={camera.mode === 'globe'
+					? 'The Earth, turning towards Nigeria'
+					: `Map of Nigeria in ${Math.floor(year)}`}
 				onView={(v) => {
 					userView = v;
 					follow = false;
@@ -200,7 +228,9 @@
 			</div>
 		{/if}
 		{#if (place || userView) && t >= INTRO}
-			<div class="absolute top-14 left-3 z-20 flex w-64 max-w-[calc(100%-1.5rem)] flex-col items-start gap-2 md:top-6 md:left-8">
+			<div
+				class="absolute top-14 left-3 z-20 flex w-64 max-w-[calc(100%-1.5rem)] flex-col items-start gap-2 md:top-6 md:left-8"
+			>
 				{#if userView}
 					<button
 						type="button"
@@ -211,29 +241,46 @@
 						}}>Reset view</button
 					>
 				{/if}
-				{#if place}<div class="w-full"><PlaceCard {place} onClose={() => (pinned = null)} /></div>{/if}
+				{#if place}<div class="w-full">
+						<PlaceCard {place} onClose={() => (pinned = null)} />
+					</div>{/if}
 			</div>
 		{/if}
 		{#if camera.title > 0}
-			<div class="pointer-events-none absolute inset-0 bottom-40 flex flex-col items-center justify-center text-[#f2efe6] md:bottom-14" style:opacity={camera.title}>
+			<div
+				class="pointer-events-none absolute inset-0 bottom-40 flex flex-col items-center justify-center text-[#f2efe6] md:bottom-14"
+				style:opacity={camera.title}
+			>
 				<p class="font-serif text-7xl font-black md:text-9xl">{run.history[0].year}</p>
 				<p class="mt-2 text-sm font-black tracking-[0.3em] uppercase">{label}</p>
 			</div>
 		{/if}
 		{#if t < INTRO}
-			<button type="button" class="absolute right-3 bottom-44 z-20 border-2 border-black bg-white px-3 py-1 text-xs font-black uppercase shadow-[3px_3px_0_0_#000] md:right-8 md:bottom-20" onclick={skipIntro}>Skip intro</button>
+			<button
+				type="button"
+				class="absolute right-3 bottom-44 z-20 border-2 border-black bg-white px-3 py-1 text-xs font-black uppercase shadow-[3px_3px_0_0_#000] md:right-8 md:bottom-20"
+				onclick={skipIntro}>Skip intro</button
+			>
 		{/if}
 		<Hud {year} {stats} {caption} {label} />
 		{#if narration}<Narration {narration} {chapter} />{/if}
 		{#if notice}
-			<p class="absolute top-14 left-3 max-w-sm border-2 border-black bg-yellow-200 px-2 py-1 text-xs font-bold md:top-3">{notice}</p>
+			<p
+				class="absolute top-14 left-3 max-w-sm border-2 border-black bg-yellow-200 px-2 py-1 text-xs font-bold md:top-3"
+			>
+				{notice}
+			</p>
 		{/if}
 
 		<div class="absolute right-4 bottom-36 hidden flex-col gap-2 md:right-8 md:bottom-24 md:flex">
 			{#each families as card (card.key)}<FamilyCard {card} />{/each}
 		</div>
 		<div class="absolute top-3 left-3 md:hidden">
-			<button type="button" class="border-2 border-black bg-white px-2 py-1 text-xs font-black uppercase" onclick={() => (showFamilies = !showFamilies)}>Families</button>
+			<button
+				type="button"
+				class="border-2 border-black bg-white px-2 py-1 text-xs font-black uppercase"
+				onclick={() => (showFamilies = !showFamilies)}>Families</button
+			>
 			{#if showFamilies}
 				<div class="mt-2 flex flex-col gap-2">
 					{#each families as card (card.key)}<FamilyCard {card} />{/each}
@@ -271,7 +318,18 @@
 		{/if}
 		{#if ended}
 			<div class="absolute inset-0 z-10"><TwoNigerias {run} year={run.history.at(-1).year} /></div>
-			<Ending {run} {summary} onRunAgain={runAgain} changeHref="/sim?s={encodeInputs(inputs)}" {inputs} {runId} />
+			<Ending
+				{run}
+				{summary}
+				onRunAgain={runAgain}
+				onBack={() => {
+					playing = false;
+					seek(run.history.at(-1).year);
+				}}
+				changeHref="/sim?s={encodeInputs(inputs)}"
+				{inputs}
+				{runId}
+			/>
 		{/if}
 	{/if}
 </main>
