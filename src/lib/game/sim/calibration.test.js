@@ -23,7 +23,8 @@ const rows = [
 	...[1900, 1950, 2000, 2025].map((y) => ['pop', y, sim('pop', y), real('pop', y)]),
 	['litSchool', 2018, sim('litSchool', 2018), real('litSchool', 2018)],
 	['lifeExp', 2020, sim('lifeExp', 2020), real('lifeExp', 2020)],
-	['urban', 2020, sim('urban', 2020), real('urban', 2020)]
+	['urban', 2020, sim('urban', 2020), real('urban', 2020)],
+	...[1960, 1980, 2000, 2022].map((y) => ['incomePc', y, sim('incomePc', y), real('gdpPc', y)])
 ];
 console.table(rows.map(([k, y, s, r]) => ({ metric: k, year: y, simulated: +s.toFixed(3), real: +r.toFixed(3) })));
 console.log({ nigeriaFormed, civilWar });
@@ -32,6 +33,9 @@ describe('baseline calibration (mean of 30 seeds)', () => {
 	it.each([1900, 1950, 2000, 2025])('population %i within ±15%%', (y) => {
 		expect(Math.abs(sim('pop', y) / real('pop', y) - 1)).toBeLessThan(0.15);
 	});
+	// Maddison 2011 dollars, like the scorecard's "ours". The 1990s still run high (see docs/timeline-data.md).
+	it('income 2022 within ±15% of our Nigeria', () => expect(Math.abs(sim('incomePc', 2022) / real('gdpPc', 2022) - 1)).toBeLessThan(0.15));
+	it('income 1960 within ±25% of our Nigeria', () => expect(Math.abs(sim('incomePc', 1960) / real('gdpPc', 1960) - 1)).toBeLessThan(0.25));
 	it('school literacy 2018 within ±10 points', () => expect(Math.abs(sim('litSchool', 2018) - real('litSchool', 2018))).toBeLessThan(0.1));
 	it('life expectancy 2020 within ±5 years', () => expect(Math.abs(sim('lifeExp', 2020) - real('lifeExp', 2020))).toBeLessThan(5));
 	it.each([1950, 2000])('life expectancy %i within ±3 years (UN WPP)', (y) => expect(Math.abs(sim('lifeExp', y) - real('lifeExp', y))).toBeLessThan(3));

@@ -31,6 +31,21 @@ const FACTORS = {
 			[0, 'Almost no usable power: few connections, or cuts most of the time.']
 		]
 	],
+	modern: [
+		'Modern economy',
+		[
+			[
+				3,
+				'Much of the economy works like the richest countries in our world, with technology to match.'
+			],
+			[1.3, 'Part of the economy works like the richest countries in our world.'],
+			[1.03, 'A small modern sector works like the richest countries in our world.'],
+			[
+				0,
+				'Almost nothing works at the level of the richest countries yet: that needs nearly everyone schooled, on good roads and on reliable power.'
+			]
+		]
+	],
 	conflict: [
 		'War',
 		[
