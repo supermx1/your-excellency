@@ -153,6 +153,30 @@ describe('shortScript', () => {
 		}
 		expect(shortScript(r, genius, summary).some((b) => b.town)).toBe(false);
 	});
+	it('shows the power switch it is about: the lights coming on, and power in the result', () => {
+		const lit = {
+			seed: 5,
+			switches: { ...defaultSwitches(), power24hFromYear: 1960 },
+			startYear: 1950,
+			endYear: 2025
+		};
+		const litRun = runSimulation(lit);
+		const script = shortScript(litRun, lit, null, { town: true });
+		const scene = script.find((b) => b.town?.preset === 'home-power');
+		expect(scene.say).toMatch(/^1960: The lights come on/);
+		expect(scene.to).toBe(1960);
+		expect(script.at(-1).say).toMatch(/electricity, \d+ hours a day\. Ours: \d+% of homes\./);
+		expect(script.some((b) => /\(\d{4}\)/.test(b.say))).toBe(false); // no "Military coup (1983)"
+		// The scene has no event behind it, and still plans (it would throw otherwise).
+		expect(() =>
+			planShort(
+				litRun,
+				script,
+				script.map((_, i) => ({ file: `a${i}.wav`, seconds: 4 })),
+				{ town: true }
+			)
+		).not.toThrow();
+	});
 	it('labels the Short with every what-if it combines', () => {
 		expect(shortLabel(inputs)).toBe('Never colonized');
 		expect(shortLabel({ ...inputs, switches: { ...inputs.switches, learning: 3 } })).toBe(
@@ -229,9 +253,7 @@ describe('shortSceneAt', () => {
 			'Biggest city',
 			'Religious mix'
 		]);
-		expect(beats.at(-1).say).toMatch(
-			/Average income: [\d,]+00 dollars a year\. Ours: [\d,]+00\./
-		);
+		expect(beats.at(-1).say).toMatch(/Average income: [\d,]+00 dollars a year\. Ours: [\d,]+00\./);
 		expect(s.card.runs.theirs).toMatch(/Nigeria never formed$/);
 	});
 });
