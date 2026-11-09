@@ -110,5 +110,6 @@ export const PARAMS = {
 	inventChance: 0.2,
 	// literacy
 	learnRate: 0.018, // per year at full school coverage
+	startSchools: 3, // school places per adult reader when a run starts from real mid-century averages: enrolment runs ahead of adult reading (fitted so 1950 starts track real literacy and life expectancy)
 	litDecay: 0.002
 };

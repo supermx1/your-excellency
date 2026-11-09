@@ -59,7 +59,7 @@ describe('planExport', () => {
 	it('a split year holds at the end of that year', () => {
 		const y = 1960;
 		const plan = planExport(run, { splits: [y] });
-		const split = times(plan, 2000).map((t) => [t, plan.at(t)]).filter(([, a]) => a.phase === 'split');
+		const split = times(plan, 4000).map((t) => [t, plan.at(t)]).filter(([, a]) => a.phase === 'split');
 		expect(split.at(-1)[0] - split[0][0]).toBeGreaterThan(3.9);
 		for (const [, a] of split) {
 			expect(a.year).toBe(y);
