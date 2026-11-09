@@ -9,8 +9,8 @@ const FIRST = 1850;
 const LAST = 2100;
 export const YEARS = Array.from({ length: LAST - FIRST + 1 }, (_, i) => FIRST + i);
 
-/** Reads an OWID CSV and returns Map<year, number> for Nigeria from the given column. */
-export function owidSeries(csv, column) {
+/** Reads an OWID CSV and returns Map<year, number> for one country (Nigeria by default) from the given column. */
+export function owidSeries(csv, column, code = 'NGA') {
 	const [header, ...rows] = csv.trim().split('\n');
 	const cols = header.split(',');
 	const ci = cols.indexOf(column);
@@ -18,7 +18,7 @@ export function owidSeries(csv, column) {
 	const out = new Map();
 	for (const row of rows) {
 		const f = row.split(',');
-		if (f[1] !== 'NGA' || f[ci] === '') continue;
+		if (f[1] !== code || f[ci] === '') continue;
 		out.set(Number(f[2]), Number(f[ci]));
 	}
 	return out;
@@ -43,7 +43,10 @@ const read = (f) => readFileSync(new URL(f, CACHE), 'utf8');
 if (import.meta.url === `file://${process.argv[1]}`) {
 	const popLong = owidSeries(read('pop-long.csv'), 'population_historical');
 	const unEst = owidSeries(read('pop-un.csv'), 'population__sex_all__age_all__variant_estimates');
-	const unProj = owidSeries(read('pop-un.csv'), 'population__sex_all__age_all__variant_medium__projected');
+	const unProj = owidSeries(
+		read('pop-un.csv'),
+		'population__sex_all__age_all__variant_medium__projected'
+	);
 	const pop = new Map([...popLong, ...unEst, ...unProj]);
 
 	const national = {
@@ -51,9 +54,20 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 		pop: align(pop),
 		lifeExp: align(owidSeries(read('life-expectancy.csv'), 'life_expectancy_0')),
 		litSchool: align(owidSeries(read('literacy.csv'), 'literacy_rate'), 0.01),
-		urban: align(owidSeries(read('urban.csv'), 'share__area_type_urban__data_type_estimates'), 0.01),
+		urban: align(
+			owidSeries(read('urban.csv'), 'share__area_type_urban__data_type_estimates'),
+			0.01
+		),
 		gdpPc: align(owidSeries(read('gdp-pc.csv'), 'gdp_per_capita')),
-		electricityKwhPc: align(owidSeries(read('electricity.csv'), 'per_capita_total_generation__kwh')),
+		// The world's income frontier: the richer of the UK and the US each year (the UK until about 1900).
+		frontierGdpPc: ((uk, us) =>
+			uk.map((v, i) => (v == null || us[i] == null ? (v ?? us[i]) : Math.max(v, us[i]))))(
+			align(owidSeries(read('gdp-pc.csv'), 'gdp_per_capita', 'GBR')),
+			align(owidSeries(read('gdp-pc.csv'), 'gdp_per_capita', 'USA'))
+		),
+		electricityKwhPc: align(
+			owidSeries(read('electricity.csv'), 'per_capita_total_generation__kwh')
+		),
 		oilTwh: align(owidSeries(read('oil.csv'), 'oil_production_twh'))
 	};
 	writeFileSync(OUT, JSON.stringify(national) + '\n');

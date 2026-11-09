@@ -159,6 +159,15 @@
 				relationships are gameplay assumptions, not measured causal effects from the surveys.
 			</p>
 			<p>
+				Income comes from two economies. Farming and trade earn from a state's tools, schooling,
+				roads, power, government and setting. A modern economy earns what the richest country in our
+				world earned that year (the UK, then the US), more if the state's technology is ahead of
+				ours and less if it is behind. The modern share grows steeply with schooling, roads and
+				power, so it takes nearly everyone schooled, connected and powered to earn at the world's
+				level. The steepness is fitted so a history run tracks Nigeria's real income; it is a model
+				choice, not a measured law.
+			</p>
+			<p>
 				Family careers depend on local conditions and available technology. Their stories are
 				fictional and do not determine the national results.
 			</p>

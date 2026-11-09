@@ -3,6 +3,36 @@ import { PARAMS as P } from '../params.js';
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, Number.isFinite(v) ? v : lo));
 
+/**
+ * Our world's richest country that year (the UK, then the US from about 1900), per person, in the
+ * Maddison Project's 2011 dollars. Past the last data year it grows at P.frontierGrowth a year.
+ */
+export function frontierIncome(national, year) {
+	const series = national?.frontierGdpPc;
+	if (!series) return null;
+	const first = series.findIndex((v) => v != null);
+	const last = series.findLastIndex((v) => v != null);
+	const i = Math.max(first, national.years.indexOf(Math.round(year)));
+	if (i <= last && series[i] != null) return series[i];
+	return series[last] * (1 + P.frontierGrowth) ** (Math.round(year) - national.years[last]);
+}
+
+/** The combined productivity of a set of technologies (each one's `productivity` effect, multiplied). */
+export const techProductivity = (techs, ids) => {
+	const byId = new Map(techs.map((t) => [t.id, t]));
+	return ids.reduce((a, id) => a * (byId.get(id)?.effects?.productivity ?? 1), 1);
+};
+
+/** The same for everything our world had by that year. */
+export const worldProductivity = (techs, year) =>
+	techProductivity(
+		techs,
+		techs.filter((t) => t.worldYear != null && t.worldYear <= year).map((t) => t.id)
+	);
+
+/** Everyone at school, full roads and power all day: the most those three multiply income by. */
+export const FULL_SKILLS = (1 + P.litReturn) * (1 + P.infraReturn) * (1 + P.powerIncomeReturn);
+
 /** How much road and market a place's income can build and maintain (0–1). */
 export const roadsFor = (incomePc) =>
 	clamp(Math.log10(incomePc / P.infraBaseIncome) / P.infraIncomeSpan, 0, 1);
@@ -52,7 +82,6 @@ export function harbourTrade(world, polity) {
 	return out;
 }
 
-
 /** Income, urbanisation and infrastructure per cell. Same rules for every cell. */
 /** @param {import('../types.js').World} world */
 export function stepEconomy(world) {
@@ -62,10 +91,12 @@ export function stepEconomy(world) {
 		world.switches.power24hFromYear != null && world.year >= world.switches.power24hFromYear;
 	const polityById = new Map(world.polities.map((p) => [p.id, p]));
 	const freeSchool =
-		world.switches.freeSchoolingFromYear != null && world.year >= world.switches.freeSchoolingFromYear;
+		world.switches.freeSchoolingFromYear != null &&
+		world.year >= world.switches.freeSchoolingFromYear;
 	// Light public budget: a government that is oil-rich feels the squeeze half as much.
 	const oilRich = new Set(oilOn ? [...oilCells].map((id) => world.cellById.get(id)?.polityId) : []);
-	const resourcesOf = (c) => (polityById.get(c.polityId)?.stability ?? 0.5) * Math.min(1, c.incomePc / 2000);
+	const resourcesOf = (c) =>
+		(polityById.get(c.polityId)?.stability ?? 0.5) * Math.min(1, c.incomePc / 2000);
 	// While free schooling is still being built, it takes money that would otherwise go to the grid.
 	const squeezeOf = (c) =>
 		freeSchool && c.schoolExpansion < P.schoolPolicyCoverage - 0.01
@@ -73,6 +104,12 @@ export function stepEconomy(world) {
 			: 0;
 	const reliability = gridReliability(world, squeezeOf);
 	const through = new Map(world.polities.flatMap((p) => [...harbourTrade(world, p)]));
+	// What a modern economy here would earn: our world's richest country this year, raised or lowered
+	// by how far ahead of or behind our world this government's technology is. Same for every government.
+	const techs = world.data.tech ?? [];
+	const frontier = frontierIncome(world.data.national, world.year);
+	const ourTech = worldProductivity(techs, world.year);
+	const techOf = new Map(world.polities.map((p) => [p.id, techProductivity(techs, p.tech)]));
 	const meanDensity =
 		world.cells.reduce((s, c) => s + c.pop, 0) / (world.cells.reduce((s, c) => s + c.area, 0) || 1);
 	for (const c of world.cells) {
@@ -84,12 +121,17 @@ export function stepEconomy(world) {
 		else if (polity?.tech.includes('electricity')) {
 			// Crowded places are cheaper to wire per home, so the grid reaches them first;
 			// the rest of the land as roads reach it.
-			const dense = clamp(P.gridDenseBase + P.gridDenseSlope * Math.log10(c.pop / (c.area || 1) / meanDensity), 0, 1);
+			const dense = clamp(
+				P.gridDenseBase + P.gridDenseSlope * Math.log10(c.pop / (c.area || 1) / meanDensity),
+				0,
+				1
+			);
 			const target = clamp(dense + (1 - dense) * c.infra * P.ruralGridReach, 0, 1);
 			c.electricityAccess +=
-				Math.max(0, target - c.electricityAccess) *
-				P.connectionGrowth *
-				(polity.stability * c.incomePc) / P.gridIncomeUnit * // wiring costs money: poor places wire slowly
+				((Math.max(0, target - c.electricityAccess) *
+					P.connectionGrowth *
+					(polity.stability * c.incomePc)) /
+					P.gridIncomeUnit) * // wiring costs money: poor places wire slowly
 				(1 - squeeze);
 		}
 		// Connected access and usable service are different: service is the share of the day the
@@ -120,7 +162,9 @@ export function stepEconomy(world) {
 			// a school of any faith teaching the school curriculum counts fully. Owner's decision, 2026-11-07.
 			literacy: 1 + P.litReturn * (c.litSchool + P.otherScriptReturn * (c.litAny - c.litSchool)),
 			// A harbour earns from the trade of everyone behind it: more people, more trade, more income.
-			trade: c.harbour ? 1 + P.portPremium * ((n) => n / (n + P.portScale))(through.get(c.id) ?? 0) : 1,
+			trade: c.harbour
+				? 1 + P.portPremium * ((n) => n / (n + P.portScale))(through.get(c.id) ?? 0)
+				: 1,
 			// Big cities are more productive: more trades, firms and buyers close together.
 			city: 1 + P.cityReturn * Math.max(0, Math.log10((c.urban * c.pop) / 1e6)),
 			// The seat of government draws public salaries and contracts, whoever governs.
@@ -134,10 +178,28 @@ export function stepEconomy(world) {
 			// A government that rules from abroad sends part of what is made home: company profits, taxes.
 			colonial: polity?.british ? 1 - P.colonialDrain : 1
 		};
-		const potential =
+		const { literacy, infrastructure, electricity, ...rest } = c.incomeFactors;
+		// The farming and trading economy: what this place's tools, skills and setting earn.
+		const traditional =
 			P.baseIncome *
-				c.mods.productivity *
-				Object.values(c.incomeFactors).reduce((a, b) => a * b, 1) +
+			c.mods.productivity *
+			Object.values(c.incomeFactors).reduce((a, b) => a * b, 1);
+		// Two economies: farming and trade, and a modern one earning at the world's level for its
+		// technology. The modern share needs nearly everyone schooled, connected and powered: it is the
+		// share of full skills raised to P.modernExponent (at 80% about a fifth, at 95% about 70%).
+		const tech = techOf.get(c.polityId) ?? 1;
+		const modern =
+			frontier == null
+				? 0
+				: frontier *
+					(tech / ourTech) ** P.frontierElasticity *
+					(c.mods.productivity / tech) * // world events: droughts, slumps, pandemics
+					Object.values(rest).reduce((a, b) => a * b, 1);
+		const share = ((literacy * infrastructure * electricity) / FULL_SKILLS) ** P.modernExponent;
+		c.incomeFactors.modern =
+			traditional > 0 ? 1 + (share * Math.max(0, modern - traditional)) / traditional : 1;
+		const potential =
+			traditional * c.incomeFactors.modern +
 			(oilOn && oilCells.has(c.id) ? P.oilIncome * (world.oilPrice ?? 1) : 0);
 		c.incomePc = clamp(c.incomePc + (potential - c.incomePc) * P.incomeAdjust, 100, 1e6);
 
@@ -150,6 +212,10 @@ export function stepEconomy(world) {
 		// Roads and markets settle where income can build and keep them: below that they grow
 		// (faster with reliable power), above it they wear down. They no longer only ever grow.
 		const gap = roadsFor(c.incomePc) - c.infra;
-		c.infra = clamp(c.infra + gap * P.infraAdjust * (gap > 0 && power ? 2 : 1) - 0.01 * c.warDamage, 0, 1);
+		c.infra = clamp(
+			c.infra + gap * P.infraAdjust * (gap > 0 && power ? 2 : 1) - 0.01 * c.warDamage,
+			0,
+			1
+		);
 	}
 }

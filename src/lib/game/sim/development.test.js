@@ -4,7 +4,7 @@ import { createWorld, runSimulation, stepWorld } from './world.js';
 import { defaultData } from './data/index.js';
 import { defaultSwitches } from './switches.js';
 import { PARAMS as P } from './params.js';
-import { stepEconomy, roadsFor, harbourTrade } from './rules/economy.js';
+import { stepEconomy, roadsFor, harbourTrade, frontierIncome, techProductivity } from './rules/economy.js';
 import { stepDemography } from './rules/demography.js';
 import { stepFamilies } from './rules/families.js';
 import { statsAt } from './hud.js';
@@ -74,6 +74,43 @@ describe('dated development evidence', () => {
 		const a = runSimulation({ ...inputs(2010), endYear: 2020 }, defaultData);
 		const b = runSimulation({ ...inputs(2010), endYear: 2020 }, altered);
 		expect(a.history).toEqual(b.history);
+	});
+});
+
+describe('income follows the richest country in our world', () => {
+	const ours = (year) => defaultData.tech.filter((t) => t.worldYear != null && t.worldYear <= year).map((t) => t.id);
+	// One place, years of the economy rule at a fixed year, so income settles at its potential.
+	const settled = (cell, tech, year = 2000) => {
+		const w = createWorld(
+			{ seed: 1, switches: { power24hFromYear: 1900 }, startYear: year, endYear: year + 1 },
+			{
+				cells: [{ id: 'kano', name: 'Kano', neighbours: [], pop: 1e6, area: 1, coastal: false, incomePc: 2000, ...cell }],
+				polities: [{ id: 'p', name: 'P', capitalCell: 'elsewhere', cellIds: ['kano'], stability: 1, tech }],
+				events: { events: [] },
+				tech: defaultData.tech,
+				national: defaultData.national,
+				names: defaultData.names
+			}
+		);
+		for (let i = 0; i < 300; i++) {
+			// What stepTech leaves for the economy: the productivity of the tools this government has.
+			w.cells[0].mods = { mortality: 1, productivity: techProductivity(defaultData.tech, tech), learning: 1 };
+			stepEconomy(w);
+		}
+		return w.cells[0];
+	};
+	const full = { litSchool: 1, litAny: 1, infra: 1, incomePc: 45000 };
+	const frontier = frontierIncome(defaultData.national, 2000);
+	it('everyone schooled, connected and powered, with our technology, earns what our richest country did', () => {
+		expect(settled(full, ours(2000)).incomePc / frontier).toBeCloseTo(1, 1);
+	});
+	it('the same place with technology ahead of ours earns more than our richest country', () => {
+		expect(settled(full, defaultData.tech.map((t) => t.id)).incomePc).toBeGreaterThan(1.5 * frontier);
+	});
+	it('without schooling the modern economy adds almost nothing', () => {
+		const poor = settled({ litSchool: 0.1, litAny: 0.1, infra: 0.1 }, ours(2000));
+		expect(poor.incomeFactors.modern).toBeLessThan(1.02);
+		expect(poor.incomePc).toBeLessThan(frontier / 10);
 	});
 });
 

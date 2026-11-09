@@ -3,6 +3,12 @@
 export const PARAMS = {
 	// economy
 	baseIncome: 650, // $ per head with no schooling, infrastructure or tech
+	// A modern economy earns like our world's richest country that year (UK, then US; Maddison 2011 $),
+	// scaled by how far a state's technology is ahead of or behind ours. From 1850 to 2022 that country got 13.5 times richer
+	// while the technologies here multiplied productivity 1.89 times: ln 13.5 / ln 1.89 ≈ 4.
+	frontierElasticity: 4,
+	frontierGrowth: 0.015, // a year, past the last data year (assumption: about the US average since 1990)
+	modernExponent: 7, // how steeply the modern share rises with schooling, roads and power (fitted, see economy.js)
 	incomeAdjust: 0.08, // share of the gap to potential income closed each year
 	litReturn: 2, // income boost per unit of school literacy
 	otherScriptReturn: 0.3, // share of that boost from reading in another script (owner's decision)
