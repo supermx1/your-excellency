@@ -12,7 +12,8 @@ import { verb } from './rules/conflict.js';
 
 const NOTABLE = ['union', 'secession', 'conquest', 'history', 'coup', 'war']; // what makes a line, best first
 const snap = (run, y) => run.history.find((h) => h.year === y) ?? run.history.at(-1);
-const thousands = (n) => (n >= 1000 ? `${Math.round(n / 1000)} thousand` : `${Math.round(n)}`);
+/** Dollars to the nearest hundred, written the way a screen shows them: 5680 → "5,700". */
+const dollars = (n) => (Math.round(n / 100) * 100).toLocaleString('en-US');
 const people = (n) =>
 	n >= 1e6 ? `${Math.round(n / 1e6)} million` : `${Math.round(n / 1e3)} thousand`;
 const stat = (run, y, key) => statsAt(run, defaultData.national, y).find((s) => s.key === key);
@@ -113,7 +114,7 @@ export function shortScript(run, inputs, summary = null, { town = false } = {}) 
 	const income = rows.find((r) => r.label === 'Income per person');
 	const earns =
 		income.theirs && income.oursValue
-			? ` Average income: ${thousands(income.theirs)} dollars a year. Ours: ${thousands(income.oursValue)}.`
+			? ` Average income: ${dollars(income.theirs)} dollars a year. Ours: ${dollars(income.oursValue)}.`
 			: '';
 	beats.push({
 		say: `${people(pop.value)} people, against ${people(pop.ours)} in ours.${earns} ${city}${city === 'Lagos' ? ' is still' : ', not Lagos, is'} the biggest city.${summary ? ` ${formedLine(summary)}` : ''}`,

@@ -230,7 +230,7 @@ describe('shortSceneAt', () => {
 			'Religious mix'
 		]);
 		expect(beats.at(-1).say).toMatch(
-			/Average income: \d+ thousand dollars a year\. Ours: \d+ thousand\./
+			/Average income: [\d,]+00 dollars a year\. Ours: [\d,]+00\./
 		);
 		expect(s.card.runs.theirs).toMatch(/Nigeria never formed$/);
 	});
