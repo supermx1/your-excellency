@@ -219,3 +219,14 @@ describe('their-world state lines', () => {
 		expect(frameAt(never, 1850).cells.every((c) => c.color === undefined)).toBe(true);
 	});
 });
+
+describe('richAs', async () => {
+	const { richAs, richAsText } = await import('./hud.js');
+	const peers = { year: 2022, gdpPc: { 'the United States': 58000, China: 19000, Ghana: 4200, Niger: 1000 } };
+	it('names the country closest by ratio, or says richer or poorer past the ends', () => {
+		expect(richAsText(richAs(20500, peers))).toBe('like China today');
+		expect(richAsText(richAs(5100, peers))).toBe('like Ghana today');
+		expect(richAsText(richAs(90000, peers))).toBe('richer than the United States today');
+		expect(richAsText(richAs(700, peers))).toBe('poorer than Niger today');
+	});
+});
