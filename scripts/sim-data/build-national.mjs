@@ -38,6 +38,27 @@ export function align(series, scale = 1) {
 }
 
 const round = (n) => Math.round(n * 1000) / 1000;
+// Compared first: a Nigerian audience knows these best. Others only when no African country is close.
+const AFRICA = [
+	'Egypt',
+	'South Africa',
+	'Morocco',
+	'Ghana',
+	"Côte d'Ivoire",
+	'Senegal',
+	'Algeria',
+	'Tunisia',
+	'Botswana',
+	'Gabon',
+	'Angola',
+	'Tanzania',
+	'Uganda',
+	'Benin',
+	'Kenya',
+	'Cameroon',
+	'Ethiopia',
+	'Niger'
+];
 const PEERS = {
 	'the United States': 'USA',
 	Germany: 'DEU',
@@ -59,6 +80,16 @@ const PEERS = {
 	Pakistan: 'PAK',
 	Bangladesh: 'BGD',
 	Ghana: 'GHA',
+	"Côte d'Ivoire": 'CIV',
+	Senegal: 'SEN',
+	Algeria: 'DZA',
+	Tunisia: 'TUN',
+	Botswana: 'BWA',
+	Gabon: 'GAB',
+	Angola: 'AGO',
+	Tanzania: 'TZA',
+	Uganda: 'UGA',
+	Benin: 'BEN',
 	Kenya: 'KEN',
 	Cameroon: 'CMR',
 	Ethiopia: 'ETH',
@@ -98,6 +129,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 			const year = at('USA')[0];
 			return {
 				year,
+				africa: AFRICA.filter((name) => name in PEERS),
 				gdpPc: Object.fromEntries(
 					Object.entries(PEERS)
 						.map(([name, code]) => [name, at(code)])
