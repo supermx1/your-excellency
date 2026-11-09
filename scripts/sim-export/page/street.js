@@ -323,6 +323,9 @@ export function street(ctx, site, shot) {
 		[198, 60, 38, 28, 1, 'rust']
 	];
 	for (const [i, [x, d, w, dd, plaster, roof]] of houses.entries()) {
+		// The side road's car goes behind the houses across it (and the poles in front of them).
+		if (i === 6 && hasCars(site, shot))
+			car(ctx, 168, 70 - ((shot.elapsed * shot.pace * 12) % 260) + 100, '#e9e4d6', 'd');
 		house(ctx, x, d, w, dd, { plaster, roof, lit });
 		// Each wall goes in front of its own house and before the houses nearer the viewer.
 		if (i === 0) compoundWall(ctx, -96, 4, 60);
@@ -336,12 +339,14 @@ export function street(ctx, site, shot) {
 	if (!site.lot) plane(ctx, verge, 62, 124, 30, 18); // the path from the door to the road
 }
 
+const hasCars = (site, shot) =>
+	!site.quiet && ((shot.year ?? 1990) >= 1950 || (shot.techs ?? []).includes('motor-car'));
+
 /** In front of the lot: the pavement and road traffic, passers-by, and the near verge's trees. */
 export function streetFront(ctx, site, shot) {
 	const t = shot.elapsed * shot.pace;
 	const year = shot.year ?? 1990;
 	const techs = new Set(shot.techs ?? []);
-	const cars = year >= 1950 || techs.has('motor-car');
 	if (year >= 1935 || techs.has('electricity')) {
 		const poles = [-120, -70, -20, 30, 80, 130];
 		poles.forEach((d, i) =>
@@ -365,10 +370,9 @@ export function streetFront(ctx, site, shot) {
 			0.8
 		);
 	}
-	if (cars && !site.quiet) {
+	if (hasCars(site, shot)) {
 		car(ctx, ((t * 18) % 340) - 120, 144, '#b4513f');
 		car(ctx, 220 - ((t * 14 + 150) % 340), 158, '#e8b437');
-		car(ctx, 168, 70 - ((t * 12) % 260) + 100, '#e9e4d6', 'd');
 	}
 	kiosk(ctx, 104, 176, ['#3d7a5c', '#efd9a8']);
 	palm(ctx, 30, 190, 1.1);

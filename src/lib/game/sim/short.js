@@ -176,7 +176,7 @@ const MILESTONE_SCENES = {
 	computer: 'internet',
 	internet: 'internet',
 	telephone: 'signal',
-	satellite: 'signal',
+	satellite: 'launch', // its first satellite going up
 	'mobile-phone': 'signal',
 	'motor-car': 'market',
 	'solar-power': 'market'
