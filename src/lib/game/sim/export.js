@@ -62,7 +62,9 @@ export function scenarioCard(inputs) {
 
 /** Narration cut into short captions (a few words each), timed by how long each takes to say. */
 export function captionChunks(text, seconds) {
-	const words = text.split(/\s+/).filter(Boolean);
+	// The voice says "319 thousand"; the screen shows "319,000".
+	const shown = text.replace(/\b(\d+) thousand\b/g, (_, n) => Number(n * 1000).toLocaleString('en-US'));
+	const words = shown.split(/\s+/).filter(Boolean);
 	const chunks = [];
 	let cur = [];
 	for (const w of words) {
