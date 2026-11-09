@@ -26,10 +26,13 @@ export function richAs(value, peers = defaultData.national.peers) {
 	];
 	if (value > top[1] * 1.15) return { name: top[0], relation: 'richer' };
 	if (value < bottom[1] / 1.15) return { name: bottom[0], relation: 'poorer' };
-	const [name] = list.reduce((a, b) =>
-		Math.abs(Math.log(value / b[1])) < Math.abs(Math.log(value / a[1])) ? b : a
-	);
-	return { name, relation: 'like' };
+	const off = ([, v]) => Math.abs(Math.log(value / v));
+	const closest = (xs) => xs.reduce((a, b) => (off(b) < off(a) ? b : a));
+	// An African country when one is within 25%; otherwise the closest anywhere.
+	const africa = list.filter(([name]) => peers.africa?.includes(name));
+	const near =
+		africa.length && off(closest(africa)) < Math.log(1.25) ? closest(africa) : closest(list);
+	return { name: near[0], relation: 'like' };
 }
 /** "like China today", "richer than the United States today". */
 export const richAsText = (r) =>

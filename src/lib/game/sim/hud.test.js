@@ -222,10 +222,10 @@ describe('their-world state lines', () => {
 
 describe('richAs', async () => {
 	const { richAs, richAsText } = await import('./hud.js');
-	const peers = { year: 2022, gdpPc: { 'the United States': 58000, China: 19000, Ghana: 4200, Niger: 1000 } };
+	const peers = { year: 2022, africa: ['Ghana', 'Niger'], gdpPc: { 'the United States': 58000, China: 19000, Pakistan: 5300, Ghana: 4200, Niger: 1000 } };
 	it('names the country closest by ratio, or says richer or poorer past the ends', () => {
 		expect(richAsText(richAs(20500, peers))).toBe('like China today');
-		expect(richAsText(richAs(5100, peers))).toBe('like Ghana today');
+		expect(richAsText(richAs(5100, peers))).toBe('like Ghana today'); // African first, though Pakistan is closer
 		expect(richAsText(richAs(90000, peers))).toBe('richer than the United States today');
 		expect(richAsText(richAs(700, peers))).toBe('poorer than Niger today');
 	});
