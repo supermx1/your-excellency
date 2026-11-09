@@ -362,7 +362,7 @@ function landing(ctx, shot) {
 	fence(ctx, shot, p > 0.78);
 }
 
-const FIELD = { lot: '#9fa26a' };
+const FIELD = { lot: '#9fa26a', quiet: true }; // no traffic or passers-by in a battle
 
 /** A flag on the floor; as `raise` goes from 1 to 0 it comes down its pole (a lost battle). */
 function standard(ctx, x, d, color, raise, t) {
@@ -427,7 +427,8 @@ function battle(ctx, shot) {
 			const front = side === 0 ? 58 + rank * 8 : 96 - rank * 8;
 			let x = mix(home, front, close);
 			if (fighting) x += Math.sin(t * 9 + i * 1.7) * 2;
-			if (side === loser) x = mix(x, side === 0 ? -50 : 210, retreat);
+			// The losers fall back to their own edge of the field, not off it across the road.
+			if (side === loser) x = mix(x, side === 0 ? 4 + rank * 6 : 150 - rank * 6, retreat);
 			soldiers.push({ side, color, x, d: 24 + Math.floor(i / 2) * 30 + rank * 9, i });
 		}
 	soldiers.sort((m, n) => m.d - n.d);
