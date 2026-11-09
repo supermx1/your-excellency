@@ -164,6 +164,14 @@ describe('captionChunks', () => {
 		expect(chunks.at(-1).end).toBeCloseTo(10, 9);
 		for (let i = 1; i < chunks.length; i++) expect(chunks[i].start).toBeCloseTo(chunks[i - 1].end, 9);
 	});
+	it('never leaves one word alone on screen', () => {
+		const lone = captionChunks(
+			"1943: Colony and Protectorate of Nigeria sends the first people into space. That's 18 years before anyone in our world did it.",
+			6
+		);
+		expect(lone.map((c) => c.text)).toContain('world did it.');
+		for (const c of lone) expect(c.text.includes(' ')).toBe(true);
+	});
 	it('shows thousands as numerals', () => {
 		expect(captionChunks('319 thousand people die.', 2)[0].text).toBe('319,000 people die.');
 	});

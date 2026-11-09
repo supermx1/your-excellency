@@ -63,7 +63,9 @@ export function scenarioCard(inputs) {
 /** Narration cut into short captions (a few words each), timed by how long each takes to say. */
 export function captionChunks(text, seconds) {
 	// The voice says "319 thousand"; the screen shows "319,000".
-	const shown = text.replace(/\b(\d+) thousand\b/g, (_, n) => Number(n * 1000).toLocaleString('en-US'));
+	const shown = text.replace(/\b(\d+) thousand\b/g, (_, n) =>
+		Number(n * 1000).toLocaleString('en-US')
+	);
 	const words = shown.split(/\s+/).filter(Boolean);
 	const chunks = [];
 	let cur = [];
@@ -81,6 +83,15 @@ export function captionChunks(text, seconds) {
 		}
 	}
 	if (cur.length) chunks.push(cur.join(' '));
+	// No word left alone on screen ("…did" / "it."): it takes the two words before it along.
+	for (let i = 1; i < chunks.length; i++) {
+		const prev = chunks[i - 1].split(' ');
+		if (!chunks[i].includes(' ') && !/[.!?]$/.test(prev.at(-1)) && prev.length > 3)
+			[chunks[i - 1], chunks[i]] = [
+				prev.slice(0, -2).join(' '),
+				`${prev.slice(-2).join(' ')} ${chunks[i]}`
+			];
+	}
 	const weights = chunks.map((c) => speakable(c).length + 6); // + a beat for the pause between phrases
 	const total = weights.reduce((a, b) => a + b, 0);
 	let t = 0;
