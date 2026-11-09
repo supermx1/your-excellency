@@ -31,7 +31,9 @@ const standout = (run, a, b) => {
 };
 const statesAt = (run, y) => {
 	const p = snap(run, y).polities;
-	return p.length === 1 ? `${p[0].name} rules it all` : `${p.length} states share the land`;
+	return p.length === 1
+		? `${p[0].name} ${verb(p[0].name, 'rules', 'rule')} it all`
+		: `${p.length} states share the land`;
 };
 
 /** Every what-if preset these switches match: a run can be Never colonized and 200 IQ at once. */
@@ -62,7 +64,8 @@ export function shortScript(run, inputs, summary = null, { town = false } = {}) 
 	const rest = card.changes.filter((c) => !covered.has(c.key));
 	const premise =
 		[
-			...presets.map((p) => p.description.split('. ')[0].replace(/\.?$/, '.')),
+			// A preset's own opening line, else the first sentence of its description.
+			...presets.map((p) => p.hook ?? p.description.split('. ')[0].replace(/\.?$/, '.')),
 			rest.length
 				? `I set ${rest.map((c) => `${c.label.toLowerCase()}${/ from$/.test(c.label) ? '' : ' to'} ${c.value}`).join(', ')}.`
 				: ''
@@ -318,7 +321,7 @@ function battleCutaway(run, inRange, end) {
 function addCutaways(run, beats, start, end, inputs) {
 	const inRange = (year) => year > start && year <= end;
 	const premise = powerCutaway(inputs, inRange); // the switch the Short is about comes first
-	const firsts = inventionCutaways(run, inRange).slice(0, 2);
+	const firsts = inventionCutaways(run, inRange).slice(0, 3); // space to the Moon to Mars, when a run has them
 	const war = battleCutaway(run, inRange, end);
 	const milestones = milestoneCutaways(run, inRange).sort((a, b) => b.gap - a.gap);
 	const picked = [];

@@ -44,7 +44,7 @@ const nameOf = (world, id) => world.cellById.get(id).name ?? id;
 
 /** The verb that agrees with a polity's name: "Middle Belt peoples conquer", "Sokoto Caliphate conquers". */
 export const verb = (name, singular, plural) =>
-	/(peoples|communities)$/.test(name) ? plural : singular;
+	/(peoples|communities|territories)$/.test(name) ? plural : singular;
 
 /** @param {import('../types.js').World} world */
 export function stepConflict(world) {

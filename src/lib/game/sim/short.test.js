@@ -33,7 +33,7 @@ describe('shortScript', () => {
 			endYear: 2100
 		};
 		expect(shortScript(run, both)[0].say).toBe(
-			'Britain never conquers the region. Everyone learns and invents three times faster. I ran Nigeria from 1850 to 2025.'
+			'Britain never conquers the region. I gave every Nigerian a 200 IQ: everyone learns and invents three times faster. I ran Nigeria from 1850 to 2025.'
 		);
 		const more = { ...inputs, switches: { ...inputs.switches, coups: 'off' } };
 		expect(shortScript(run, more)[0].say).toBe(
