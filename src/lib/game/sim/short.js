@@ -24,7 +24,8 @@ const standout = (run, a, b) => {
 		const e = run.events.find(
 			(x) => x.kind === kind && x.year > a && x.year <= b && (kind !== 'conquest' || x.annexed)
 		); // a whole state falling, not one battle
-		if (e) return `${e.year}: ${e.title}. `;
+		// "Military coup (1983)" already has its year in front: "1983: Military coup."
+		if (e) return `${e.year}: ${e.title.replace(/ \((?:\w+ )?\d{4}\)$/, '')}. `;
 	}
 	return '';
 };
@@ -116,13 +117,15 @@ export function shortScript(run, inputs, summary = null, { town = false } = {}) 
 		income.theirs && income.oursValue
 			? ` Average income: ${dollars(income.theirs)} dollars a year. Ours: ${dollars(income.oursValue)}.`
 			: '';
+	const power =
+		inputs.switches.power24hFromYear != null ? ` ${lightsLine(snap(run, end), end)}` : '';
 	beats.push({
-		say: `${people(pop.value)} people, against ${people(pop.ours)} in ours.${earns} ${city}${city === 'Lagos' ? ' is still' : ', not Lagos, is'} the biggest city.${summary ? ` ${formedLine(summary)}` : ''}`,
+		say: `${people(pop.value)} people, against ${people(pop.ours)} in ours.${power}${earns} ${city}${city === 'Lagos' ? ' is still' : ', not Lagos, is'} the biggest city.${summary ? ` ${formedLine(summary)}` : ''}`,
 		from: end,
 		to: end,
 		card: true
 	});
-	if (town) addCutaways(run, beats, start, end);
+	if (town) addCutaways(run, beats, start, end, inputs);
 	return beats;
 }
 
@@ -200,6 +203,26 @@ export const CUTAWAYS = [
 	'workshop',
 	'battle'
 ];
+
+/** "Everyone has electricity, 23 hours a day. Ours: 57% of homes." */
+function lightsLine({ totals: { electricityAccess: access = 0, powerService: service = 0 } }, end) {
+	const who = access >= 0.995 ? 'Everyone has' : `${Math.round(access * 100)}% of homes have`;
+	const hours = access > 0.005 ? Math.round((24 * service) / access) : 0;
+	const ours = defaultData.development.snapshots.filter((x) => x.year <= end).at(-1)?.national
+		.electricityAccess?.value;
+	return `${who} electricity, ${hours} hours a day.${ours != null ? ` Ours: ${Math.round(ours * 100)}% of homes.` : ''}`;
+}
+
+/** The scene for the power switch: the year the lights come on and stay on. */
+function powerCutaway(inputs, inRange) {
+	const year = inputs.switches.power24hFromYear;
+	if (year == null || !inRange(year)) return null;
+	return {
+		year,
+		say: `${year}: The lights come on, and they stay on. Day and night, no more power cuts.`,
+		town: { at: year, title: 'Power that never goes off', preset: 'home-power' }
+	};
+}
 
 /** "Kingdom of Lagos sends the first people into space" (its verb agrees with plural names too). */
 function does(name, phrase) {
@@ -292,13 +315,14 @@ function battleCutaway(run, inRange, end) {
  * then the milestones furthest from when they reached our Nigeria (earlier or later), one per scene
  * and spread across the run.
  */
-function addCutaways(run, beats, start, end) {
+function addCutaways(run, beats, start, end, inputs) {
 	const inRange = (year) => year > start && year <= end;
+	const premise = powerCutaway(inputs, inRange); // the switch the Short is about comes first
 	const firsts = inventionCutaways(run, inRange).slice(0, 2);
 	const war = battleCutaway(run, inRange, end);
 	const milestones = milestoneCutaways(run, inRange).sort((a, b) => b.gap - a.gap);
 	const picked = [];
-	for (const shot of [...firsts, war, ...milestones].filter(Boolean)) {
+	for (const shot of [premise, ...firsts, war, ...milestones].filter(Boolean)) {
 		if (picked.length === SHOTS) break;
 		const clash = picked.some(
 			(p) =>
@@ -344,8 +368,15 @@ function formedLine({ runs, nigeriaFormed: n, withCivilWar = 0, withWar = 0 }) {
 }
 const ease = (k) => k * k * (3 - 2 * k);
 
-function cutawaySource(run, { event, familyEvent }) {
+function cutawaySource(run, { event, familyEvent, at, title }) {
 	if (Number.isInteger(event)) return run.events[event];
+	// A scene for a switch rather than an event: the year and a title, under the biggest state's flag.
+	if (Number.isInteger(at) && typeof title === 'string') {
+		const biggest = run.history
+			.find((h) => h.year === at)
+			?.polities.toSorted((a, b) => (b.cellIds?.length ?? 0) - (a.cellIds?.length ?? 0))[0];
+		return { year: at, title, polityIds: biggest ? [biggest.id] : [] };
+	}
 	if (
 		!Array.isArray(familyEvent) ||
 		familyEvent.length !== 3 ||
