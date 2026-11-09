@@ -14,7 +14,7 @@ import { PARAMS as P } from './params.js';
 import { populationAt } from './population.js';
 import { stepLivelihoods } from './rules/livelihoods.js';
 
-export const ENGINE_VERSION = 19;
+export const ENGINE_VERSION = 20;
 
 const RULES = [
 	stepEvents,
@@ -106,7 +106,11 @@ function startingMap(inputs, data) {
 				lifeExp: at('lifeExp'),
 				urban: at('urban'),
 				incomePc: at('gdpPc'),
-				schools: { quranic: 0.1, mission: litSchool * 0.4, state: litSchool * 0.6 }
+				schools: {
+					quranic: 0.1,
+					mission: litSchool * 0.4 * P.startSchools,
+					state: litSchool * 0.6 * P.startSchools
+				}
 			}).filter(([, v]) => v != null)
 		)
 	};

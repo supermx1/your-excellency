@@ -38,6 +38,14 @@ describe('baseline calibration (mean of 30 seeds)', () => {
 	it('income 1960 within ±25% of our Nigeria', () => expect(Math.abs(sim('incomePc', 1960) / real('gdpPc', 1960) - 1)).toBeLessThan(0.25));
 	it('school literacy 2018 within ±10 points', () => expect(Math.abs(sim('litSchool', 2018) - real('litSchool', 2018))).toBeLessThan(0.1));
 	it('life expectancy 2020 within ±5 years', () => expect(Math.abs(sim('lifeExp', 2020) - real('lifeExp', 2020))).toBeLessThan(5));
+	// Shorts start in 1950 from real averages: schooling must grow from there like ours did, not lag it.
+	it('a 1950 start reads like ours in 2000 and 2024 (±8 points)', () => {
+		const mid = [1, 2, 3, 4, 5].map((seed) => runSimulation({ seed, switches: defaultSwitches(), startYear: 1950, endYear: 2025 }));
+		for (const y of [2000, 2024]) {
+			const lit = mid.reduce((s, r) => s + r.history.find((h) => h.year === y).totals.litSchool, 0) / mid.length;
+			expect(Math.abs(lit - real('litSchool', y))).toBeLessThan(0.08);
+		}
+	});
 	it.each([1950, 2000])('life expectancy %i within ±3 years (UN WPP)', (y) => expect(Math.abs(sim('lifeExp', y) - real('lifeExp', y))).toBeLessThan(3));
 	it('urban share 2020 within ±10 points', () => expect(Math.abs(sim('urban', 2020) - real('urban', 2020))).toBeLessThan(0.1));
 	it('Nigeria forms in at least 90% of seeds', () => expect(nigeriaFormed).toBeGreaterThanOrEqual(0.9));
