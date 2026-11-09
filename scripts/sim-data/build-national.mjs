@@ -38,6 +38,32 @@ export function align(series, scale = 1) {
 }
 
 const round = (n) => Math.round(n * 1000) / 1000;
+const PEERS = {
+	'the United States': 'USA',
+	Germany: 'DEU',
+	'South Korea': 'KOR',
+	'the UK': 'GBR',
+	Japan: 'JPN',
+	Turkey: 'TUR',
+	Malaysia: 'MYS',
+	Russia: 'RUS',
+	China: 'CHN',
+	Mexico: 'MEX',
+	Brazil: 'BRA',
+	Egypt: 'EGY',
+	Indonesia: 'IDN',
+	'South Africa': 'ZAF',
+	Morocco: 'MAR',
+	Vietnam: 'VNM',
+	India: 'IND',
+	Pakistan: 'PAK',
+	Bangladesh: 'BGD',
+	Ghana: 'GHA',
+	Kenya: 'KEN',
+	Cameroon: 'CMR',
+	Ethiopia: 'ETH',
+	Niger: 'NER'
+};
 const read = (f) => readFileSync(new URL(f, CACHE), 'utf8');
 
 if (import.meta.url === `file://${process.argv[1]}`) {
@@ -65,6 +91,21 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 			align(owidSeries(read('gdp-pc.csv'), 'gdp_per_capita', 'GBR')),
 			align(owidSeries(read('gdp-pc.csv'), 'gdp_per_capita', 'USA'))
 		),
+		// Well-known countries' income in the last data year, for "as rich as China today".
+		peers: (() => {
+			const csv = read('gdp-pc.csv');
+			const at = (code) => [...owidSeries(csv, 'gdp_per_capita', code)].at(-1);
+			const year = at('USA')[0];
+			return {
+				year,
+				gdpPc: Object.fromEntries(
+					Object.entries(PEERS)
+						.map(([name, code]) => [name, at(code)])
+						.filter(([, last]) => last?.[0] === year)
+						.map(([name, [, v]]) => [name, Math.round(v)])
+				)
+			};
+		})(),
 		electricityKwhPc: align(
 			owidSeries(read('electricity.csv'), 'per_capita_total_generation__kwh')
 		),

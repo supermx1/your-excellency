@@ -44,8 +44,16 @@
 					{#each rows as row (row.label)}
 						<tr class="border-b-2 border-black/20 align-top">
 							<th class="py-2 pr-3 text-sm font-black uppercase">{row.label}</th>
-							<td class="py-2 pr-3 font-bold">{show(row, row.theirs)}</td>
-							<td class="py-2 text-black/70">{show(row, row.ours)}</td>
+							<td class="py-2 pr-3 font-bold"
+								>{show(row, row.theirs)}{#if row.like?.theirs}<span
+										class="block text-sm font-medium opacity-70">{row.like.theirs}</span
+									>{/if}</td
+							>
+							<td class="py-2 text-black/70"
+								>{show(row, row.ours)}{#if row.like?.ours}<span class="block text-sm"
+										>{row.like.ours}</span
+									>{/if}</td
+							>
 						</tr>
 					{/each}
 				</tbody>

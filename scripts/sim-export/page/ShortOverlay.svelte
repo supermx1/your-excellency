@@ -82,8 +82,8 @@
 					{#each scene.card.rows as row (row.label)}
 						<tr class="border-b-2 border-black/20">
 							<th class="py-2 pr-4 text-[28px] font-black whitespace-nowrap uppercase">{row.label}</th>
-							<td class="py-2 pr-3 font-bold">{@render value(row, row.theirs)}</td>
-							<td class="py-2 text-black/70">{@render value(row, row.ours)}</td>
+							<td class="py-2 pr-3 font-bold">{@render value(row, row.theirs)}{#if row.like?.theirs}<span class="block text-[24px] font-medium opacity-70">{row.like.theirs}</span>{/if}</td>
+							<td class="py-2 text-black/70">{@render value(row, row.ours)}{#if row.like?.ours}<span class="block text-[24px]">{row.like.ours}</span>{/if}</td>
 						</tr>
 					{/each}
 				</tbody>

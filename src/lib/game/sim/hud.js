@@ -13,6 +13,28 @@ const powerShort = (access, service) =>
 		? `${Math.round(access * 100)}% · ${Math.round((24 * service) / access)} h a day`
 		: `${Math.round((access ?? 0) * 100)}%`;
 
+/**
+ * The well-known country whose income per person is closest (by ratio), in the last data year:
+ * { name, relation } with relation 'like', or 'richer'/'poorer' when past the ends of the list.
+ */
+export function richAs(value, peers = defaultData.national.peers) {
+	const list = Object.entries(peers?.gdpPc ?? {});
+	if (!Number.isFinite(value) || !list.length) return null;
+	const [top, bottom] = [
+		list.reduce((a, b) => (b[1] > a[1] ? b : a)),
+		list.reduce((a, b) => (b[1] < a[1] ? b : a))
+	];
+	if (value > top[1] * 1.15) return { name: top[0], relation: 'richer' };
+	if (value < bottom[1] / 1.15) return { name: bottom[0], relation: 'poorer' };
+	const [name] = list.reduce((a, b) =>
+		Math.abs(Math.log(value / b[1])) < Math.abs(Math.log(value / a[1])) ? b : a
+	);
+	return { name, relation: 'like' };
+}
+/** "like China today", "richer than the United States today". */
+export const richAsText = (r) =>
+	r && `${r.relation === 'like' ? 'like' : `${r.relation} than`} ${r.name} today`;
+
 const realEvents = defaultData.events.events.filter((e) => e.kind === 'history');
 const isRealWar = (e) => e.effects?.war || (e.effects?.conquer && e.effects?.mortality);
 
@@ -232,6 +254,11 @@ export function endingRows(run, national, summary) {
 				year
 			),
 			oursValue: lastKnown(national, 'gdpPc', year),
+			// Which well-known country each is as rich as today.
+			like: {
+				theirs: richAsText(richAs(last.totals.incomePc)),
+				ours: richAsText(richAs(lastKnown(national, 'gdpPc', year)))
+			},
 			key: 'incomePc'
 		},
 		{

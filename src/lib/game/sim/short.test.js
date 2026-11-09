@@ -253,7 +253,7 @@ describe('shortSceneAt', () => {
 			'Biggest city',
 			'Religious mix'
 		]);
-		expect(beats.at(-1).say).toMatch(/Average income: [\d,]+00 dollars a year\. Ours: [\d,]+00\./);
+		expect(beats.at(-1).say).toMatch(/Average income: [\d,]+00 dollars a year, (about as rich as|richer than|poorer than) [A-Z].* today\. Ours: [\d,]+00\./);
 		expect(s.card.runs.theirs).toMatch(/Nigeria never formed$/);
 	});
 });

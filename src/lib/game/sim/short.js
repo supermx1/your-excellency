@@ -4,7 +4,7 @@
 // each line's years to its audio; shortSceneAt says what each frame shows. Pure functions.
 import { scenarioCard, captionChunks } from './export.js';
 import { frameAt } from './frame.js';
-import { realFrame, statsAt, captionsAt, endingRows } from './hud.js';
+import { realFrame, statsAt, captionsAt, endingRows, richAs } from './hud.js';
 import { defaultData } from './data/index.js';
 import { PRESETS } from './switches.js';
 import { polityColor } from './colors.js';
@@ -12,6 +12,9 @@ import { verb } from './rules/conflict.js';
 
 const NOTABLE = ['union', 'secession', 'conquest', 'history', 'coup', 'war']; // what makes a line, best first
 const snap = (run, y) => run.history.find((h) => h.year === y) ?? run.history.at(-1);
+/** "about as rich as China today", "richer than the United States today". */
+const asRich = (r) =>
+	r.relation === 'like' ? `about as rich as ${r.name} today` : `${r.relation} than ${r.name} today`;
 /** Dollars to the nearest hundred, written the way a screen shows them: 5680 → "5,700". */
 const dollars = (n) => (Math.round(n / 100) * 100).toLocaleString('en-US');
 const people = (n) =>
@@ -118,7 +121,7 @@ export function shortScript(run, inputs, summary = null, { town = false } = {}) 
 	const income = rows.find((r) => r.label === 'Income per person');
 	const earns =
 		income.theirs && income.oursValue
-			? ` Average income: ${dollars(income.theirs)} dollars a year. Ours: ${dollars(income.oursValue)}.`
+			? ` Average income: ${dollars(income.theirs)} dollars a year, ${asRich(richAs(income.theirs))}. Ours: ${dollars(income.oursValue)}.`
 			: '';
 	const power =
 		inputs.switches.power24hFromYear != null ? ` ${lightsLine(snap(run, end), end)}` : '';
