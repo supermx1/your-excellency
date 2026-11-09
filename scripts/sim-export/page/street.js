@@ -349,7 +349,8 @@ export function streetFront(ctx, site, shot) {
 		);
 	}
 	if (site.flag) at(ctx, 52, 132, 0, 1, (c) => flagPole(c, t, shot.color ?? '#d0a24a'));
-	for (let i = 0; i < Math.min(4, shot.crowd ?? 4); i++) {
+	const people = site.quiet ? 0 : Math.min(4, shot.crowd ?? 4);
+	for (let i = 0; i < people; i++) {
 		const travel = (t * 0.05 + 0.27 * i) % 1;
 		const east = i % 2 === 0;
 		walker(
@@ -364,7 +365,7 @@ export function streetFront(ctx, site, shot) {
 			0.8
 		);
 	}
-	if (cars) {
+	if (cars && !site.quiet) {
 		car(ctx, ((t * 18) % 340) - 120, 144, '#b4513f');
 		car(ctx, 220 - ((t * 14 + 150) % 340), 158, '#e8b437');
 		car(ctx, 168, 70 - ((t * 12) % 260) + 100, '#e9e4d6', 'd');
