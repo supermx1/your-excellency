@@ -12,7 +12,7 @@ test('hub shows The Timeline card linking to /sim', async ({ page }) => {
 
 test('choosing Never colonized and Run reaches /sim/play', async ({ page }) => {
 	await page.goto('/sim');
-	await page.getByRole('button', { name: /Never colonized/ }).click();
+	await page.getByLabel('What if…').selectOption('neverColonized');
 	await page.getByRole('button', { name: /Run simulation/ }).click();
 	await expect(page).toHaveURL(/\/sim\/play\?s=/);
 });
@@ -144,7 +144,7 @@ test('an unknown run link shows not found', async ({ page }) => {
 
 test('the end year is typed in and carried into the run', async ({ page }) => {
 	await page.goto('/sim');
-	await page.getByRole('button', { name: /Start from scratch/ }).click();
+	await page.getByLabel('What if…').selectOption('blank');
 	await page.getByLabel('Start year').fill('2020');
 	await page.getByLabel('End year').fill('2060');
 	await page.getByRole('button', { name: /Run simulation/ }).click();
@@ -228,7 +228,9 @@ test('ending explains local conditions and reports the chosen year across seeds'
 	await expect(page.getByText(/all ending in 2021/)).toBeVisible({ timeout: 15000 });
 	await page.getByText('What shaped this world?', { exact: true }).click();
 	await page.getByLabel('Inspect a region').selectOption('kano');
-	await expect(page.getByRole('heading', { name: /What sets income in Kano in 2021/ })).toBeVisible();
+	await expect(
+		page.getByRole('heading', { name: /What sets income in Kano in 2021/ })
+	).toBeVisible();
 	await expect(page.getByText('Electricity.', { exact: true })).toBeVisible();
 	expect(errors).toEqual([]);
 });
@@ -256,7 +258,9 @@ test.describe('map controls', () => {
 
 	test('clicking a state shows who rules it then and what it is today', async ({ page }) => {
 		const map = await start(page);
-		const box = /** @type {{ x: number, y: number, width: number, height: number }} */ (await map.boundingBox());
+		const box = /** @type {{ x: number, y: number, width: number, height: number }} */ (
+			await map.boundingBox()
+		);
 		await map.click({ position: { x: box.width * 0.5, y: box.height * 0.3 } });
 		const card = page.getByRole('region', { name: /^About / });
 		await expect(card).toBeVisible();
@@ -268,15 +272,23 @@ test.describe('map controls', () => {
 
 	test('dragging the map takes over the camera until Reset view', async ({ page }) => {
 		const map = await start(page);
-		const box = /** @type {{ x: number, y: number, width: number, height: number }} */ (await map.boundingBox());
+		const box = /** @type {{ x: number, y: number, width: number, height: number }} */ (
+			await map.boundingBox()
+		);
 		await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
 		await page.mouse.down();
 		await page.mouse.move(box.x + box.width / 2 - 120, box.y + box.height / 2 - 40, { steps: 5 });
 		await page.mouse.up();
-		await expect(page.getByRole('button', { name: 'Follow events' })).toHaveAttribute('aria-pressed', 'false');
+		await expect(page.getByRole('button', { name: 'Follow events' })).toHaveAttribute(
+			'aria-pressed',
+			'false'
+		);
 		await page.getByRole('button', { name: 'Reset view' }).click();
 		await expect(page.getByRole('button', { name: 'Reset view' })).toHaveCount(0);
-		await expect(page.getByRole('button', { name: 'Follow events' })).toHaveAttribute('aria-pressed', 'true');
+		await expect(page.getByRole('button', { name: 'Follow events' })).toHaveAttribute(
+			'aria-pressed',
+			'true'
+		);
 	});
 });
 
@@ -284,7 +296,10 @@ test.describe('read aloud', () => {
 	test('Listen reads the chapter with the site’s own voice', async ({ page }) => {
 		/** @type {string[]} */
 		const external = [];
-		page.on('request', (r) => /huggingface|ampixa|jsdelivr|kittenml/.test(r.url()) && external.push(r.url()));
+		page.on(
+			'request',
+			(r) => /huggingface|ampixa|jsdelivr|kittenml/.test(r.url()) && external.push(r.url())
+		);
 		await page.goto(`/sim/play?s=${never()}`);
 		const listen = page.getByRole('button', { name: /Listen/ });
 		await listen.click({ timeout: 15000 });
@@ -299,8 +314,12 @@ test.describe('read aloud', () => {
 		await page.route('**/kitten/**', (r) => r.abort());
 		await page.goto(`/sim/play?s=${never()}`);
 		await page.getByRole('button', { name: /Listen/ }).click({ timeout: 15000 });
-		await expect(page.locator('button[aria-pressed="true"][data-voice]')).toHaveAttribute('data-voice', 'browser', {
-			timeout: 30000
-		});
+		await expect(page.locator('button[aria-pressed="true"][data-voice]')).toHaveAttribute(
+			'data-voice',
+			'browser',
+			{
+				timeout: 30000
+			}
+		);
 	});
 });
