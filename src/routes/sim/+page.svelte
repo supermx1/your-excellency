@@ -15,6 +15,14 @@
 	const btn =
 		'border-2 border-black font-black uppercase tracking-wide shadow-[4px_4px_0_0_#000] transition active:translate-x-1 active:translate-y-1 active:shadow-none';
 
+	const OPTIONS = {
+		...PRESETS,
+		blank: {
+			label: 'Start from scratch',
+			description: 'Every switch as in history. Change what you like.'
+		}
+	};
+
 	let chosen = $state('neverColonized');
 	let switches = $state({ ...defaultSwitches(), ...PRESETS.neverColonized.switches });
 	let startYear = $state(PRESETS.neverColonized.startYear);
@@ -105,20 +113,23 @@
 			</section>
 		{/if}
 
-		<div class="grid gap-4 md:grid-cols-3">
-			{#each [...Object.entries(PRESETS), ['blank', { label: 'Start from scratch', description: 'Every switch as in history. Change what you like.' }]] as [id, p] (id)}
-				<button
-					type="button"
-					class="{card} p-5 text-left transition hover:-translate-y-1 {chosen === id
-						? 'bg-yellow-200'
-						: ''}"
-					aria-pressed={chosen === id}
-					onclick={() => choose(id)}
-				>
-					<h2 class="text-2xl font-black uppercase">{p.label}</h2>
-					<p class="mt-1 font-medium">{p.description}</p>
-				</button>
-			{/each}
+		<!-- ponytail: one native select, so new presets need only an entry in PRESETS -->
+		<div class="{card} p-5">
+			<label class="block text-2xl font-black uppercase" for="preset">What if…</label>
+			<select
+				id="preset"
+				class="mt-2 block w-full border-2 border-black bg-yellow-200 px-3 py-2 text-lg font-bold"
+				value={chosen}
+				onchange={(e) => choose(e.currentTarget.value)}
+			>
+				{#each Object.entries(OPTIONS) as [id, p] (id)}
+					<option value={id}>{p.label}</option>
+				{/each}
+				{#if chosen === 'custom'}<option value="custom">Your last run's switches</option>{/if}
+			</select>
+			<p class="mt-2 font-medium">
+				{OPTIONS[chosen]?.description ?? 'The switches from your last run. Change what you like.'}
+			</p>
 		</div>
 
 		<div class="{card} flex flex-wrap items-center gap-6 p-5">
