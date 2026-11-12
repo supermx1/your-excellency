@@ -9,6 +9,7 @@ import { defaultData } from './data/index.js';
 import { PRESETS } from './switches.js';
 import { polityColor } from './colors.js';
 import { verb } from './rules/conflict.js';
+import { militaryOn1January } from './world.js';
 
 const NOTABLE = ['union', 'secession', 'conquest', 'history', 'coup', 'war']; // what makes a line, best first
 const snap = (run, y) => run.history.find((h) => h.year === y) ?? run.history.at(-1);
@@ -85,7 +86,7 @@ export function shortScript(run, inputs, summary = null, { town = false } = {}) 
 			.join(' ') || 'Every switch as in history.';
 	const beats = [
 		{
-			say: `${premise} I ran ${landName(snap(run, start))} from ${start} to ${end}.`,
+			say: `${premise}${onePeopleLine(run, inputs)} I ran ${landName(snap(run, start))} from ${start} to ${end}.`,
 			from: start,
 			to: start
 		}
@@ -221,7 +222,8 @@ export const CUTAWAYS = [
 	'home-power',
 	'workshop',
 	'battle',
-	'repelled'
+	'repelled',
+	'junta'
 ];
 
 const KIND_WORDS = {
@@ -257,6 +259,56 @@ function tradeLine({ totals }, end) {
 	const ourMain = Object.keys(OUR_KINDS).reduce((a, b) => (real[b] > real[a] ? b : a));
 	const ourTwh = Math.round((kwh * national.pop[i]) / 1e9);
 	return `${theirs} Ours: ${ourTwh} terawatt-hours, and ${billions(real.total)}${+year < end ? ` in ${year}` : ''}, mostly ${OUR_KINDS[ourMain]}.`;
+}
+
+const FAITH_WORDS = {
+	islam: 'is Muslim',
+	christian: 'is Christian',
+	traditional: 'follows the traditional faiths'
+};
+
+/**
+ * " Everyone follows the traditional faiths and speaks Hausa, as most people did in 1850." With a chosen
+ * faith: " Everyone is Muslim and speaks Hausa, the language most people spoke in 1850."
+ */
+function onePeopleLine(run, inputs) {
+	const pick = inputs.switches.onePeople ?? 'off';
+	if (pick === 'off') return '';
+	const first = run.history[0];
+	const religion = first.cells[0]?.religion ?? {};
+	const faith = Object.keys(religion).find((f) => religion[f] === 1);
+	const speakers = {};
+	for (const c of first.cells) {
+		const l = defaultData.names?.cellLanguage?.[c.id];
+		if (l) speakers[l] = (speakers[l] ?? 0) + c.pop;
+	}
+	const language = Object.keys(speakers).reduce((a, b) => (speakers[b] > speakers[a] ? b : a));
+	const name = language[0].toUpperCase() + language.slice(1);
+	const why =
+		pick === 'largest'
+			? `as most people did in ${first.year}`
+			: `the language most people spoke in ${first.year}`;
+	return ` Everyone ${FAITH_WORDS[faith]} and speaks ${name}, ${why}.`;
+}
+
+/**
+ * The scene for soldiers who never hand power back: the year they hold on (the year after a start under
+ * military rule, else their first coup), set against when ours handed power back.
+ */
+function militaryCutaway(run, inputs, inRange) {
+	if (inputs.switches.militaryHandsBack !== false) return null;
+	const start = run.history[0].year;
+	const coup = run.events.find((e) => e.kind === 'coup' && inRange(e.year));
+	const year = militaryOn1January(start) ? start + 1 : coup?.year;
+	if (year == null || !inRange(year)) return null;
+	const handover = year <= 1980 ? 'in 1979' : 'on 29 May 1999';
+	const ours =
+		year <= 2000 ? ` In our world, they handed power to an elected government ${handover}.` : '';
+	return {
+		year,
+		say: `${year}: The soldiers keep power. No election, no handover.${ours}`,
+		town: { at: year, title: 'The soldiers keep power', preset: 'junta' }
+	};
 }
 
 /** "Everyone has electricity, 23 hours a day. Ours: 57% of homes." */
@@ -403,12 +455,13 @@ function battleCutaway(run, inRange, end) {
 function addCutaways(run, beats, start, end, inputs) {
 	const inRange = (year) => year > start && year <= end;
 	const premise = powerCutaway(inputs, inRange); // the switch the Short is about comes first
+	const soldiers = militaryCutaway(run, inputs, inRange);
 	const firsts = inventionCutaways(run, inRange).slice(0, 3); // space to the Moon to Mars, when a run has them
 	const war = battleCutaway(run, inRange, end);
 	const repelled = repelledCutaway(run, inRange); // the land holds: the story of a strong people
 	const milestones = milestoneCutaways(run, inRange).sort((a, b) => b.gap - a.gap);
 	const picked = [];
-	for (const shot of [premise, repelled, ...firsts, war, ...milestones].filter(Boolean)) {
+	for (const shot of [premise, soldiers, repelled, ...firsts, war, ...milestones].filter(Boolean)) {
 		if (picked.length === SHOTS) break;
 		const clash = picked.some(
 			(p) =>

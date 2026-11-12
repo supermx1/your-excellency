@@ -48,7 +48,7 @@ function startingCell(id, year, data, populations) {
 }
 
 /** Soldiers ruled Nigeria from the January 1966 coup to October 1979, and from 31 December 1983 to May 1999. */
-const militaryOn1January = (y) => (y > 1966 && y < 1980) || (y > 1983 && y < 2000);
+export const militaryOn1January = (y) => (y > 1966 && y < 1980) || (y > 1983 && y < 2000);
 
 /**
  * The polity map, flags and real conditions at the start year. 1850 starts use the 1850 polities;

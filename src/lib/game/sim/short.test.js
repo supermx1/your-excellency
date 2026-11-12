@@ -41,7 +41,30 @@ describe('shortScript', () => {
 		expect(shot.rivals).toEqual([shot.color, polityColor('british')]);
 		expect(shot.winner).toBe(0);
 		// Five states hold the land at the end: the closing line names them, not one 'Nigeria'.
-		expect(shortScript(r, genius, summary).at(-1).say).toMatch(/^\d+ states share the land we call Nigeria: .+ and .+\. In all, [\d.]+ million people, against/);
+		expect(shortScript(r, genius, summary).at(-1).say).toMatch(
+			/^\d+ states share the land we call Nigeria: .+ and .+\. In all, [\d.]+ million people, against/
+		);
+	});
+	it('One people: says which faith and language everyone shares', () => {
+		const one = { ...inputs, switches: { ...defaultSwitches(), ...PRESETS.onePeople.switches } };
+		expect(shortScript(runSimulation(one), one)[0].say).toContain(
+			'Everyone follows the traditional faiths and speaks Hausa, as most people did in 1850.'
+		);
+	});
+	it('Military never leaves: the soldiers keep power, against our 1999 handover', () => {
+		const p = PRESETS.militaryStays;
+		const army = {
+			seed: 17,
+			switches: { ...defaultSwitches(), ...p.switches },
+			startYear: p.startYear,
+			endYear: 2025
+		};
+		const shot = shortScript(runSimulation(army), army, summary, { town: true }).find(
+			(b) => b.town?.preset === 'junta'
+		);
+		expect(shot.say).toBe(
+			'2000: The soldiers keep power. No election, no handover. In our world, they handed power to an elected government on 29 May 1999.'
+		);
 	});
 	it('opens on the what-if and its years', () => {
 		expect(beats[0].say).toBe(
