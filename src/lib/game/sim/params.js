@@ -31,6 +31,21 @@ export const PARAMS = {
 	powerIncomeReturn: 0.15, // full effective service adds at most 15% to non-oil potential income
 	connectionGrowth: 0.07, // annual share of the affordable connection gap closed, at gridIncomeUnit and full stability
 	gridIncomeUnit: 4000, // $ a head at which grid building and wiring run at their base rates (no cap above)
+	// Electricity made: a person with power all day (homes, work, industry) uses this many kWh a year per $ of
+	// income. Fitted across the 95 countries with incomes of $10,000 or more in 2022 (OWID/Ember generation,
+	// Maddison income): slope 1.0, so a straight share. It gives our Nigeria about 40 TWh in 2022 (real: 38).
+	kwhPerDollar: 0.17,
+	powerPrice: 0.08, // $ per kWh sold to the neighbours (West African Power Pool tariffs, about 8–12 US cents)
+	// Exports, fitted to our Nigeria (exportAnchors in national.json): about $2.3B in 1950, nearly all farm
+	// goods, and $48B in 2022, 88% oil and gas (2011 dollars).
+	farmExport: 0.13, // share of farm output sold abroad: rural people × farm technology × market access
+	goodsExport: 0.28, // share of the modern economy's output sold abroad (rich countries: about 10–45%)
+	// Oil money makes a currency dear, so other exports cost more abroad (Corden and Neary 1982): they are
+	// multiplied by e^(−dutchDisease × oil share of income). Fitted to the fall of Nigeria's farm exports.
+	dutchDisease: 50,
+	// From the first find to full output, rising as (years / this)³: fitted to Nigeria (found 1956; 1% of
+	// peak output in 1960, 13% in 1965, half in 1970, all of about 2.3M barrels a day in 1974).
+	oilRampYears: 18,
 	schoolExpansionRate: 0.12, // free-school capacity expands gradually, scaled by resources and skills
 	schoolPolicyCoverage: 0.4,
 	// Livelihood rules are sensitivity assumptions, not household-survey estimates.

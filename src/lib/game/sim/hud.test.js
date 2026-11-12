@@ -110,10 +110,18 @@ describe('ending', () => {
 			'Life expectancy',
 			'Income per person',
 			'Has electricity',
+			'Power made',
+			'Exports a year',
 			'Wars',
 			'Biggest city',
 			'Religious mix'
 		]);
+		const power = rows.find((r) => r.label === 'Power made');
+		expect(power.theirs).toBeGreaterThan(0);
+		expect(power.like.theirs).toMatch(/a person (as|than) .+ today$/);
+		const exports = rows.find((r) => r.label === 'Exports a year');
+		expect(exports.theirs).toBeGreaterThan(0);
+		expect(exports.like.ours).toMatch(/^oil 88%/); // our Nigeria in 2022
 		const income = rows.find((r) => r.label === 'Income per person');
 		expect(income.theirs).toBeGreaterThan(0);
 		expect(income.oursValue).toBeGreaterThan(4000); // OWID GDP per person, 2022

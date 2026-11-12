@@ -97,6 +97,20 @@ const PEERS = {
 };
 const read = (f) => readFileSync(new URL(f, CACHE), 'utf8');
 
+// Nigeria's neighbours and the countries its grid line reaches through Benin and Togo (West African Power Pool).
+const NEIGHBOURS = ['BEN', 'NER', 'TCD', 'CMR', 'TGO', 'GHA'];
+
+// Our Nigeria's exports of goods in 2011 US dollars (US CPI: 1950 24.1, 1960 29.6, 2011 224.9, 2022 292.7).
+// 1950 and 1960: domestic exports £88.5M and £165.6M at $2.80 (Helleiner 1966, Peasant Agriculture,
+// Government and Economic Growth in Nigeria, statistical appendix); oil 2.7% and tin about 3% in 1960, the
+// rest farm goods. 2022: merchandise exports about $63B (WTO), oil and gas about 88%, farm goods about 4%,
+// manufactures about 5% (NBS foreign trade reports). Rounded; the shares are approximate.
+const EXPORT_ANCHORS = {
+	1950: { total: 2.31e9, oil: 0, farm: 0.9, goods: 0.02 },
+	1960: { total: 3.52e9, oil: 0.03, farm: 0.85, goods: 0.03 },
+	2022: { total: 48.4e9, oil: 0.88, farm: 0.04, goods: 0.05 }
+};
+
 if (import.meta.url === `file://${process.argv[1]}`) {
 	const popLong = owidSeries(read('pop-long.csv'), 'population_historical');
 	const unEst = owidSeries(read('pop-un.csv'), 'population__sex_all__age_all__variant_estimates');
@@ -141,6 +155,42 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 		electricityKwhPc: align(
 			owidSeries(read('electricity.csv'), 'per_capita_total_generation__kwh')
 		),
+		// Electricity made per person in the same well-known countries, for "as much power as Egypt today".
+		peersKwhPc: (() => {
+			const csv = read('electricity.csv');
+			return Object.fromEntries(
+				Object.entries(PEERS)
+					.map(([name, code]) => [
+						name,
+						[...owidSeries(csv, 'per_capita_total_generation__kwh', code)].at(-1)
+					])
+					.filter(([, last]) => last)
+					.map(([name, [, v]]) => [name, Math.round(v)])
+			);
+		})(),
+		// The market for power sold abroad: total income of the neighbours on the West African grid ($ a year).
+		// Income per person holds at its last value; population follows the UN projections.
+		neighbourIncome: (() => {
+			const gdp = read('gdp-pc.csv');
+			const people = read('pop-un.csv');
+			const perCountry = NEIGHBOURS.map((code) => {
+				const pc = align(owidSeries(gdp, 'gdp_per_capita', code));
+				const last = pc.findLast((v) => v != null);
+				const pop = align(
+					new Map([
+						...owidSeries(people, 'population__sex_all__age_all__variant_estimates', code),
+						...owidSeries(people, 'population__sex_all__age_all__variant_medium__projected', code)
+					])
+				);
+				return YEARS.map((y, i) => (pop[i] == null || y < 1950 ? null : (pc[i] ?? last) * pop[i]));
+			});
+			return YEARS.map((_, i) =>
+				perCountry.some((s) => s[i] == null)
+					? null
+					: Math.round(perCountry.reduce((t, s) => t + s[i], 0))
+			);
+		})(),
+		exportAnchors: EXPORT_ANCHORS,
 		oilTwh: align(owidSeries(read('oil.csv'), 'oil_production_twh'))
 	};
 	writeFileSync(OUT, JSON.stringify(national) + '\n');
