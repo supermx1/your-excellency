@@ -598,7 +598,8 @@ export function planShort(
 	return { duration, cues, segments, at };
 }
 
-// The Short's scorecard: how people live, not only how many there are and how often they fought.
+// The Short's scorecard: how people live, not only how many there are and how often they fought
+// (the box above it already counts the wars).
 const SCORECARD = [
 	'Population',
 	'Income per person',
@@ -606,11 +607,29 @@ const SCORECARD = [
 	'Exports a year',
 	'Can read (school)',
 	'Life expectancy',
-	'Wars',
 	'Biggest city',
 	'Religious mix',
 	'People in space'
 ];
+
+// So the card fits the frame: the two biggest kinds of exports, and faiths of 5% or more.
+const parts = (text, keep) => text && text.split(' · ').filter(keep).join(' · ');
+const cardRow = (row) =>
+	row.label === 'Exports a year'
+		? {
+				...row,
+				like: {
+					theirs: parts(row.like?.theirs, (_, i) => i < 2),
+					ours: parts(row.like?.ours, (_, i) => i < 2)
+				}
+			}
+		: row.label === 'Religious mix'
+			? {
+					...row,
+					theirs: parts(row.theirs, (s) => parseInt(s) >= 5),
+					ours: parts(row.ours, (s) => parseInt(s) >= 5)
+				}
+			: row;
 
 /** What one frame of the Short shows. */
 export function shortSceneAt(run, plan, time, summary = null) {
@@ -628,7 +647,9 @@ export function shortSceneAt(run, plan, time, summary = null) {
 		line,
 		stats: [pick('pop'), pick('wars')],
 		card: rows && {
-			rows: SCORECARD.map((l) => rows.find((r) => r.label === l)).filter(Boolean),
+			rows: SCORECARD.map((l) => rows.find((r) => r.label === l))
+				.filter(Boolean)
+				.map(cardRow),
 			runs: rows.find((r) => r.label.startsWith('In '))
 		}
 	};

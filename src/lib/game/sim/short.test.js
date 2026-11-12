@@ -270,7 +270,6 @@ describe('shortSceneAt', () => {
 			'Exports a year',
 			'Can read (school)',
 			'Life expectancy',
-			'Wars',
 			'Biggest city',
 			'Religious mix'
 		]);
