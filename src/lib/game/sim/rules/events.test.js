@@ -25,6 +25,18 @@ describe('technology and events', () => {
 		);
 	});
 
+	it('every British attack in our history works: Britain was far ahead', () => {
+		for (const s of seeds.slice(0, 5))
+			expect(run(s).events.some((e) => e.kind === 'conquest' && e.failed)).toBe(false);
+	});
+
+	it('with 200 IQ, some states drive Britain off in most seeds', () => {
+		const beaten = seeds.filter((s) =>
+			run(s, { learning: 3 }, 1850, 1920).events.some((e) => e.failed)
+		);
+		expect(beaten.length).toBeGreaterThan(10);
+	});
+
 	it('civil war is skipped without error when Nigeria does not exist', () => {
 		const r = run(2, { britishConquest: false });
 		expect(ids(r).has('civil-war')).toBe(false);

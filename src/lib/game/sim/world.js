@@ -14,7 +14,7 @@ import { PARAMS as P } from './params.js';
 import { populationAt } from './population.js';
 import { stepLivelihoods } from './rules/livelihoods.js';
 
-export const ENGINE_VERSION = 20;
+export const ENGINE_VERSION = 21;
 
 const RULES = [
 	stepEvents,
@@ -42,6 +42,9 @@ function startingCell(id, year, data, populations) {
 		religion: { islam: mix('islam'), christian: mix('christian'), traditional: mix('traditional') }
 	};
 }
+
+/** Soldiers ruled Nigeria from the January 1966 coup to October 1979, and from 31 December 1983 to May 1999. */
+const militaryOn1January = (y) => (y > 1966 && y < 1980) || (y > 1983 && y < 2000);
 
 /**
  * The polity map, flags and real conditions at the start year. 1850 starts use the 1850 polities;
@@ -84,7 +87,14 @@ function startingMap(inputs, data) {
 				: p.cellIds.includes('lagos')
 					? 'lagos'
 					: p.cellIds[0],
-		government: p.british ? 'colony' : year >= 1960 ? 'federation' : 'monarchy',
+		government: p.british
+			? 'colony'
+			: p.id === 'nigeria' && militaryOn1January(year)
+				? 'military'
+				: year >= 1960
+					? 'federation'
+					: 'monarchy',
+		governmentBeforeCoup: 'federation',
 		tech: known,
 		knowledge: 1 + 0.05 * known.length + 2 * litSchool
 	}));
@@ -160,6 +170,26 @@ function makePolity(src) {
 }
 
 /**
+ * One people: every place gets one faith (the chosen one, or the one most people hold at the start) and
+ * one language (the one most people speak at the start). States with a state faith take the shared one.
+ */
+function onePeople(world) {
+	const pick = world.switches.onePeople ?? 'off';
+	if (pick === 'off') return;
+	const largest = (share) => {
+		const sum = {};
+		for (const c of world.cells) for (const [k, v] of share(c)) sum[k] = (sum[k] ?? 0) + v * c.pop;
+		return Object.keys(sum).reduce((a, b) => (sum[b] > sum[a] ? b : a));
+	};
+	const faith = pick === 'largest' ? largest((c) => Object.entries(c.religion)) : pick;
+	const cellLanguage = world.data.names?.cellLanguage ?? {};
+	world.language = largest((c) => (cellLanguage[c.id] ? [[cellLanguage[c.id], 1]] : []));
+	for (const c of world.cells)
+		c.religion = Object.fromEntries(Object.keys(c.religion).map((f) => [f, f === faith ? 1 : 0]));
+	for (const p of world.polities) if (p.stateReligion) p.stateReligion = faith;
+}
+
+/**
  * @param {import('./types.js').RunInputs} inputs
  * @param {any} data
  * @returns {import('./types.js').World}
@@ -225,6 +255,7 @@ export function createWorld(inputs, data = defaultData) {
 		inputs,
 		data
 	};
+	onePeople(world);
 	world.families = createFamilies(world);
 	return world;
 }

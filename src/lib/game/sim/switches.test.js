@@ -39,9 +39,29 @@ describe('switches and presets', () => {
 			[
 				'britishConquest', 'indirectRule', 'capitalToAbuja', 'amalgamation', 'independenceYear', 'civilWar', 'coups', 'oilDiscovery', 'oilYear',
 				'learning', 'health', 'trust', 'oilInGround', 'malaria', 'drought', 'power24hFromYear',
-				'freeSchoolingFromYear', 'corruption', 'religiousTolerance', 'christianMissions', 'stateReligion', 'sharia'
+				'freeSchoolingFromYear', 'corruption', 'religiousTolerance', 'christianMissions', 'stateReligion', 'sharia',
+				// Both apply to everyone alike: one shared faith for all, or soldiers of any background.
+				'militaryHandsBack', 'onePeople'
 			].sort()
 		);
+	});
+
+	it('military-never-leaves keeps soldiers in power from 1999', () => {
+		const p = PRESETS.militaryStays;
+		for (const seed of [1, 2, 3]) {
+			const run = runSimulation({ seed, switches: validateSwitches(p.switches).switches, startYear: p.startYear, endYear: 2030 });
+			expect(run.events.some((e) => /Civilian rule returns/.test(e.title))).toBe(false);
+		}
+		const history = runSimulation({ seed: 1, switches: defaultSwitches(), startYear: 1999, endYear: 2060 });
+		expect(history.events.some((e) => /Civilian rule returns/.test(e.title))).toBe(true);
+	});
+
+	it('one people: one faith everywhere, no tension from difference', () => {
+		const run = runSimulation({ seed: 1, switches: validateSwitches(PRESETS.onePeople.switches).switches, startYear: 1850, endYear: 1950 });
+		const end = run.history.at(-1);
+		const faiths = new Set(end.cells.map((c) => Object.keys(c.religion).find((f) => c.religion[f] === 1)));
+		expect(faiths).toEqual(new Set(['traditional'])); // most people held traditional faiths in 1850
+		for (const c of end.cells) expect(c.tension).toBe(0);
 	});
 
 	it('summarize counts outcomes across runs', () => {

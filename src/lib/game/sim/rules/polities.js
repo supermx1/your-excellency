@@ -34,7 +34,7 @@ export function stepPolities(world) {
 
 		if (coupMult && !p.british && world.rand() < P.coupBase * coupMult * (1 - p.stability))
 			coup(world, p);
-		else if (p.government === 'military' && world.rand() < 0.06) {
+		else if (p.government === 'military' && sw.militaryHandsBack !== false && world.rand() < 0.06) {
 			// Hand power back to whatever ruled before (a kingdom stays a kingdom), worded for the era.
 			const before = p.governmentBeforeCoup ?? 'republic';
 			const modern = ['republic', 'federation', 'colony'].includes(before);

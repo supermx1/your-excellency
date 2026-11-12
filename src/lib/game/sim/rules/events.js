@@ -5,7 +5,7 @@
 // from independence, and they happen only if the state is unstable at that moment.
 import { PARAMS as P } from '../params.js';
 import { coup, secede } from './polities.js';
-import { startWar, transferCell } from './conflict.js';
+import { startWar, transferCell, verb } from './conflict.js';
 import { harbourTrade } from './economy.js';
 
 /** Is a history event allowed by its switch? Returns the year it should fire in, or null. */
@@ -31,6 +31,16 @@ const cellsFor = (world, spec) => {
 	return spec;
 };
 
+/** Britain's technology comes from Britain: our world's, whatever happens here. */
+const britainKnowledge = (year) =>
+	P.britainKnowledge1861 + P.britainKnowledgeGrowth * (year - 1861);
+
+/** A beaten (or not yet possible) conquest comes back later, while the scramble lasts. */
+function tryAgain(world, event) {
+	const year = world.year + P.conquestRetry;
+	if (year <= P.conquestUntil) (world.retry ??= {})[event.id] = year;
+}
+
 function britishPolity(world) {
 	let p = world.polities.find((x) => x.british);
 	if (!p) {
@@ -44,7 +54,7 @@ function britishPolity(world) {
 			treasury: 0,
 			army: 0.04,
 			stability: 0.6,
-			knowledge: 2.5,
+			knowledge: britainKnowledge(world.year),
 			// What reaches the people it governs is what their land already had, then what it imports with its
 			// colonial head start (adoptColonial), not everything Europe knew on the day it arrived.
 			tech: [],
@@ -77,22 +87,62 @@ function apply(world, event) {
 
 	if (fx.conquer) {
 		const brit = britishPolity(world);
+		const owners = new Map();
 		for (const id of fx.conquer.cellIds) {
 			const cell = world.cellById.get(id);
-			const from = world.polities.find((p) => p.id === cell.polityId);
+			const from = world.polities.find((p) => p.id === cell.polityId) ?? null;
 			if (from === brit) continue;
+			owners.set(from, [...(owners.get(from) ?? []), cell]);
+		}
+		// Each state defends its own land, and wins unless Britain is far enough ahead in technology.
+		// Same rule for every state; ponytail: technology only, not numbers, terrain or unity.
+		const beaten = [];
+		const taken = [];
+		for (const [from, cells] of owners) {
+			const chance = (britainKnowledge(world.year) - (from?.knowledge ?? 0)) / P.conquestEdge;
+			if (from && chance < 1 && world.rand() >= chance) {
+				beaten.push(from);
+				continue;
+			}
 			if (from) {
 				brit.tech = [...new Set([...brit.tech, ...from.tech])];
 				from.atWarWith = from.atWarWith.filter((x) => x !== brit.id);
 				brit.atWarWith = brit.atWarWith.filter((x) => x !== from.id);
+				taken.push(from);
 			}
-			transferCell(world, cell, brit);
-			cell.indirectRule = world.switches.indirectRule !== false;
+			for (const cell of cells) {
+				transferCell(world, cell, brit);
+				cell.indirectRule = world.switches.indirectRule !== false;
+			}
 		}
-		brit.capitalCell ??= fx.conquer.cellIds[0];
-		seatBySea(world, brit);
-		world.flags.britishRule = true;
+		for (const from of beaten) {
+			from.stability = Math.min(1, from.stability + 0.1); // a won defence rallies people behind their rulers
+			world.events.push({
+				year: world.year,
+				kind: 'conquest',
+				failed: true,
+				polityIds: [from.id],
+				title: `${from.name} ${verb(from.name, 'drives', 'drive')} off a British attack`
+			});
+		}
+		if (brit.cellIds.length) {
+			brit.capitalCell ??= brit.cellIds[0];
+			seatBySea(world, brit);
+			world.flags.britishRule = true;
+		}
 		world.polities = world.polities.filter((p) => p.cellIds.length);
+		if (beaten.length) {
+			tryAgain(world, event);
+			// Only some fell: name them, not our history's headline. No sack where the attack failed.
+			for (const from of taken)
+				world.events.push({
+					year: world.year,
+					kind: 'conquest',
+					polityIds: [from.id],
+					title: `Britain takes ${from.name}`
+				});
+			return false;
+		}
 	}
 
 	if (fx.merge) {
@@ -197,12 +247,16 @@ export function stepEvents(world) {
 
 	world.fired ??= new Set();
 	for (const e of all) {
-		const year = e.kind === 'world' ? e.year : scheduledYear(e, sw, world.flags);
-		if (year === null || world.fired.has(e.id)) continue;
+		const again = world.retry?.[e.id];
+		const year = again ?? (e.kind === 'world' ? e.year : scheduledYear(e, sw, world.flags));
+		if (year === null || (world.fired.has(e.id) && again !== world.year)) continue;
 		// Year-switch events (independence, oil) wait until their requirements hold.
 		const waits = e.switch === 'independenceYear' || e.id === 'oil-oloibiri';
 		if (waits ? year > world.year : year !== world.year) continue;
-		if (e.kind === 'history' && !(e.requires ?? []).every((f) => world.flags[f])) continue;
+		if (e.kind === 'history' && !(e.requires ?? []).every((f) => world.flags[f])) {
+			if (e.effects?.conquer) tryAgain(world, e); // no foothold yet: Britain comes back later
+			continue;
+		}
 		// Skipping only the first step lets completed historical events replay the next year.
 		// Explicitly postponed events have a future scheduled year and remain eligible.
 		if (waits && year < world.inputs.startYear && e.year < world.inputs.startYear) {
@@ -211,7 +265,7 @@ export function stepEvents(world) {
 		}
 		world.fired.add(e.id);
 		if (!causesHold(world, e)) continue; // the moment passes; a stable country rides it out
-		apply(world, e);
+		if (apply(world, e) === false) continue;
 		// A crisis moved by a later independence keeps its name but not our month.
 		const title = world.year === e.year ? e.title : e.title.replace(/ \([A-Z][a-z]+ \d{4}\)$/, '');
 		world.events.push({ year: world.year, kind: e.kind, id: e.id, title });

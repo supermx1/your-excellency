@@ -40,7 +40,7 @@ export const SWITCHES = {
 	britishConquest: bool(
 		'History',
 		'British conquest',
-		'Britain takes Lagos (1861) and conquers the rest by 1903.'
+		'Britain attacks Lagos (1861) and the rest by 1903. An attack works only if Britain is far enough ahead in technology; a beaten attack comes back 10 years later, until 1914.'
 	),
 	indirectRule: bool(
 		'History',
@@ -73,6 +73,11 @@ export const SWITCHES = {
 		'history',
 		'likely'
 	]),
+	militaryHandsBack: bool(
+		'History',
+		'Military hands back power',
+		'Soldiers in power hand it back to civilians in time, as in 1979 and 1999.'
+	),
 	oilDiscovery: bool('History', 'Oil is found', 'Oil is discovered (Oloibiri, 1956).'),
 	oilYear: year('History', 'Year oil is found', 'Move the discovery earlier or later.', 1956),
 	learning: num(
@@ -88,6 +93,13 @@ export const SWITCHES = {
 		'Multiplies death rates for everyone (lower is healthier).',
 		0.5,
 		1.5
+	),
+	onePeople: pickOne(
+		'People',
+		'One people',
+		'Everyone shares one language, one ethnic group and one faith, and nobody converts. "Largest" takes the language and the faith most people have when the run starts.',
+		['off', 'largest', 'islam', 'christian', 'traditional'],
+		'off'
 	),
 	trust: pickOne(
 		'People',
@@ -182,6 +194,22 @@ export const PRESETS = {
 			'Every government is steadier because it loses less to graft. Everything else is as in history.',
 		startYear: 1950,
 		switches: { corruption: 'low' }
+	},
+	militaryStays: {
+		label: 'Military never leaves',
+		hook: 'What if the military never handed power back in 1999?',
+		description:
+			'The soldiers in power in 1999 never hand over to an elected government. Coups can still swap one general for another. Everything else is as in history.',
+		startYear: 1999,
+		switches: { militaryHandsBack: false }
+	},
+	onePeople: {
+		label: 'One people',
+		hook: 'What if Nigeria had one language, one ethnic group and one religion?',
+		description:
+			'From 1850 everyone speaks the language and holds the faith that most people have, and nobody converts. Nothing else changes.',
+		startYear: 1850,
+		switches: { onePeople: 'largest' }
 	}
 };
 
