@@ -14,7 +14,7 @@ import { PARAMS as P } from './params.js';
 import { populationAt } from './population.js';
 import { stepLivelihoods } from './rules/livelihoods.js';
 
-export const ENGINE_VERSION = 23;
+export const ENGINE_VERSION = 24;
 
 const RULES = [
 	stepEvents,
@@ -131,6 +131,44 @@ function startingMap(inputs, data) {
 	};
 }
 
+/**
+ * A run that starts from real averages spreads reading across places as the NBS 2010 literacy survey
+ * found it by state, keeping the national average. A flat start leaves every place at the mean, and
+ * births fall only past a threshold (stepDemography): then no place starts to fall and the population
+ * runs high. ponytail: the 2010 pattern for every start year; earlier gaps were wider.
+ */
+function spreadLiteracy(cells, nbs) {
+	const byState = nbs?.literacy2010;
+	if (!byState) return;
+	const pop = cells.reduce((s, c) => s + c.pop, 0) || 1;
+	for (const [key, field] of [
+		['litSchool', 'english'],
+		['litAny', 'any']
+	]) {
+		const mean = cells.reduce((s, c) => s + c.pop * (byState[c.id]?.[field] ?? 0), 0) / pop;
+		if (mean > 0)
+			for (const c of cells)
+				c[key] = Math.min(1, (c[key] * (byState[c.id]?.[field] ?? mean)) / mean);
+	}
+	for (const c of cells) c.litSchool = Math.min(c.litSchool, c.litAny);
+}
+
+/**
+ * The same for town life. No survey counts town dwellers by state, so it follows household electricity
+ * access by state (the latest DHS survey at or before the start: never one from after it), which
+ * tracks town life closely.
+ */
+function spreadUrban(cells, development, year) {
+	const shots = development?.snapshots ?? [];
+	const survey = shots.filter((s) => s.year <= year).at(-1);
+	if (!survey) return;
+	const access = (c) => survey.cells[c.id]?.electricityAccess?.value;
+	const pop = cells.reduce((s, c) => s + c.pop, 0) || 1;
+	const mean = cells.reduce((s, c) => s + c.pop * (access(c) ?? 0), 0) / pop;
+	if (mean > 0)
+		for (const c of cells) c.urban = Math.min(0.95, (c.urban * (access(c) ?? mean)) / mean);
+}
+
 /** Defaults for every Cell field so rules can rely on them. */
 function makeCell(src, polityId) {
 	return {
@@ -210,6 +248,8 @@ export function createWorld(inputs, data = defaultData) {
 			owner.get(c.id) ?? null
 		)
 	);
+	if (start.cellDefaults.litSchool != null) spreadLiteracy(cells, data.nbs);
+	if (start.cellDefaults.urban != null) spreadUrban(cells, data.development, inputs.startYear);
 	// Evidence initializes a run only. Never pull the evolving counterfactual back to history.
 	const observed = (data.development?.snapshots ?? [])
 		.filter((s) => s.year <= inputs.startYear)

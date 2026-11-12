@@ -9,6 +9,7 @@ import tech from './tech.json';
 import names from './names.json';
 import development from './development.json';
 import minerals from './minerals.json';
+import nbs from './nbs.json';
 
 export const defaultData = {
 	cells,
@@ -20,7 +21,8 @@ export const defaultData = {
 	tech,
 	names,
 	development,
-	minerals
+	minerals,
+	nbs
 };
 
 // Globe and neighbour outlines (Plan 2b). Not part of defaultData: the engine never needs them.
