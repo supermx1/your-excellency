@@ -50,7 +50,7 @@ describe('baseline calibration (mean of 30 seeds)', () => {
 	// Electricity made and exports (2011 dollars; anchors in national.json).
 	const realTwh = (y) => (real('electricityKwhPc', y) * real('pop', y)) / 1e9;
 	const exportsAt = (y, kind) => sim(`exports${kind}`, y);
-	const exportsTotal = (y) => ['Oil', 'Farm', 'Goods', 'Power'].reduce((s, k) => s + exportsAt(y, k), 0);
+	const exportsTotal = (y) => ['Oil', 'Farm', 'Goods', 'Minerals', 'Power'].reduce((s, k) => s + exportsAt(y, k), 0);
 	const anchor = defaultData.national.exportAnchors;
 	it('electricity made 2022 within ±25% (Ember: 38 TWh)', () => expect(Math.abs(sim('powerTwh', 2022) / realTwh(2022) - 1)).toBeLessThan(0.25));
 	it.each([1950, 1960, 2022])('exports %i within ±30% of ours', (y) => expect(Math.abs(exportsTotal(y) / anchor[y].total - 1)).toBeLessThan(0.3));
@@ -58,6 +58,10 @@ describe('baseline calibration (mean of 30 seeds)', () => {
 		expect(exportsAt(1950, 'Farm') / exportsTotal(1950)).toBeGreaterThan(0.8);
 		expect(exportsAt(2022, 'Oil') / exportsTotal(2022)).toBeGreaterThan(0.75);
 		expect(exportsAt(2022, 'Farm') / exportsTotal(2022)).toBeLessThan(0.1); // the farm exports fell away with oil
+	});
+	it('minerals: near ours in 1960 (tin and columbite), a sliver of exports in 2022', () => {
+		expect(Math.abs(exportsAt(1960, 'Minerals') / (anchor[1960].total * anchor[1960].minerals) - 1)).toBeLessThan(0.5);
+		expect(exportsAt(2022, 'Minerals') / exportsTotal(2022)).toBeLessThan(0.02);
 	});
 	it('urban share 2020 within ±10 points', () => expect(Math.abs(sim('urban', 2020) - real('urban', 2020))).toBeLessThan(0.1));
 	it('Nigeria forms in at least 90% of seeds', () => expect(nigeriaFormed).toBeGreaterThanOrEqual(0.9));

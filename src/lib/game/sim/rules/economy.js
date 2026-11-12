@@ -83,6 +83,35 @@ export function harbourTrade(world, polity) {
 	return out;
 }
 
+/**
+ * Minerals sold abroad, $ a year by place. Each deposit (data/minerals.json) gives its full output while
+ * our world's price is at least what it was in its reference year; lower prices close mines in proportion.
+ * The output is shared among the deposit's places; each sells the share it can get out: a steady
+ * government, markets that reach it (bulk ore also needs a railway to a port), and a currency that oil
+ * has not made dear. Same rule for every government. ponytail: no new mines above full output.
+ */
+function mineralsSold(world, polityById) {
+	const national = world.data.national;
+	const at = (series, year) => series?.[national.years.indexOf(year)] ?? null;
+	const out = new Map();
+	for (const d of world.data.minerals?.deposits ?? []) {
+		if (world.year < (d.from ?? -Infinity)) continue;
+		const series = national?.mineralPrices?.[d.price];
+		const price = d.pricePerTonne ?? at(series, world.year);
+		if (!price) continue;
+		const output = d.tonnes * (d.refYear ? Math.min(1, price / at(series, d.refYear)) : 1);
+		for (const id of d.cells) {
+			const c = world.cellById.get(id);
+			const p = polityById.get(c?.polityId);
+			if (!c || !p || (d.bulk && !p.tech.includes('railway'))) continue;
+			const dutch = Math.exp(-P.dutchDisease * (p.oilShare ?? 0));
+			const share = clamp(P.mineScale * p.stability * c.marketAccess * dutch, 0, 1);
+			out.set(id, (out.get(id) ?? 0) + (output * price * share) / d.cells.length);
+		}
+	}
+	return out;
+}
+
 /** Income, urbanisation and infrastructure per cell. Same rules for every cell. */
 /** @param {import('../types.js').World} world */
 export function stepEconomy(world) {
@@ -93,7 +122,7 @@ export function stepEconomy(world) {
 	const oilRamp = oilOn
 		? clamp((world.year - world.flags.oilFoundYear) / P.oilRampYears, 0, 1) ** 3
 		: 0;
-	const trade = { oil: 0, farm: 0, goods: 0, power: 0, powerTwh: 0, twh: 0 };
+	const trade = { oil: 0, farm: 0, goods: 0, minerals: 0, power: 0, powerTwh: 0, twh: 0 };
 	const sums = new Map(world.polities.map((p) => [p, { oil: 0, income: 0, pop: 0 }]));
 	const power =
 		world.switches.power24hFromYear != null && world.year >= world.switches.power24hFromYear;
@@ -120,6 +149,7 @@ export function stepEconomy(world) {
 	const techOf = new Map(world.polities.map((p) => [p.id, techProductivity(techs, p.tech)]));
 	const meanDensity =
 		world.cells.reduce((s, c) => s + c.pop, 0) / (world.cells.reduce((s, c) => s + c.area, 0) || 1);
+	const mined = mineralsSold(world, polityById);
 	for (const c of world.cells) {
 		const polity = polityById.get(c.polityId);
 		const resources = resourcesOf(c);
@@ -213,7 +243,8 @@ export function stepEconomy(world) {
 		c.incomeFactors.modern =
 			traditional > 0 ? 1 + (share * Math.max(0, modern - traditional)) / traditional : 1;
 		const oilRent = oilOn && oilCells.has(c.id) ? P.oilIncome * (world.oilPrice ?? 1) * oilRamp : 0;
-		const potential = traditional * c.incomeFactors.modern + oilRent;
+		const mine = mined.get(c.id) ?? 0; // $ a year; its owners and miners earn it here
+		const potential = traditional * c.incomeFactors.modern + oilRent + mine / (c.pop || 1);
 		c.incomePc = clamp(c.incomePc + (potential - c.incomePc) * P.incomeAdjust, 100, 1e6);
 
 		// Sold abroad, $ a year: all the oil; farm goods where markets reach the farms; a share of the
@@ -221,6 +252,7 @@ export function stepEconomy(world) {
 		// ponytail: all technology counts as farm technology; no minerals (add with deposit and price data).
 		const dutch = Math.exp(-P.dutchDisease * (polity?.oilShare ?? 0));
 		trade.oil += oilRent * c.pop;
+		trade.minerals += mine;
 		trade.farm +=
 			P.farmExport *
 			P.baseIncome *

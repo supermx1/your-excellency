@@ -1,0 +1,45 @@
+{
+	"about": "Mineral deposits the engine mines. tonnes: a year at full output, reached when the world price is at least the price in refYear (lower prices close mines in proportion). Prices: national.json mineralPrices (World Bank Pink Sheet), or pricePerTonne where no series exists. bulk: ore that needs a railway to reach a port. Not included: iron ore (Itakpe, Agbaja) and bitumen (Ondo), which have no reliable output record; lead and zinc (small).",
+	"deposits": [
+		{
+			"id": "tin",
+			"name": "tin and columbite",
+			"price": "tin",
+			"tonnes": 11000,
+			"refYear": 1968,
+			"bulk": true,
+			"cells": ["plateau", "bauchi", "nassarawa", "kaduna"],
+			"source": "Jos Plateau. About 9,000 t of tin a year at the late-1960s high (13,031 long tons of concentrate in 1968, USGS Minerals Yearbook), plus columbite worth about a fifth more, counted as tin."
+		},
+		{
+			"id": "coal",
+			"name": "coal",
+			"price": "coal",
+			"tonnes": 905000,
+			"refYear": 1958,
+			"bulk": true,
+			"cells": ["enugu", "kogi", "benue"],
+			"source": "Enugu coalfield. Record output of about 905,000 t in 1958–59 (Nigerian Coal Corporation). Priced as Australian thermal coal."
+		},
+		{
+			"id": "gold",
+			"name": "gold",
+			"price": "gold",
+			"tonnes": 16,
+			"refYear": 2022,
+			"bulk": false,
+			"cells": ["zamfara", "kebbi", "niger", "kaduna", "osun", "kogi"],
+			"source": "About 16 t a year dug by small-scale miners in 2022, most of it unrecorded (planetGOLD; Swissaid). The official 2022 figure is about 2 t; the colonial high was about 1.4 t (1933–43)."
+		},
+		{
+			"id": "lithium",
+			"name": "lithium",
+			"pricePerTonne": 800,
+			"tonnes": 400000,
+			"from": 2016,
+			"bulk": true,
+			"cells": ["nassarawa", "kwara", "oyo", "fct", "kebbi", "kogi", "ekiti"],
+			"source": "Pegmatites named by the Ministry of Solid Minerals (2023). One plant's rated output: 3M t of ore a year, about 400,000 t of spodumene concentrate (Endo, Nasarawa). About $800 a tonne of concentrate in 2011 dollars, a long-run price outside the 2022 spike. World demand from about 2016 (batteries)."
+		}
+	]
+}
