@@ -125,8 +125,9 @@ export function shortScript(run, inputs, summary = null, { town = false } = {}) 
 			: '';
 	const power =
 		inputs.switches.power24hFromYear != null ? ` ${lightsLine(snap(run, end), end)}` : '';
+	const trade = tradeLine(snap(run, end), end);
 	beats.push({
-		say: `${people(pop.value)} people, against ${people(pop.ours)} in ours.${power}${earns} ${city}${city === 'Lagos' ? ' is still' : ', not Lagos, is'} the biggest city.${summary ? ` ${formedLine(summary)}` : ''}`,
+		say: `${people(pop.value)} people, against ${people(pop.ours)} in ours.${power}${earns}${trade} ${city}${city === 'Lagos' ? ' is still' : ', not Lagos, is'} the biggest city.${summary ? ` ${formedLine(summary)}` : ''}`,
 		from: end,
 		to: end,
 		card: true
@@ -207,8 +208,44 @@ export const CUTAWAYS = [
 	'broadcast',
 	'home-power',
 	'workshop',
-	'battle'
+	'battle',
+	'repelled'
 ];
+
+const KIND_WORDS = {
+	exportsOil: 'oil',
+	exportsFarm: 'farm goods',
+	exportsGoods: 'factory goods',
+	exportsMinerals: 'minerals',
+	exportsPower: 'electricity'
+};
+const OUR_KINDS = { oil: 'oil', farm: 'farm goods', goods: 'factory goods', minerals: 'minerals' };
+const billions = (n) =>
+	n >= 1e12
+		? `${(n / 1e12).toFixed(1)} trillion dollars`
+		: `${Math.round(n / 1e9)} billion dollars`;
+
+/**
+ * " It makes 415 terawatt-hours of electricity a year and sells 376 billion dollars of goods abroad,
+ * mostly factory goods. Ours: 42 terawatt-hours, and 48 billion dollars in 2022, mostly oil."
+ */
+function tradeLine({ totals }, end) {
+	if (totals.powerTwh == null) return ''; // older recordings
+	const kinds = Object.keys(KIND_WORDS);
+	const sold = kinds.reduce((t, k) => t + (totals[k] ?? 0), 0);
+	const main = kinds.reduce((a, b) => ((totals[b] ?? 0) > (totals[a] ?? 0) ? b : a));
+	const theirs = ` It makes ${Math.round(totals.powerTwh)} terawatt-hours of electricity a year and sells ${billions(sold)} of goods abroad, mostly ${KIND_WORDS[main]}.`;
+	const national = defaultData.national;
+	const i = national.years.indexOf(end);
+	const kwh = national.electricityKwhPc?.[i];
+	const [year, real] = Object.entries(national.exportAnchors ?? {})
+		.filter(([y]) => +y <= end)
+		.at(-1) ?? [null, null];
+	if (kwh == null || !real) return theirs;
+	const ourMain = Object.keys(OUR_KINDS).reduce((a, b) => (real[b] > real[a] ? b : a));
+	const ourTwh = Math.round((kwh * national.pop[i]) / 1e9);
+	return `${theirs} Ours: ${ourTwh} terawatt-hours, and ${billions(real.total)}${+year < end ? ` in ${year}` : ''}, mostly ${OUR_KINDS[ourMain]}.`;
+}
 
 /** "Everyone has electricity, 23 hours a day. Ours: 57% of homes." */
 function lightsLine({ totals: { electricityAccess: access = 0, powerService: service = 0 } }, end) {
@@ -297,6 +334,32 @@ const dead = (n) =>
 		? `${(n / 1e6).toFixed(1).replace(/\.0$/, '')} million people`
 		: `${Math.max(1, Math.round(n / 1e3))} thousand people`;
 
+/**
+ * The British attack driven off by the biggest state (most people), as a scene: with our world's event
+ * that year, and how many British attacks fail in the whole run.
+ */
+function repelledCutaway(run, inRange) {
+	let best = null;
+	for (const [event, e] of run.events.entries()) {
+		if (!e.failed || !inRange(e.year)) continue;
+		const year = run.history.find((h) => h.year === e.year);
+		const cells = year?.polities.find((p) => p.id === e.polityIds?.[0])?.cellIds ?? [];
+		const pop = cells.reduce((t, id) => t + (year.cells.find((c) => c.id === id)?.pop ?? 0), 0);
+		if (!best || pop > best.pop) best = { event, e, pop };
+	}
+	if (!best) return null;
+	const { e } = best;
+	const ours = defaultData.events.events.find(
+		(x) => x.kind === 'history' && x.year === e.year && x.effects?.conquer
+	)?.title;
+	const fails = run.events.filter((x) => x.failed).length;
+	return {
+		year: e.year,
+		say: `${e.year}: ${e.title}.${ours ? ` In our world that year: ${ours}.` : ''}${fails > 1 ? ` In all, ${fails} British attacks fail.` : ''}`,
+		town: { event: best.event, preset: 'repelled' }
+	};
+}
+
 /** The run's deadliest war, as a battle scene: who fought, and how many died before peace. */
 function battleCutaway(run, inRange, end) {
 	let best = null;
@@ -326,9 +389,10 @@ function addCutaways(run, beats, start, end, inputs) {
 	const premise = powerCutaway(inputs, inRange); // the switch the Short is about comes first
 	const firsts = inventionCutaways(run, inRange).slice(0, 3); // space to the Moon to Mars, when a run has them
 	const war = battleCutaway(run, inRange, end);
+	const repelled = repelledCutaway(run, inRange); // the land holds: the story of a strong people
 	const milestones = milestoneCutaways(run, inRange).sort((a, b) => b.gap - a.gap);
 	const picked = [];
-	for (const shot of [premise, ...firsts, war, ...milestones].filter(Boolean)) {
+	for (const shot of [premise, repelled, ...firsts, war, ...milestones].filter(Boolean)) {
 		if (picked.length === SHOTS) break;
 		const clash = picked.some(
 			(p) =>
@@ -443,6 +507,11 @@ function townShot(run, beat) {
 			rivals: (source.polityIds ?? []).slice(0, 2).map(polityColor),
 			winner: (source.polityIds ?? []).indexOf(peaceOf(run, source)?.winner)
 		}),
+		// A British attack that fails: the defenders' colour, then Britain's; the defenders win.
+		...(preset === 'repelled' && {
+			rivals: [polityColor(polityId), polityColor('british')],
+			winner: 0
+		}),
 		// What this state has built by then dresses the town: poles, masts, aerials, solar roofs, cars.
 		techs: polityId
 			? [
@@ -529,7 +598,8 @@ export function planShort(
 const SCORECARD = [
 	'Population',
 	'Income per person',
-	'Has electricity',
+	'Power made',
+	'Exports a year',
 	'Can read (school)',
 	'Life expectancy',
 	'Wars',

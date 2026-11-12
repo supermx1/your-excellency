@@ -108,7 +108,7 @@ function apply(world, event) {
 				brit.tech = [...new Set([...brit.tech, ...from.tech])];
 				from.atWarWith = from.atWarWith.filter((x) => x !== brit.id);
 				brit.atWarWith = brit.atWarWith.filter((x) => x !== from.id);
-				taken.push(from);
+				taken.push([from, cells]);
 			}
 			for (const cell of cells) {
 				transferCell(world, cell, brit);
@@ -134,12 +134,19 @@ function apply(world, event) {
 		if (beaten.length) {
 			tryAgain(world, event);
 			// Only some fell: name them, not our history's headline. No sack where the attack failed.
-			for (const from of taken)
+			// The whole state, or the places taken from one that holds out elsewhere.
+			for (const [from, cells] of taken)
 				world.events.push({
 					year: world.year,
 					kind: 'conquest',
 					polityIds: [from.id],
-					title: `Britain takes ${from.name}`
+					cellIds: cells.map((c) => c.id),
+					title: from.cellIds.length
+						? `Britain takes ${cells
+								.map((c) => c.name ?? c.id)
+								.join(', ')
+								.replace(/, ([^,]*)$/, ' and $1')} from ${from.name}`
+						: `Britain takes ${from.name}`
 				});
 			return false;
 		}
@@ -218,7 +225,8 @@ function causesHold(world, e) {
 	if (!fx.coup && !fx.war) return true;
 	const ng = world.polities.find((p) => p.id === 'nigeria');
 	if (!ng) return false;
-	if (fx.coup) return ng.stability < P.coupWindowStability + (world.switches.coups === 'likely' ? 0.1 : 0);
+	if (fx.coup)
+		return ng.stability < P.coupWindowStability + (world.switches.coups === 'likely' ? 0.1 : 0);
 	return (ng.lastCoupYear ?? -Infinity) >= world.year - 2 && ng.stability < P.civilWarStability;
 }
 

@@ -21,6 +21,26 @@ const plan = planShort(run, beats, voices);
 const times = (n = 600) => Array.from({ length: n + 1 }, (_, i) => (plan.duration * i) / n);
 
 describe('shortScript', () => {
+	it('200 IQ: the biggest state that drives Britain off gets its own scene', () => {
+		const genius = {
+			...inputs,
+			seed: 17,
+			switches: { ...defaultSwitches(), ...PRESETS.genius.switches }
+		};
+		const r = runSimulation(genius);
+		const shots = shortScript(r, genius, summary, { town: true }).filter((b) => b.town);
+		const held = shots.find((b) => b.town.preset === 'repelled');
+		expect(held.say).toMatch(
+			/^\d{4}: .+ drives? off a British attack\..* In all, \d+ British attacks fail\.$/
+		);
+		const shot = shortSceneAt(
+			r,
+			planShort(r, [held], [{ file: 'a.wav', seconds: 4 }], { town: true }),
+			2
+		).town;
+		expect(shot.rivals).toEqual([shot.color, polityColor('british')]);
+		expect(shot.winner).toBe(0);
+	});
 	it('opens on the what-if and its years', () => {
 		expect(beats[0].say).toBe(
 			'Britain never conquers the region. I ran Nigeria from 1850 to 2025.'
@@ -246,14 +266,20 @@ describe('shortSceneAt', () => {
 		expect(s.card.rows.map((r) => r.label)).toEqual([
 			'Population',
 			'Income per person',
-			'Has electricity',
+			'Power made',
+			'Exports a year',
 			'Can read (school)',
 			'Life expectancy',
 			'Wars',
 			'Biggest city',
 			'Religious mix'
 		]);
-		expect(beats.at(-1).say).toMatch(/Average income: [\d,]+00 dollars a year, (about as rich as|richer than|poorer than) [A-Z].* today\. Ours: [\d,]+00\./);
+		expect(beats.at(-1).say).toMatch(
+			/Average income: [\d,]+00 dollars a year, (about as rich as|richer than|poorer than) [A-Z].* today\. Ours: [\d,]+00\./
+		);
+		expect(beats.at(-1).say).toMatch(
+			/It makes \d+ terawatt-hours of electricity a year and sells [\d.]+ (billion|trillion) dollars of goods abroad, mostly [a-z ]+\. Ours: \d+ terawatt-hours, and 48 billion dollars in 2022, mostly oil\./
+		);
 		expect(s.card.runs.theirs).toMatch(/Nigeria never formed$/);
 	});
 });
