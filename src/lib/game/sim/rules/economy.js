@@ -59,6 +59,7 @@ function gridReliability(world, squeezeOf) {
 		p.powerSupply ??= demand * P.powerReliability;
 		if (p.tech.includes('electricity'))
 			p.powerSupply += P.powerBuild * invest - P.powerWear * p.powerSupply;
+		p.powerDemand = demand;
 		out.set(p.id, demand > 0 ? clamp(p.powerSupply / demand, 0, 1) : P.powerReliability);
 	}
 	return out;
@@ -87,6 +88,13 @@ export function harbourTrade(world, polity) {
 export function stepEconomy(world) {
 	const oilCells = new Set(world.data.events?.groups?.oil ?? []);
 	const oilOn = world.flags.oilFound && world.switches.oilInGround !== false;
+	// Wells, pipes and terminals take years: output reaches full P.oilRampYears after the first find.
+	if (oilOn) world.flags.oilFoundYear ??= world.year;
+	const oilRamp = oilOn
+		? clamp((world.year - world.flags.oilFoundYear) / P.oilRampYears, 0, 1) ** 3
+		: 0;
+	const trade = { oil: 0, farm: 0, goods: 0, power: 0, powerTwh: 0, twh: 0 };
+	const sums = new Map(world.polities.map((p) => [p, { oil: 0, income: 0, pop: 0 }]));
 	const power =
 		world.switches.power24hFromYear != null && world.year >= world.switches.power24hFromYear;
 	const polityById = new Map(world.polities.map((p) => [p.id, p]));
@@ -204,10 +212,32 @@ export function stepEconomy(world) {
 		const share = ((literacy * infrastructure * electricity) / FULL_SKILLS) ** P.modernExponent;
 		c.incomeFactors.modern =
 			traditional > 0 ? 1 + (share * Math.max(0, modern - traditional)) / traditional : 1;
-		const potential =
-			traditional * c.incomeFactors.modern +
-			(oilOn && oilCells.has(c.id) ? P.oilIncome * (world.oilPrice ?? 1) : 0);
+		const oilRent = oilOn && oilCells.has(c.id) ? P.oilIncome * (world.oilPrice ?? 1) * oilRamp : 0;
+		const potential = traditional * c.incomeFactors.modern + oilRent;
 		c.incomePc = clamp(c.incomePc + (potential - c.incomePc) * P.incomeAdjust, 100, 1e6);
+
+		// Sold abroad, $ a year: all the oil; farm goods where markets reach the farms; a share of the
+		// modern economy. Oil money makes the rest dearer abroad. Same rule for every government.
+		// ponytail: all technology counts as farm technology; no minerals (add with deposit and price data).
+		const dutch = Math.exp(-P.dutchDisease * (polity?.oilShare ?? 0));
+		trade.oil += oilRent * c.pop;
+		trade.farm +=
+			P.farmExport *
+			P.baseIncome *
+			c.mods.productivity *
+			c.marketAccess *
+			(1 - c.urban) *
+			c.pop *
+			dutch;
+		trade.goods += P.goodsExport * traditional * (c.incomeFactors.modern - 1) * c.pop * dutch;
+		// Electricity made: people with power all day, times what each uses at this income.
+		trade.twh += (c.pop * c.powerService * P.kwhPerDollar * c.incomePc) / 1e9;
+		const sum = sums.get(polity);
+		if (sum) {
+			sum.oil += oilRent * c.pop;
+			sum.income += c.incomePc * c.pop;
+			sum.pop += c.pop;
+		}
 
 		const urbanTarget = clamp(
 			(Math.log(c.incomePc) - Math.log(P.urbanBaseIncome)) / P.urbanScale,
@@ -224,4 +254,20 @@ export function stepEconomy(world) {
 			1
 		);
 	}
+
+	// Power stations a government built beyond its own people's needs sell to the neighbours, up to what
+	// they would use with power all day. ponytail: one shared market, first come; no sales between states here.
+	const national = world.data.national;
+	let market =
+		(P.kwhPerDollar * (national?.neighbourIncome?.[national.years.indexOf(world.year)] ?? 0)) / 1e9;
+	for (const [p, sum] of sums) {
+		p.oilShare = sum.income ? sum.oil / sum.income : 0; // next year's Dutch disease
+		const spare = Math.max(0, (p.powerSupply ?? 0) - (p.powerDemand ?? 0));
+		const sold = Math.min(market, (spare * P.kwhPerDollar * sum.income) / (sum.pop || 1) / 1e9);
+		market -= sold;
+		trade.powerTwh += sold;
+	}
+	trade.twh += trade.powerTwh;
+	trade.power = trade.powerTwh * 1e9 * P.powerPrice;
+	world.trade = trade;
 }

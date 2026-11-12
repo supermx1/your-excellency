@@ -30,5 +30,11 @@ export function formatStat(key, v) {
 		return `${Math.round(v * 100)}%`;
 	if (key === 'lifeExp') return `${Math.round(v)} yrs`;
 	if (key === 'incomePc') return `$${(Math.round(v / 10) * 10).toLocaleString('en-US')}`;
+	if (key === 'powerTwh')
+		return `${v < 10 ? v.toFixed(1) : Math.round(v).toLocaleString('en-US')} TWh`;
+	if (key === 'exports')
+		return v >= 1e12
+			? `$${(v / 1e12).toFixed(1)}T`
+			: `$${v >= 1e10 ? Math.round(v / 1e9) : (v / 1e9).toFixed(1)}B`;
 	return `${Math.round(v)}`;
 }

@@ -47,6 +47,18 @@ describe('baseline calibration (mean of 30 seeds)', () => {
 		}
 	});
 	it.each([1950, 2000])('life expectancy %i within ±3 years (UN WPP)', (y) => expect(Math.abs(sim('lifeExp', y) - real('lifeExp', y))).toBeLessThan(3));
+	// Electricity made and exports (2011 dollars; anchors in national.json).
+	const realTwh = (y) => (real('electricityKwhPc', y) * real('pop', y)) / 1e9;
+	const exportsAt = (y, kind) => sim(`exports${kind}`, y);
+	const exportsTotal = (y) => ['Oil', 'Farm', 'Goods', 'Power'].reduce((s, k) => s + exportsAt(y, k), 0);
+	const anchor = defaultData.national.exportAnchors;
+	it('electricity made 2022 within ±25% (Ember: 38 TWh)', () => expect(Math.abs(sim('powerTwh', 2022) / realTwh(2022) - 1)).toBeLessThan(0.25));
+	it.each([1950, 1960, 2022])('exports %i within ±30% of ours', (y) => expect(Math.abs(exportsTotal(y) / anchor[y].total - 1)).toBeLessThan(0.3));
+	it('farm goods lead exports in 1950; oil leads in 2022 (real: 88%)', () => {
+		expect(exportsAt(1950, 'Farm') / exportsTotal(1950)).toBeGreaterThan(0.8);
+		expect(exportsAt(2022, 'Oil') / exportsTotal(2022)).toBeGreaterThan(0.75);
+		expect(exportsAt(2022, 'Farm') / exportsTotal(2022)).toBeLessThan(0.1); // the farm exports fell away with oil
+	});
 	it('urban share 2020 within ±10 points', () => expect(Math.abs(sim('urban', 2020) - real('urban', 2020))).toBeLessThan(0.1));
 	it('Nigeria forms in at least 90% of seeds', () => expect(nigeriaFormed).toBeGreaterThanOrEqual(0.9));
 	it('population 2100 stays near the UN projection (WPP 2024 medium ≈477M)', () => {

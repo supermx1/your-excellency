@@ -14,7 +14,7 @@ import { PARAMS as P } from './params.js';
 import { populationAt } from './population.js';
 import { stepLivelihoods } from './rules/livelihoods.js';
 
-export const ENGINE_VERSION = 21;
+export const ENGINE_VERSION = 22;
 
 const RULES = [
 	stepEvents,
@@ -29,6 +29,10 @@ const RULES = [
 ];
 
 const round = (n, p = 4) => Math.round(n * 10 ** p) / 10 ** p;
+
+/** What a land sells abroad, and each kind's key in a year's totals (exportsOil, …; see EXPORTS in hud.js). */
+const EXPORT_KINDS = ['oil', 'farm', 'goods', 'power'];
+const exportKey = (kind) => `exports${kind[0].toUpperCase()}${kind.slice(1)}`;
 
 /** Population and religion for a cell at the start year, from the regional data (if present). */
 function startingCell(id, year, data, populations) {
@@ -107,7 +111,8 @@ function startingMap(inputs, data) {
 			independent: nigeriaExists && year >= (sw.independenceYear ?? 1960),
 			independentYear: sw.independenceYear ?? 1960,
 			oilFound:
-				sw.oilInGround !== false && sw.oilDiscovery !== false && year >= (sw.oilYear ?? 1956)
+				sw.oilInGround !== false && sw.oilDiscovery !== false && year >= (sw.oilYear ?? 1956),
+			oilFoundYear: sw.oilYear ?? 1956 // only read once oil is found
 		},
 		cellDefaults: Object.fromEntries(
 			Object.entries({
@@ -308,7 +313,14 @@ export function snapshot(world) {
 			powerService: round(w('powerService')),
 			incomePc: Math.round(w('incomePc')),
 			foodStress: round(w('foodStress')),
-			wars: world.polities.reduce((s, p) => s + p.atWarWith.length, 0) / 2
+			wars: world.polities.reduce((s, p) => s + p.atWarWith.length, 0) / 2,
+			// Electricity made (TWh a year, sold abroad included) and exports ($ a year) by kind, from the
+			// first year the economy has run (the start year shows "—"). Flat keys: frames blend each total.
+			...(world.trade && {
+				powerTwh: round(world.trade.twh, 2),
+				powerExportTwh: round(world.trade.powerTwh, 2),
+				...Object.fromEntries(EXPORT_KINDS.map((k) => [exportKey(k), Math.round(world.trade[k])]))
+			})
 		}
 	};
 }

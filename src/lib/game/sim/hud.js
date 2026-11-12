@@ -38,6 +38,45 @@ export function richAs(value, peers = defaultData.national.peers) {
 export const richAsText = (r) =>
 	r && `${r.relation === 'like' ? 'like' : `${r.relation} than`} ${r.name} today`;
 
+/** "as much a person as Egypt today": richAs over electricity made per person. */
+const powerAs = (twh, pop, national = defaultData.national) => {
+	const r =
+		pop > 0 &&
+		richAs((twh * 1e9) / pop, { gdpPc: national.peersKwhPc, africa: national.peers?.africa });
+	if (!r) return null;
+	const how = { like: 'as much', richer: 'more', poorer: 'less' }[r.relation];
+	return `${how} a person ${r.relation === 'like' ? 'as' : 'than'} ${r.name} today`;
+};
+
+/** Exports by kind, as each year's totals store them. */
+const EXPORTS = {
+	exportsOil: 'oil',
+	exportsFarm: 'farm',
+	exportsGoods: 'factories',
+	exportsPower: 'power'
+};
+const exportsTotal = (totals) =>
+	totals.exportsOil == null ? null : Object.keys(EXPORTS).reduce((s, k) => s + (totals[k] ?? 0), 0);
+/** "oil 88% · factories 5% · farm 4%": kinds of at least 1%, biggest first. */
+const shareText = (pairs) =>
+	pairs
+		.filter(([, share]) => share >= 0.01)
+		.sort((a, b) => b[1] - a[1])
+		.map(([name, share]) => `${name} ${Math.round(share * 100)}%`)
+		.join(' · ');
+const exportsMix = (totals) => {
+	const all = exportsTotal(totals);
+	return all
+		? shareText(Object.entries(EXPORTS).map(([k, name]) => [name, (totals[k] ?? 0) / all]))
+		: null;
+};
+/** Real electricity made (TWh) in a year with data, else null. */
+const oursTwh = (national, year) => {
+	const kwh = nationalAt(national, 'electricityKwhPc', year);
+	const pop = nationalAt(national, 'pop', year);
+	return kwh == null || pop == null ? null : (kwh * pop) / 1e9;
+};
+
 const realEvents = defaultData.events.events.filter((e) => e.kind === 'history');
 const isRealWar = (e) => e.effects?.war || (e.effects?.conquer && e.effects?.mortality);
 
@@ -86,6 +125,25 @@ export function statsAt(run, national, year) {
 						ours:
 							defaultData.development.snapshots.find((s) => s.year === Math.floor(year))?.national
 								.electricityAccess.value ?? null
+					}
+				]),
+		...(run.history.at(-1).totals.powerTwh == null
+			? [] // older recordings
+			: [
+					{
+						key: 'powerTwh',
+						label: 'Power made',
+						value: f.totals.powerTwh,
+						extra: powerAs(f.totals.powerTwh, f.totals.pop),
+						ours: oursTwh(national, year)
+					},
+					{
+						key: 'exports',
+						label: 'Exports a year',
+						value: exportsTotal(f.totals),
+						extra: exportsMix(f.totals),
+						// Real exports are known only in a few years (exportAnchors): shown then, never carried.
+						ours: national.exportAnchors?.[Math.floor(year)]?.total ?? null
 					}
 				])
 	];
@@ -275,6 +333,45 @@ export function endingRows(run, national, summary) {
 			})(),
 			key: 'electricityAccess'
 		},
+		...(last.totals.powerTwh == null
+			? [] // older recordings
+			: [
+					(() => {
+						const asOf = lastYearOf(national, 'electricityKwhPc', year);
+						const ours = asOf == null ? null : oursTwh(national, asOf);
+						return {
+							label: 'Power made',
+							theirs: last.totals.powerTwh,
+							ours: dated('powerTwh', ours, asOf, year),
+							like: {
+								theirs: powerAs(last.totals.powerTwh, last.totals.pop),
+								ours: asOf == null ? null : powerAs(ours, nationalAt(national, 'pop', asOf))
+							},
+							key: 'powerTwh'
+						};
+					})(),
+					(() => {
+						const [asOf, real] = Object.entries(national.exportAnchors ?? {})
+							.filter(([y]) => +y <= year)
+							.at(-1) ?? [null, null];
+						return {
+							label: 'Exports a year',
+							theirs: exportsTotal(last.totals),
+							ours: real && dated('exports', real.total, +asOf, year),
+							like: {
+								theirs: exportsMix(last.totals),
+								ours:
+									real &&
+									shareText([
+										['oil', real.oil],
+										['farm', real.farm],
+										['factories', real.goods]
+									])
+							},
+							key: 'exports'
+						};
+					})()
+				]),
 		{
 			label: 'Wars',
 			theirs: run.events.filter((e) => e.kind === 'war').length,
