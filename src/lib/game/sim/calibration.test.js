@@ -63,6 +63,14 @@ describe('baseline calibration (mean of 30 seeds)', () => {
 		expect(Math.abs(exportsAt(1960, 'Minerals') / (anchor[1960].total * anchor[1960].minerals) - 1)).toBeLessThan(0.5);
 		expect(exportsAt(2022, 'Minerals') / exportsTotal(2022)).toBeLessThan(0.02);
 	});
+	// A run that starts from real averages must not leave every place at the national mean: births fall
+	// only past a threshold, so a flat start keeps them at their old level (2018 start: 3.4% a year).
+	it.each([1999, 2010, 2018])('a %i start grows like ours to 2025 (±0.5 points a year)', (start) => {
+		const runs = [1, 2, 3].map((seed) => runSimulation({ seed, switches: defaultSwitches(), startYear: start, endYear: 2025 }));
+		const pop = runs.reduce((s, r) => s + r.history.at(-1).totals.pop, 0) / runs.length;
+		const rate = (a, b) => Math.log(b / a) / (2025 - start);
+		expect(Math.abs(rate(real('pop', start), pop) - rate(real('pop', start), real('pop', 2025)))).toBeLessThan(0.005);
+	});
 	it('urban share 2020 within ±10 points', () => expect(Math.abs(sim('urban', 2020) - real('urban', 2020))).toBeLessThan(0.1));
 	it('Nigeria forms in at least 90% of seeds', () => expect(nigeriaFormed).toBeGreaterThanOrEqual(0.9));
 	it('population 2100 stays near the UN projection (WPP 2024 medium ≈477M)', () => {

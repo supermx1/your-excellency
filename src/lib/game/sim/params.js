@@ -75,7 +75,7 @@ export const PARAMS = {
 	healthFertility: 0.12, // share births rise as medicine removes disease (pre-transition fertility rise)
 	birthUrbanDrop: 0.002,
 	transitionUrbanWeight: 0.5, // births fall with literacy (any script) and town life equally
-	transitionStart: 0.7, // that blend, where birth rates start falling fast (assumption, see docs/timeline-data.md)
+	transitionStart: 0.66, // that blend, where birth rates start falling fast: fitted to 1850 runs (2000, 2025, the UN 2050 and 2100) and to runs that start from real averages (1950, 1999, 2010, 2018), see docs/timeline-data.md
 	transitionDrop: 0.05, // births per person per year removed at full transition (fitted to 2025, 2050 and the UN 2100 projection)
 	deathBase: 0.041,
 	deathIncomeDrop: 0.35, // share of deaths removed as income approaches incomeForLowDeath
