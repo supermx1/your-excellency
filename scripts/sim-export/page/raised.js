@@ -581,6 +581,61 @@ function repelled(ctx, shot) {
 		}
 }
 
+const GOVERNMENT = { lot: '#b9ad8c' };
+const OLIVE = ['#6b7a45', '#56633a', '#46512f'];
+
+/**
+ * Soldiers keep power: an armoured car pulls up at Government House, soldiers take the gate, and a
+ * notice goes up on the fence: no election. The state's flag stays on its pole; people walk past.
+ */
+function junta(ctx, shot) {
+	const { progress: p, elapsed, pace } = shot;
+	const t = elapsed * pace;
+	house(ctx, 20, 2, 110, 34, { plaster: 1, roof: 'zinc', height: 22 });
+	plate(ctx, 44, 36, 15, 50, 7, '#efcf94');
+	wallText(ctx, 'GOVERNMENT HOUSE', 69, 36, 18.5, INK, 'x', 5);
+	at(ctx, 142, 54, 0, 1, (c) => flagPole(c, t, shot.color ?? '#3d8a4a'));
+	// The fence with its gate; the notice goes up on the left of the gate.
+	const wall = ['#e3d8bd', '#c9bc9c', '#b1a483'];
+	solid(ctx, -2, 70, 52, 3, 8, wall);
+	solid(ctx, 80, 70, 76, 3, 8, wall);
+	const notice = ease(p, 0.5, 0.62);
+	if (notice > 0) {
+		ctx.globalAlpha = notice;
+		plate(ctx, 8, 73, 2, 34, 9, '#f4f1e6');
+		wallText(ctx, 'NO ELECTION', 25, 73, 6.5, '#b4352c', 'x', 5);
+		ctx.globalAlpha = 1;
+	}
+	// The armoured car drives in along the front of the lot and stops by the gate.
+	const cx = mix(-60, 58, ease(p, 0, 0.28));
+	for (const wx of [cx + 3, cx + 19]) solid(ctx, wx, 106, 5, 2, 4, ['#2b2b2b', '#222', '#1a1a1a']);
+	solid(ctx, cx, 94, 26, 12, 8, OLIVE, 2);
+	solid(ctx, cx + 8, 97, 10, 7, 5, OLIVE, 10);
+	const [gx, gy] = point(cx + 18, 100, 13);
+	line(ctx, '#2f3622', Math.round(gx), Math.round(gy), Math.round(gx) + 12, Math.round(gy) + 3, 2);
+	// Soldiers step down from the car and take the gate.
+	const posts = [
+		[54, 78],
+		[74, 78],
+		[52, 90],
+		[76, 90]
+	];
+	const out = ease(p, 0.26, 0.48);
+	if (p > 0.26)
+		posts
+			.map(([x, d], i) => ({ x: mix(cx + 12, x, out), d: mix(100, d, out), i }))
+			.sort((m, n) => m.x + m.d - (n.x + n.d))
+			.forEach(({ x, d, i }) =>
+				rifleman(ctx, x, d, {
+					color: '#5d6b3a',
+					cap: '#3b4227',
+					skin: SKIN[i % 3],
+					facing: i % 2 ? -1 : 1,
+					stride: out < 1 ? Math.round(Math.sin(t * 9 + i)) : 0
+				})
+			);
+}
+
 /** The railway: a station house behind the line, a platform, the train pulling in, a trader arriving. */
 const STATION = { lot: '#c9a978', flag: true };
 function station(ctx, shot) {
@@ -944,6 +999,7 @@ export const RAISED_SCENES = {
 	landing: outdoor(RANGE, landing),
 	battle: outdoor(FIELD, battle),
 	repelled: outdoor(RIVER, repelled),
+	junta: outdoor(GOVERNMENT, junta),
 	moon: landscape((ctx, shot) => ground(ctx, shot, MOON), moon),
 	mars: landscape((ctx, shot) => ground(ctx, shot, MARS), mars),
 	asteroid: landscape(asteroidRock, asteroid),
