@@ -461,6 +461,126 @@ function battle(ctx, shot) {
 		}
 }
 
+const RIVER = { lot: '#b9a774', quiet: true };
+
+/** A soldier with a rifle, `hop` units off the ground; a flash at the muzzle when `firing`. */
+function rifleman(ctx, x, d, look, { hop = 0, firing = false } = {}) {
+	at(ctx, x, d, hop, 0.9, (c) => person(c, 0, 0, { skin: SKIN[1], ...look }));
+	const facing = look.facing ?? 1;
+	const [sx, sy] = point(x, d, 10 + hop);
+	const tip = Math.round(sx + facing * 10);
+	line(ctx, '#3a302a', Math.round(sx + facing * 2), Math.round(sy), tip, Math.round(sy) - 2, 1);
+	if (firing) box(ctx, '#fff0b2', tip + (facing > 0 ? 0 : -2), Math.round(sy) - 3, 3, 2);
+}
+
+/**
+ * A British attack driven off. A gunboat lies at the riverbank; soldiers in Britain's colour land and
+ * close on an earth wall; the defenders fire from behind it and their gun throws water up by the boat;
+ * the attackers fall back, the boat pulls away, and the defenders' flag stays up while they cheer.
+ * `shot.rivals` are [defenders, attackers].
+ */
+function repelled(ctx, shot) {
+	const { progress: p, elapsed, pace } = shot;
+	const t = elapsed * pace;
+	const [ours, theirs] =
+		shot.rivals?.length === 2 ? shot.rivals : [shot.color ?? '#3d6fa8', '#b4513f'];
+	const fighting = p > 0.34 && p < 0.66;
+	const retreat = ease(p, 0.62, 0.82);
+	// The river along the left of the lot, its bank, and ripples running downstream.
+	plane(ctx, '#4f86a8', -4, -2, 40, 132);
+	plane(ctx, '#d6c08a', 36, -2, 5, 132);
+	for (let i = 0; i < 14; i++) {
+		const d = ((i * 37 + t * 9) % 132) - 2;
+		plane(ctx, '#7fb0cc', 2 + ((i * 13) % 28), d, 4, 1);
+	}
+	// The gunboat: moored, then backing away up the river once the soldiers are aboard.
+	const bd = mix(42, 6, ease(p, 0.84, 1));
+	solid(ctx, 8, bd, 16, 42, 6, ['#59606a', '#3f454d', '#30353b']);
+	solid(ctx, 11, bd + 16, 10, 14, 7, ['#ece8dc', '#bdb6a6', '#a39c8c'], 6);
+	solid(ctx, 14, bd + 8, 4, 4, 13, ['#3a3a3a', '#2a2a2a', '#1f1f1f'], 6);
+	at(ctx, 16, bd + 41, 6, 0.8, (c) => flagPole(c, t, theirs));
+	const [fx, fy] = point(16, bd + 10, 19);
+	for (let i = 0; i < 4; i++) {
+		const age = (t * 0.5 + i / 4) % 1;
+		ctx.globalAlpha = 0.6 * (1 - age);
+		disc(ctx, '#55524f', fx + age * 8, fy - 4 - age * 22, 2 + age * 4);
+	}
+	ctx.globalAlpha = 1;
+	// The defenders' gun answers: water thrown up beside the boat.
+	const splash = (t * 0.7) % 1;
+	if (fighting && splash < 0.35) {
+		const [wx, wy] = point(30, bd + 20 + Math.sin(t) * 12);
+		ctx.globalAlpha = 1 - splash / 0.35;
+		disc(ctx, '#e8f1f5', wx, wy - splash * 30, 3 + splash * 8);
+		ctx.globalAlpha = 1;
+	}
+	// The attackers: off the boat, up to the wall, back to the boat, then aboard.
+	const attackers = [];
+	for (let i = 0; i < 6; i++) {
+		if (p > 0.83 + i * 0.01) continue;
+		const rank = i % 2;
+		const aboard = [28, bd + 6 + i * 5];
+		const front = [70 + rank * 8, 14 + i * 19];
+		const out = ease(p, 0.04 + i * 0.015, 0.36);
+		let x = mix(aboard[0], front[0], out);
+		let d = mix(aboard[1], front[1], out);
+		x = mix(x, aboard[0] + 6, retreat);
+		d = mix(d, aboard[1], retreat);
+		attackers.push({ x, d, i, running: retreat > 0 && retreat < 1 });
+	}
+	attackers.sort((m, n) => m.x + m.d - (n.x + n.d));
+	for (const { x, d, i, running } of attackers)
+		rifleman(
+			ctx,
+			x,
+			d,
+			{
+				color: theirs,
+				cap: '#e9e4d6',
+				skin: SKIN[i % 3],
+				facing: running ? -1 : 1,
+				stride: p < 0.36 || running ? Math.round(Math.sin(t * 9 + i)) : 0
+			},
+			{ firing: fighting && Math.sin(t * 10 + i * 2.3) > 0.9 }
+		);
+	// The earth wall, its crenels, the defenders' gun and their flag.
+	const laterite = ['#c98a5e', '#a8704a', '#8c5c3e'];
+	solid(ctx, 92, 4, 7, 122, 13, laterite);
+	for (let d = 6; d < 122; d += 12) solid(ctx, 92, d, 7, 5, 4, laterite, 13);
+	solid(ctx, 84, 34, 12, 3, 3, ['#3a3a3a', '#2a2a2a', '#1f1f1f'], 14);
+	if (fighting && splash < 0.12) {
+		const [mx, my] = point(84, 35, 16);
+		disc(ctx, '#fff0b2', mx, my, 3);
+	}
+	at(ctx, 96, 70, 17, 1, (c) => flagPole(c, t, ours));
+	// The defenders, behind their wall; they cheer once the boat backs off.
+	const cheer = ease(p, 0.84, 0.9);
+	const defenders = Array.from({ length: 6 }, (_, i) => ({
+		x: 106 + (i % 2) * 9,
+		d: 12 + i * 19,
+		i
+	})).sort((m, n) => m.x + m.d - (n.x + n.d));
+	for (const { x, d, i } of defenders) {
+		const hop = cheer ? Math.max(0, Math.sin(t * 8 + i * 1.3)) * 3 * cheer : 0;
+		rifleman(
+			ctx,
+			x,
+			d,
+			{ color: ours, cap: '#2c3550', skin: SKIN[(i + 1) % 3], facing: -1 },
+			{ hop, firing: fighting && Math.sin(t * 11 + i * 1.9) > 0.85 }
+		);
+	}
+	// Gun smoke drifting off the wall while they fight.
+	if (fighting)
+		for (let i = 0; i < 5; i++) {
+			const [sx, sy] = point(98, 14 + i * 24, 16);
+			const puff = (t * 1.1 + i * 0.29) % 1;
+			ctx.globalAlpha = 0.7 * (1 - puff);
+			disc(ctx, '#e7e2d6', sx - puff * 8, sy - puff * 12, 2 + puff * 5);
+			ctx.globalAlpha = 1;
+		}
+}
+
 /** The railway: a station house behind the line, a platform, the train pulling in, a trader arriving. */
 const STATION = { lot: '#c9a978', flag: true };
 function station(ctx, shot) {
@@ -823,6 +943,7 @@ export const RAISED_SCENES = {
 	launch: outdoor(RANGE, launch),
 	landing: outdoor(RANGE, landing),
 	battle: outdoor(FIELD, battle),
+	repelled: outdoor(RIVER, repelled),
 	moon: landscape((ctx, shot) => ground(ctx, shot, MOON), moon),
 	mars: landscape((ctx, shot) => ground(ctx, shot, MARS), mars),
 	asteroid: landscape(asteroidRock, asteroid),
