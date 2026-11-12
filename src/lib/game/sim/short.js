@@ -335,23 +335,27 @@ const dead = (n) =>
 		: `${Math.max(1, Math.round(n / 1e3))} thousand people`;
 
 /**
- * The British attack driven off by the biggest state (most people), as a scene: with our world's event
- * that year, and how many British attacks fail in the whole run.
+ * A British attack driven off, as a scene: one our world lost that year if there is one (the sharpest
+ * contrast), the biggest state's (most people) among those; with our world's event and how many British
+ * attacks fail in the whole run.
  */
 function repelledCutaway(run, inRange) {
+	const oursIn = (year) =>
+		defaultData.events.events.find(
+			(x) => x.kind === 'history' && x.year === year && x.effects?.conquer
+		)?.title;
 	let best = null;
 	for (const [event, e] of run.events.entries()) {
 		if (!e.failed || !inRange(e.year)) continue;
 		const year = run.history.find((h) => h.year === e.year);
 		const cells = year?.polities.find((p) => p.id === e.polityIds?.[0])?.cellIds ?? [];
 		const pop = cells.reduce((t, id) => t + (year.cells.find((c) => c.id === id)?.pop ?? 0), 0);
-		if (!best || pop > best.pop) best = { event, e, pop };
+		const rank = (oursIn(e.year) ? 1e12 : 0) + pop;
+		if (!best || rank > best.rank) best = { event, e, rank };
 	}
 	if (!best) return null;
 	const { e } = best;
-	const ours = defaultData.events.events.find(
-		(x) => x.kind === 'history' && x.year === e.year && x.effects?.conquer
-	)?.title;
+	const ours = oursIn(e.year);
 	const fails = run.events.filter((x) => x.failed).length;
 	return {
 		year: e.year,

@@ -31,7 +31,7 @@ describe('shortScript', () => {
 		const shots = shortScript(r, genius, summary, { town: true }).filter((b) => b.town);
 		const held = shots.find((b) => b.town.preset === 'repelled');
 		expect(held.say).toMatch(
-			/^\d{4}: .+ drives? off a British attack\..* In all, \d+ British attacks fail\.$/
+			/^\d{4}: .+ drives? off a British attack\. In our world that year: .+\. In all, \d+ British attacks fail\.$/
 		);
 		const shot = shortSceneAt(
 			r,
