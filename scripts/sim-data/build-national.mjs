@@ -154,6 +154,40 @@ const NEIGHBOURS = ['BEN', 'NER', 'TCD', 'CMR', 'TGO', 'GHA'];
 // about 7% in 1950 and 5% in 1960 (tin alone about 3%); oil 2.7% in 1960. 2022: merchandise exports about
 // $63B (WTO): oil and gas about 88%, farm goods about 4%, manufactures about 5%, solid minerals about 0.3%
 // (NBS foreign trade reports). Rounded; the shares are approximate.
+/** For the data page: where the export anchors and the power and trade assumptions come from. */
+export const TRADE_SOURCES = [
+	{
+		name: 'Helleiner (1966) — Peasant Agriculture, Government and Economic Growth in Nigeria (exports 1950 and 1960)',
+		url: 'https://archive.org/search?query=Helleiner+Peasant+Agriculture+Government+Economic+Growth+Nigeria',
+		licence: 'Book; figures cited',
+		files: ['national.json']
+	},
+	{
+		name: 'WTO Stats — Nigeria merchandise exports, 2022',
+		url: 'https://stats.wto.org/',
+		licence: 'WTO terms of use',
+		files: ['national.json']
+	},
+	{
+		name: 'National Bureau of Statistics — Foreign trade in goods statistics (2022 export mix)',
+		url: 'https://www.nigerianstat.gov.ng/elibrary',
+		licence: 'NBS terms of use',
+		files: ['national.json']
+	},
+	{
+		name: 'Corden and Neary (1982) — Booming sector and de-industrialisation (the Dutch disease rule)',
+		url: 'https://doi.org/10.2307/2232670',
+		licence: 'Article; assumption cited',
+		files: ['params.js']
+	},
+	{
+		name: 'Acemoglu, Naidu, Restrepo and Robinson (2019) — Democracy does cause growth (the military-rule income loss)',
+		url: 'https://doi.org/10.1086/700936',
+		licence: 'Article; assumption cited',
+		files: ['params.js']
+	}
+];
+
 const EXPORT_ANCHORS = {
 	1950: { total: 2.31e9, oil: 0, farm: 0.9, goods: 0.02, minerals: 0.07 },
 	1960: { total: 3.52e9, oil: 0.03, farm: 0.85, goods: 0.03, minerals: 0.05 },

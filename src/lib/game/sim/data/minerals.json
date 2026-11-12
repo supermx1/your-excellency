@@ -41,5 +41,37 @@
 			"cells": ["nassarawa", "kwara", "oyo", "fct", "kebbi", "kogi", "ekiti"],
 			"source": "Pegmatites named by the Ministry of Solid Minerals (2023). One plant's rated output: 3M t of ore a year, about 400,000 t of spodumene concentrate (Endo, Nasarawa). About $800 a tonne of concentrate in 2011 dollars, a long-run price outside the 2022 spike. World demand from about 2016 (batteries)."
 		}
+	],
+	"sources": [
+		{
+			"name": "USGS Minerals Yearbook, Nigeria chapters 1963–1968 (tin and columbite output)",
+			"url": "https://search.library.wisc.edu/digital/ANYREM3MSLSGPJ9E",
+			"licence": "Public domain (US government)"
+		},
+		{
+			"name": "USGS Minerals Yearbook, Nigeria 2016–2019 (coal, gold, iron ore)",
+			"url": "https://pubs.usgs.gov/myb/vol3/2019/myb3-2019-nigeria.pdf",
+			"licence": "Public domain (US government)"
+		},
+		{
+			"name": "Wikipedia — Nigerian Coal Corporation (Enugu coal output)",
+			"url": "https://en.wikipedia.org/wiki/Nigerian_Coal_Corporation",
+			"licence": "CC BY-SA 4.0"
+		},
+		{
+			"name": "planetGOLD Nigeria — small-scale gold output (about 16 t a year)",
+			"url": "https://www.planetgold.org/nigeria",
+			"licence": "planetGOLD terms of use"
+		},
+		{
+			"name": "Nairametrics (2023) — Ministry of Solid Minerals on lithium-bearing states",
+			"url": "https://nairametrics.com/2023/09/20/nigerias-solid-mineral-deposit-worth-over-700bn-dele-alake/",
+			"licence": "Nairametrics terms of use"
+		},
+		{
+			"name": "bne IntelliNews — Endo (Nasarawa) lithium plant, 3M t of ore a year",
+			"url": "https://www.intellinews.com/nigeria-opens-chinese-built-250mn-lithium-plant-targets-leading-role-in-battery-supply-chain-453719/",
+			"licence": "IntelliNews terms of use"
+		}
 	]
 }

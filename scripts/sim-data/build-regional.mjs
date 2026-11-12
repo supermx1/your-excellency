@@ -1,6 +1,7 @@
 // Builds regional data and copies the hand-authored files into src/lib/game/sim/data/.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { populationAt } from '../../src/lib/game/sim/population.js';
+import { TRADE_SOURCES } from './build-national.mjs';
 
 const CACHE = new URL('./.cache/', import.meta.url);
 const AUTH = new URL('./authored/', import.meta.url);
@@ -89,7 +90,11 @@ for (const snap of borders.snapshots) {
 		...kept.map((p) => ({ ...p, cellIds: p.cellIds.filter((c) => !taken.has(c)) })),
 		...incoming
 	].filter((p) => p.cellIds.length);
-	snapshots.push({ year: snap.year, ...(snap.atWar && { atWar: true }), polities: structuredClone(current) });
+	snapshots.push({
+		year: snap.year,
+		...(snap.atWar && { atWar: true }),
+		polities: structuredClone(current)
+	});
 }
 write('real-borders.json', snapshots);
 
@@ -98,7 +103,12 @@ write('polities-1850.json', p1850.polities);
 const events = readJson(new URL('events.json', AUTH));
 write('events.json', { flags: events.flags, groups: events.groups, events: events.events });
 write('tech.json', readJson(new URL('tech.json', AUTH)).tech);
-write('nbs.json', (({ literacy2010, nlss2019 }) => ({ literacy2010, nlss2019 }))(readJson(new URL('nbs.json', AUTH))));
+write(
+	'nbs.json',
+	(({ literacy2010, nlss2019 }) => ({ literacy2010, nlss2019 }))(
+		readJson(new URL('nbs.json', AUTH))
+	)
+);
 const names = readJson(new URL('names.json', AUTH));
 write('names.json', { languages: names.languages, cellLanguage: names.cellLanguage });
 
@@ -116,7 +126,12 @@ const sources = [
 	})),
 	...['polities-1850', 'real-borders', 'events', 'tech', 'names', 'religion', 'nbs'].flatMap((f) =>
 		readJson(new URL(`${f}.json`, AUTH)).sources.map((s) => ({ ...s, files: [`${f}.json`] }))
-	)
+	),
+	...readJson(new URL('minerals.json', OUT)).sources.map((s) => ({
+		...s,
+		files: ['minerals.json']
+	})),
+	...TRADE_SOURCES
 ];
 write('sources.json', sources);
 console.log(`regional data: ${snapshots.length} border snapshots, ${sources.length} sources`);
