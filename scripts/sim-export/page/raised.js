@@ -592,22 +592,22 @@ function junta(ctx, shot) {
 	const { progress: p, elapsed, pace } = shot;
 	const t = elapsed * pace;
 	house(ctx, 20, 2, 110, 34, { plaster: 1, roof: 'zinc', height: 22 });
-	plate(ctx, 44, 36, 15, 50, 7, '#efcf94');
-	wallText(ctx, 'GOVERNMENT HOUSE', 69, 36, 18.5, INK, 'x', 5);
+	plate(ctx, 22, 36, 14, 104, 8, '#efcf94');
+	wallText(ctx, 'GOVERNMENT HOUSE', 74, 36, 18, INK, 'x', 5);
 	at(ctx, 142, 54, 0, 1, (c) => flagPole(c, t, shot.color ?? '#3d8a4a'));
 	// The fence with its gate; the notice goes up on the left of the gate.
 	const wall = ['#e3d8bd', '#c9bc9c', '#b1a483'];
-	solid(ctx, -2, 70, 52, 3, 8, wall);
-	solid(ctx, 80, 70, 76, 3, 8, wall);
+	solid(ctx, -24, 70, 84, 3, 8, wall);
+	solid(ctx, 82, 70, 74, 3, 8, wall);
 	const notice = ease(p, 0.5, 0.62);
 	if (notice > 0) {
 		ctx.globalAlpha = notice;
-		plate(ctx, 8, 73, 2, 34, 9, '#f4f1e6');
-		wallText(ctx, 'NO ELECTION', 25, 73, 6.5, '#b4352c', 'x', 5);
+		plate(ctx, -18, 73, 1, 60, 10, '#f4f1e6');
+		wallText(ctx, 'NO ELECTION', 12, 73, 6, '#b4352c', 'x', 5);
 		ctx.globalAlpha = 1;
 	}
 	// The armoured car drives in along the front of the lot and stops by the gate.
-	const cx = mix(-60, 58, ease(p, 0, 0.28));
+	const cx = mix(-60, 100, ease(p, 0, 0.28)); // parks right of the gate
 	for (const wx of [cx + 3, cx + 19]) solid(ctx, wx, 106, 5, 2, 4, ['#2b2b2b', '#222', '#1a1a1a']);
 	solid(ctx, cx, 94, 26, 12, 8, OLIVE, 2);
 	solid(ctx, cx + 8, 97, 10, 7, 5, OLIVE, 10);
@@ -615,10 +615,10 @@ function junta(ctx, shot) {
 	line(ctx, '#2f3622', Math.round(gx), Math.round(gy), Math.round(gx) + 12, Math.round(gy) + 3, 2);
 	// Soldiers step down from the car and take the gate.
 	const posts = [
-		[54, 78],
-		[74, 78],
-		[52, 90],
-		[76, 90]
+		[58, 80],
+		[80, 80],
+		[56, 92],
+		[82, 92]
 	];
 	const out = ease(p, 0.26, 0.48);
 	if (p > 0.26)
