@@ -6,7 +6,7 @@ import { chaptersFor, scenarioLabel } from './narration.js';
 import { INTRO, OUTRO, introCamera, outroCamera } from './intro.js';
 import { cameraAt, WIDE } from './camera.js';
 import { frameAt } from './frame.js';
-import { realFrame, statsAt, captionsAt, familyCardsAt, endingRows } from './hud.js';
+import { realFrame, statsAt, captionsAt, familyCardsAt, endingRows, endingTitle } from './hud.js';
 import { SWITCHES, PRESETS, defaultSwitches } from './switches.js';
 import { speakable } from './kitten.js';
 import { incomeDrivers } from './explanations.js';
@@ -255,6 +255,7 @@ export function sceneAt(run, plan, shots, time, national) {
 					}
 				: null,
 		ending: phase === 'ending' ? endingRows(run, national, plan.summary) : null,
+		endingTitle: phase === 'ending' ? endingTitle(run) : null,
 		ranges:
 			phase === 'range'
 				? {

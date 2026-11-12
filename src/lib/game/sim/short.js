@@ -4,7 +4,7 @@
 // each line's years to its audio; shortSceneAt says what each frame shows. Pure functions.
 import { scenarioCard, captionChunks } from './export.js';
 import { frameAt } from './frame.js';
-import { realFrame, statsAt, captionsAt, endingRows, richAs } from './hud.js';
+import { realFrame, statsAt, captionsAt, endingRows, richAs, landName } from './hud.js';
 import { defaultData } from './data/index.js';
 import { PRESETS } from './switches.js';
 import { polityColor } from './colors.js';
@@ -32,6 +32,14 @@ const standout = (run, a, b) => {
 	}
 	return '';
 };
+/** At the end, when the land is not one Nigeria: "5 states share the land we call Nigeria: A, B and C. " */
+const landLine = (last) =>
+	last.polities.length > 1
+		? `${last.polities.length} states share the land we call Nigeria: ${last.polities
+				.map((p) => p.name)
+				.join(', ')
+				.replace(/, ([^,]*)$/, ' and $1')}. In all, `
+		: '';
 const statesAt = (run, y) => {
 	const p = snap(run, y).polities;
 	return p.length === 1
@@ -76,7 +84,11 @@ export function shortScript(run, inputs, summary = null, { town = false } = {}) 
 			.filter(Boolean)
 			.join(' ') || 'Every switch as in history.';
 	const beats = [
-		{ say: `${premise} I ran Nigeria from ${start} to ${end}.`, from: start, to: start }
+		{
+			say: `${premise} I ran ${landName(snap(run, start))} from ${start} to ${end}.`,
+			from: start,
+			to: start
+		}
 	];
 
 	if (end - start >= 30) {
@@ -127,7 +139,7 @@ export function shortScript(run, inputs, summary = null, { town = false } = {}) 
 		inputs.switches.power24hFromYear != null ? ` ${lightsLine(snap(run, end), end)}` : '';
 	const trade = tradeLine(snap(run, end), end);
 	beats.push({
-		say: `${people(pop.value)} people, against ${people(pop.ours)} in ours.${power}${earns}${trade} ${city}${city === 'Lagos' ? ' is still' : ', not Lagos, is'} the biggest city.${summary ? ` ${formedLine(summary)}` : ''}`,
+		say: `${landLine(snap(run, end))}${people(pop.value)} people, against ${people(pop.ours)} in ours.${power}${earns}${trade} ${city}${city === 'Lagos' ? ' is still' : ', not Lagos, is'} the biggest city.${summary ? ` ${formedLine(summary)}` : ''}`,
 		from: end,
 		to: end,
 		card: true

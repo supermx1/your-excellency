@@ -48,6 +48,22 @@ const powerAs = (twh, pop, national = defaultData.national) => {
 	return `${how} ${r.name}, per person`;
 };
 
+/**
+ * "Nigeria" is the name Britain gave the land: use it only while one state of that name holds all of it.
+ * Otherwise the run speaks of "the land we call Nigeria".
+ */
+export const isOneNigeria = (snapshot) =>
+	snapshot.polities.length === 1 && snapshot.polities[0].id === 'nigeria';
+export const landName = (snapshot) =>
+	isOneNigeria(snapshot) ? 'Nigeria' : 'the land we call Nigeria';
+/** The end table's title: "Their Nigeria in 2025", or "The land we call Nigeria, in 2025". */
+export const endingTitle = (run) => {
+	const last = run.history.at(-1);
+	return isOneNigeria(last)
+		? `Their Nigeria in ${last.year}`
+		: `The land we call Nigeria, in ${last.year}`;
+};
+
 /** Exports by kind, as each year's totals store them. */
 const EXPORTS = {
 	exportsOil: 'oil',
@@ -379,6 +395,16 @@ export function endingRows(run, national, summary) {
 			theirs: run.events.filter((e) => e.kind === 'war').length,
 			ours: realWars,
 			key: 'wars'
+		},
+		// How many states share the land, and which (ours: one, Nigeria).
+		{
+			label: 'States',
+			theirs: last.polities.length,
+			ours: 1,
+			like: {
+				theirs: last.polities.map((p) => p.name).join(', '),
+				ours: 'Federal Republic of Nigeria'
+			}
 		},
 		{ label: 'Biggest city', theirs: cellName.get(biggest.id) ?? biggest.id, ours: 'Lagos' },
 		...(space

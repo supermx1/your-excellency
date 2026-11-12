@@ -113,6 +113,7 @@ describe('ending', () => {
 			'Power made',
 			'Exports a year',
 			'Wars',
+			'States',
 			'Biggest city',
 			'Religious mix'
 		]);

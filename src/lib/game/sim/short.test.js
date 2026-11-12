@@ -40,10 +40,12 @@ describe('shortScript', () => {
 		).town;
 		expect(shot.rivals).toEqual([shot.color, polityColor('british')]);
 		expect(shot.winner).toBe(0);
+		// Five states hold the land at the end: the closing line names them, not one 'Nigeria'.
+		expect(shortScript(r, genius, summary).at(-1).say).toMatch(/^\d+ states share the land we call Nigeria: .+ and .+\. In all, [\d.]+ million people, against/);
 	});
 	it('opens on the what-if and its years', () => {
 		expect(beats[0].say).toBe(
-			'Britain never conquers the region. I ran Nigeria from 1850 to 2025.'
+			'Britain never conquers the region. I ran the land we call Nigeria from 1850 to 2025.'
 		);
 	});
 	it('names every what-if it combines, then any other switch changed', () => {
@@ -53,11 +55,11 @@ describe('shortScript', () => {
 			endYear: 2100
 		};
 		expect(shortScript(run, both)[0].say).toBe(
-			'Britain never conquers the region. I gave every Nigerian a 200 IQ: everyone learns and invents three times faster. I ran Nigeria from 1850 to 2025.'
+			'Britain never conquers the region. I gave every Nigerian a 200 IQ: everyone learns and invents three times faster. I ran the land we call Nigeria from 1850 to 2025.'
 		);
 		const more = { ...inputs, switches: { ...inputs.switches, coups: 'off' } };
 		expect(shortScript(run, more)[0].say).toBe(
-			'Britain never conquers the region. I set military coups to off. I ran Nigeria from 1850 to 2025.'
+			'Britain never conquers the region. I set military coups to off. I ran the land we call Nigeria from 1850 to 2025.'
 		);
 		const power = { ...inputs, switches: { ...inputs.switches, power24hFromYear: 1960 } };
 		expect(shortScript(run, power)[0].say).toContain('I set 24-hour power from 1960.');

@@ -68,7 +68,7 @@
 	<section class="absolute inset-0 flex items-center justify-center bg-black/60 p-16">
 		<div class={panel}>
 			<p class={kicker}>The Timeline · {label}</p>
-			<h1 class="text-6xl font-black uppercase">Their Nigeria in {endYear}</h1>
+			<h1 class="text-6xl font-black uppercase">{scene.endingTitle ?? `Their Nigeria in ${endYear}`}</h1>
 			<table class="mt-8 w-full border-collapse text-left text-3xl">
 				<thead>
 					<tr class="border-b-4 border-black text-xl font-black uppercase">
