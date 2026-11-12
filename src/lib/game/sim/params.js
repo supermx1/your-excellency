@@ -91,6 +91,18 @@ export const PARAMS = {
 	warWeakness: 0.01,
 	warAmbition: 0.015, // × ambition (0–1): a stronger, settled, crowded neighbour attacks for land
 	coupBase: 0.02,
+	// Soldiers who take power from an elected government: democracy raises income about 20% within
+	// 25 years (Acemoglu, Naidu, Restrepo and Robinson 2019, JPE), so military rule loses 1 − 1/1.2.
+	militaryIncomeLoss: 0.17,
+	// Conquest from overseas. Britain's technology is our world's: what its government here reaches in
+	// history runs (2.5 in 1861, about 3 by 1914). An attack always works with a lead of conquestEdge or
+	// more, never without a lead, and in between with a chance in proportion (assumption). In our
+	// history Britain led every state it attacked here by 1.2–1.7, and every attack worked.
+	britainKnowledge1861: 2.5,
+	britainKnowledgeGrowth: 0.01, // a year
+	conquestEdge: 1,
+	conquestRetry: 10, // years before a beaten attacker comes back
+	conquestUntil: 1914, // the scramble for Africa ends with the First World War
 	// Post-independence crises: our coup years are moments of high risk, counted from independence.
 	// A coup happens only if the state is shaky then; civil war needs a recent coup and a shaken state.
 	coupWindowStability: 0.64,

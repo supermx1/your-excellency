@@ -47,7 +47,7 @@ const months = (family, income) => (income ? Math.round((12 * family.savings) / 
 
 function nameList(world, cellId) {
 	const names = world.data.names;
-	return names?.languages[names.cellLanguage[cellId]];
+	return names?.languages[world.language ?? names.cellLanguage[cellId]];
 }
 
 function drawFaith(world, cell, parentFaith) {

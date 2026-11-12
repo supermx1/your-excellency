@@ -61,7 +61,9 @@ export function stepReligion(world) {
 		}
 		const total = FAITHS.reduce((s, f) => s + pull[f], 0) || 1;
 		const religion = {};
-		for (const f of FAITHS) religion[f] = c.religion[f] + P.relRate * (pull[f] / total - c.religion[f]);
+		// One people: nobody converts, so no difference grows within or between places.
+		const fixed = (sw.onePeople ?? 'off') !== 'off';
+		for (const f of FAITHS) religion[f] = fixed ? c.religion[f] : c.religion[f] + P.relRate * (pull[f] / total - c.religion[f]);
 
 		const within = 1 - FAITHS.reduce((s, f) => s + religion[f] ** 2, 0);
 		const across = neighbours.length ? neighbours.reduce((s, n) => s + diff(c.religion, n.religion), 0) / neighbours.length : 0;
