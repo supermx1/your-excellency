@@ -1,6 +1,6 @@
 <script>
 	// @ts-nocheck
-	import { endingRows } from '$lib/game/sim/hud.js';
+	import { endingRows, endingTitle } from '$lib/game/sim/hud.js';
 	import { defaultData } from '$lib/game/sim/data/index.js';
 	import { formatStat } from '$lib/game/sim/format.js';
 	import ShareButton from './ShareButton.svelte';
@@ -30,7 +30,7 @@
 			>
 			<p class="text-xs font-black tracking-[0.2em] uppercase opacity-60">The Timeline</p>
 			<h1 id="ending-title" class="text-3xl font-black uppercase md:text-5xl">
-				Their Nigeria in {run.history.at(-1).year}
+				{endingTitle(run)}
 			</h1>
 			<table class="mt-6 w-full border-collapse text-left">
 				<thead>
@@ -80,7 +80,7 @@
 			class="whitespace-nowrap {btn} bg-white text-sm text-black"
 			aria-expanded="false"
 			onclick={() => (open = true)}
-			>Their Nigeria in {run.history.at(-1).year} · Show scorecard ▴</button
+			>{endingTitle(run)} · Show scorecard ▴</button
 		>
 		<button
 			type="button"
