@@ -38,14 +38,14 @@ export function richAs(value, peers = defaultData.national.peers) {
 export const richAsText = (r) =>
 	r && `${r.relation === 'like' ? 'like' : `${r.relation} than`} ${r.name} today`;
 
-/** "as much a person as Egypt today": richAs over electricity made per person. */
+/** "like Egypt, per person": richAs over electricity made per person (short enough for one line). */
 const powerAs = (twh, pop, national = defaultData.national) => {
 	const r =
 		pop > 0 &&
 		richAs((twh * 1e9) / pop, { gdpPc: national.peersKwhPc, africa: national.peers?.africa });
 	if (!r) return null;
-	const how = { like: 'as much', richer: 'more', poorer: 'less' }[r.relation];
-	return `${how} a person ${r.relation === 'like' ? 'as' : 'than'} ${r.name} today`;
+	const how = { like: 'like', richer: 'more than', poorer: 'less than' }[r.relation];
+	return `${how} ${r.name}, per person`;
 };
 
 /** Exports by kind, as each year's totals store them. */

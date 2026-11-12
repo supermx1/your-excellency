@@ -118,7 +118,7 @@ describe('ending', () => {
 		]);
 		const power = rows.find((r) => r.label === 'Power made');
 		expect(power.theirs).toBeGreaterThan(0);
-		expect(power.like.theirs).toMatch(/a person (as|than) .+ today$/);
+		expect(power.like.theirs).toMatch(/^(like|more than|less than) .+, per person$/);
 		const exports = rows.find((r) => r.label === 'Exports a year');
 		expect(exports.theirs).toBeGreaterThan(0);
 		expect(exports.like.ours).toMatch(/^oil 88%/); // our Nigeria in 2022
@@ -223,14 +223,20 @@ describe('their-world state lines', () => {
 		const held = f.cells.filter((c) => c.polityId === 'nigeria' && c.nextPolityId === 'nigeria');
 		expect(held.length).toBeGreaterThan(1);
 		expect(new Set(held.map((c) => c.color)).size).toBe(held.length);
-		expect(f.cells.filter((c) => c.polityId !== 'nigeria').every((c) => c.color === undefined)).toBe(true);
+		expect(
+			f.cells.filter((c) => c.polityId !== 'nigeria').every((c) => c.color === undefined)
+		).toBe(true);
 		expect(frameAt(never, 1850).cells.every((c) => c.color === undefined)).toBe(true);
 	});
 });
 
 describe('richAs', async () => {
 	const { richAs, richAsText } = await import('./hud.js');
-	const peers = { year: 2022, africa: ['Ghana', 'Niger'], gdpPc: { 'the United States': 58000, China: 19000, Pakistan: 5300, Ghana: 4200, Niger: 1000 } };
+	const peers = {
+		year: 2022,
+		africa: ['Ghana', 'Niger'],
+		gdpPc: { 'the United States': 58000, China: 19000, Pakistan: 5300, Ghana: 4200, Niger: 1000 }
+	};
 	it('names the country closest by ratio, or says richer or poorer past the ends', () => {
 		expect(richAsText(richAs(20500, peers))).toBe('like China today');
 		expect(richAsText(richAs(5100, peers))).toBe('like Ghana today'); // African first, though Pakistan is closer
