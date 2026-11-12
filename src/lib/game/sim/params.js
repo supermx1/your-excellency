@@ -46,6 +46,10 @@ export const PARAMS = {
 	// From the first find to full output, rising as (years / this)³: fitted to Nigeria (found 1956; 1% of
 	// peak output in 1960, 13% in 1965, half in 1970, all of about 2.3M barrels a day in 1974).
 	oilRampYears: 18,
+	// Share of a deposit's output a place gets out and sells: this × stability × market access × the Dutch
+	// disease factor, at most all of it. Fitted to 1960, when our Nigeria sold about $160M of minerals
+	// (2011 dollars), nearly all tin and columbite, close to full output.
+	mineScale: 3,
 	schoolExpansionRate: 0.12, // free-school capacity expands gradually, scaled by resources and skills
 	schoolPolicyCoverage: 0.4,
 	// Livelihood rules are sensitivity assumptions, not household-survey estimates.

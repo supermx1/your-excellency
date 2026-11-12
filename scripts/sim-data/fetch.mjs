@@ -56,6 +56,13 @@ export const SOURCES = [
 		licence: 'CC BY 4.0'
 	},
 	{
+		file: 'commodity-prices.xlsx',
+		url: 'https://thedocs.worldbank.org/en/doc/5d903e848db1d1b83e0ec8f744e55570-0350012021/related/CMO-Historical-Data-Annual.xlsx',
+		name: 'World Bank Commodity Price Data (The Pink Sheet), annual real prices from 1960',
+		licence: 'CC BY 4.0',
+		binary: true
+	},
+	{
 		file: 'oil.csv',
 		url: owid('fossil-fuels', '&fuel=oil&metric=production&per_capita=total'),
 		name: 'Our World in Data — Oil production (Energy Institute)',
@@ -102,7 +109,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 		if (existsSync(target)) continue;
 		const res = await fetch(s.url, { headers: { 'user-agent': 'the-timeline-data-script/1.0' } });
 		if (!res.ok) throw new Error(`${s.file}: HTTP ${res.status} from ${s.url}`);
-		writeFileSync(target, await res.text());
+		writeFileSync(target, s.binary ? Buffer.from(await res.arrayBuffer()) : await res.text());
 		manifest[s.file] = {
 			url: s.url,
 			name: s.name,

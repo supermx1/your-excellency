@@ -2,6 +2,8 @@
 // Gaps between real points are interpolated linearly; nothing is extrapolated (null outside the data),
 // except population, which uses the long-run series before 1950 and UN projections after the last estimate.
 import { readFileSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 const CACHE = new URL('./.cache/', import.meta.url);
 const OUT = new URL('../../src/lib/game/sim/data/national.json', import.meta.url);
@@ -97,18 +99,65 @@ const PEERS = {
 };
 const read = (f) => readFileSync(new URL(f, CACHE), 'utf8');
 
+/**
+ * Real annual prices from the World Bank Pink Sheet (an .xlsx; read with the system `unzip`, no package):
+ * Map<commodity, Map<year, price in 2010 dollars>>.
+ */
+export function pinkSheet(file, sheet = 'Annual Prices (Real)') {
+	const part = (p) => execFileSync('unzip', ['-p', file, p], { encoding: 'utf8', maxBuffer: 1e9 });
+	const shared = [...part('xl/sharedStrings.xml').matchAll(/<si>([\s\S]*?)<\/si>/g)].map((m) =>
+		[...m[1].matchAll(/<t[^>]*>([^<]*)<\/t>/g)].map((t) => t[1].replace(/&amp;/g, '&')).join('')
+	);
+	const attr = (tag, name) => tag.match(new RegExp(`\\b${name}="([^"]*)"`))?.[1];
+	const sheetTag = part('xl/workbook.xml')
+		.match(/<sheet [^>]*>/g)
+		.find((t) => attr(t, 'name') === sheet);
+	const rel = part('xl/_rels/workbook.xml.rels')
+		.match(/<Relationship [^>]*>/g)
+		.find((t) => attr(t, 'Id') === attr(sheetTag, 'r:id'));
+	const rows = [
+		...part(`xl/${attr(rel, 'Target').replace(/^\/?xl\//, '')}`).matchAll(
+			/<row [^>]*>([\s\S]*?)<\/row>/g
+		)
+	].map((row) =>
+		Object.fromEntries(
+			[...row[1].matchAll(/<c r="([A-Z]+)\d+"((?:(?!\/>)[^>])*)>([\s\S]*?)<\/c>/g)]
+				.map(([, col, attrs, body]) => {
+					const v = body.match(/<v>([^<]*)<\/v>/)?.[1];
+					return [col, v == null ? null : /t="s"/.test(attrs) ? shared[+v] : v];
+				})
+				.filter(([, v]) => v != null)
+		)
+	);
+	const header = rows.find((r) => Object.values(r).includes('Gold'));
+	const out = new Map(Object.values(header).map((name) => [name, new Map()]));
+	for (const r of rows)
+		if (/^\d{4}$/.test(r.A ?? ''))
+			for (const [col, name] of Object.entries(header))
+				if (Number.isFinite(+r[col]) && r[col] !== '') out.get(name).set(+r.A, +r[col]);
+	return out;
+}
+
+/** Holds the first known value before the data and the last one after it. */
+const hold = (xs) => {
+	const first = xs.find((v) => v != null);
+	let last = first;
+	return xs.map((v) => (v == null ? last : (last = v)));
+};
+
 // Nigeria's neighbours and the countries its grid line reaches through Benin and Togo (West African Power Pool).
 const NEIGHBOURS = ['BEN', 'NER', 'TCD', 'CMR', 'TGO', 'GHA'];
 
 // Our Nigeria's exports of goods in 2011 US dollars (US CPI: 1950 24.1, 1960 29.6, 2011 224.9, 2022 292.7).
 // 1950 and 1960: domestic exports £88.5M and £165.6M at $2.80 (Helleiner 1966, Peasant Agriculture,
-// Government and Economic Growth in Nigeria, statistical appendix); oil 2.7% and tin about 3% in 1960, the
-// rest farm goods. 2022: merchandise exports about $63B (WTO), oil and gas about 88%, farm goods about 4%,
-// manufactures about 5% (NBS foreign trade reports). Rounded; the shares are approximate.
+// Government and Economic Growth in Nigeria, statistical appendix): mostly farm goods; tin and columbite
+// about 7% in 1950 and 5% in 1960 (tin alone about 3%); oil 2.7% in 1960. 2022: merchandise exports about
+// $63B (WTO): oil and gas about 88%, farm goods about 4%, manufactures about 5%, solid minerals about 0.3%
+// (NBS foreign trade reports). Rounded; the shares are approximate.
 const EXPORT_ANCHORS = {
-	1950: { total: 2.31e9, oil: 0, farm: 0.9, goods: 0.02 },
-	1960: { total: 3.52e9, oil: 0.03, farm: 0.85, goods: 0.03 },
-	2022: { total: 48.4e9, oil: 0.88, farm: 0.04, goods: 0.05 }
+	1950: { total: 2.31e9, oil: 0, farm: 0.9, goods: 0.02, minerals: 0.07 },
+	1960: { total: 3.52e9, oil: 0.03, farm: 0.85, goods: 0.03, minerals: 0.05 },
+	2022: { total: 48.4e9, oil: 0.88, farm: 0.04, goods: 0.05, minerals: 0.003 }
 };
 
 if (import.meta.url === `file://${process.argv[1]}`) {
@@ -191,6 +240,18 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 			);
 		})(),
 		exportAnchors: EXPORT_ANCHORS,
+		// World prices of the minerals in data/minerals.json, $ a tonne in 2011 dollars (the Pink Sheet's
+		// 2010 dollars × 1.031, US CPI). Held at the first value before 1960 (Australian coal: 1970) and the
+		// last after the data.
+		mineralPrices: (() => {
+			const prices = pinkSheet(fileURLToPath(new URL('commodity-prices.xlsx', CACHE)));
+			const series = (name, perTonne = 1) => hold(align(prices.get(name), 1.031 * perTonne));
+			return {
+				tin: series('Tin'),
+				coal: series('Coal, Australian'),
+				gold: series('Gold', 32150.75) // troy ounces in a tonne
+			};
+		})(),
 		oilTwh: align(owidSeries(read('oil.csv'), 'oil_production_twh'))
 	};
 	writeFileSync(OUT, JSON.stringify(national) + '\n');

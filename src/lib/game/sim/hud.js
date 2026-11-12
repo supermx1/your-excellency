@@ -53,6 +53,7 @@ const EXPORTS = {
 	exportsOil: 'oil',
 	exportsFarm: 'farm',
 	exportsGoods: 'factories',
+	exportsMinerals: 'minerals',
 	exportsPower: 'power'
 };
 const exportsTotal = (totals) =>
@@ -365,7 +366,8 @@ export function endingRows(run, national, summary) {
 									shareText([
 										['oil', real.oil],
 										['farm', real.farm],
-										['factories', real.goods]
+										['factories', real.goods],
+										['minerals', real.minerals]
 									])
 							},
 							key: 'exports'

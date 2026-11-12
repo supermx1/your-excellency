@@ -14,7 +14,7 @@ import { PARAMS as P } from './params.js';
 import { populationAt } from './population.js';
 import { stepLivelihoods } from './rules/livelihoods.js';
 
-export const ENGINE_VERSION = 22;
+export const ENGINE_VERSION = 23;
 
 const RULES = [
 	stepEvents,
@@ -31,7 +31,7 @@ const RULES = [
 const round = (n, p = 4) => Math.round(n * 10 ** p) / 10 ** p;
 
 /** What a land sells abroad, and each kind's key in a year's totals (exportsOil, …; see EXPORTS in hud.js). */
-const EXPORT_KINDS = ['oil', 'farm', 'goods', 'power'];
+const EXPORT_KINDS = ['oil', 'farm', 'goods', 'minerals', 'power'];
 const exportKey = (kind) => `exports${kind[0].toUpperCase()}${kind.slice(1)}`;
 
 /** Population and religion for a cell at the start year, from the regional data (if present). */
