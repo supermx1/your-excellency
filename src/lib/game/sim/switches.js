@@ -166,7 +166,7 @@ export const PRESETS = {
 	},
 	genius: {
 		label: '200 IQ',
-		hook: 'I gave every Nigerian a 200 IQ: everyone learns and invents three times faster.',
+		hook: 'I gave everyone in the land we call Nigeria a 200 IQ: everyone learns and invents three times faster.',
 		description:
 			'Everyone learns and invents three times faster. Greed, fear and ambition stay the same.',
 		startYear: 1850,
